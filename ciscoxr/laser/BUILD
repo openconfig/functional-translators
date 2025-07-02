@@ -11,7 +11,6 @@ go_library(
     srcs = ["cisco_laser.go"],
     deps = [
         "//third_party/openconfig/functional_translators:ftconsts",
-        "//third_party/openconfig/functional_translators:ftutilities",
         "//third_party/openconfig/functional_translators:translator",
         "//third_party/openconfig/functional_translators/ciscoxr/laser/yang/native:gostructs",
         "//third_party/openconfig/functional_translators/ciscoxr/laser/yang/openconfig:gostructs",
@@ -23,5 +22,4 @@ go_test(
     size = "small",
     srcs = ["cisco_laser_test.go"],
     library = ":ciscoxrlaser",
-    deps = ["//third_party/openconfig/functional_translators:ftutilities"],
 )

@@ -11,10 +11,8 @@ go_library(
     srcs = ["arista_interface_desc.go"],
     deps = [
         "//third_party/openconfig/functional_translators:ftconsts",
-        "//third_party/openconfig/functional_translators:ftutilities",
         "//third_party/openconfig/functional_translators:simplemapper",
         "//third_party/openconfig/functional_translators:translator",
-        "//third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig:interfaces",
     ],
 )
 
@@ -23,7 +21,6 @@ go_test(
     size = "small",
     srcs = ["arista_interface_desc_test.go"],
     library = ":aristainterfacedesc",
-    deps = ["//third_party/openconfig/functional_translators:ftutilities"],
 )
 
 go_library(
@@ -31,10 +28,8 @@ go_library(
     srcs = ["arista_interface_mac.go"],
     deps = [
         "//third_party/openconfig/functional_translators:ftconsts",
-        "//third_party/openconfig/functional_translators:ftutilities",
         "//third_party/openconfig/functional_translators:simplemapper",
         "//third_party/openconfig/functional_translators:translator",
-        "//third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig:interfaces",
     ],
 )
 

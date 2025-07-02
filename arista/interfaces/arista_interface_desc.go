@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"google3/third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig/interfaces"
+	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
 	"google3/third_party/openconfig/functional_translators/ftconsts"
-	"google3/third_party/openconfig/functional_translators/ftutilities"
+	"github.com/openconfig/functional-translators"
 	"google3/third_party/openconfig/functional_translators/simplemapper"
 	"google3/third_party/openconfig/functional_translators/translator"
 

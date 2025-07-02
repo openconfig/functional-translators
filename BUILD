@@ -26,7 +26,6 @@ go_test(
 go_library(
     name = "simplemapper",
     srcs = ["simplemapper.go"],
-    deps = [":ftutilities"],
 )
 
 go_test(
@@ -34,13 +33,11 @@ go_test(
     size = "small",
     srcs = ["simplemapper_test.go"],
     library = ":simplemapper",
-    deps = ["//third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig:interfaces"],
 )
 
 go_library(
     name = "translator",
     srcs = ["translator.go"],
-    deps = [":ftutilities"],
 )
 
 go_test(
