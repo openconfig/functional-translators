@@ -1,0 +1,510 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "module-temperature-upper"
+      }
+    }
+    val: {
+      double_val: 80
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "module-temperature-upper"
+      }
+    }
+    val: {
+      double_val: 75
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "module-temperature-lower"
+      }
+    }
+    val: {
+      double_val: -10
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "module-temperature-lower"
+      }
+    }
+    val: {
+      double_val: -7
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "input-power-upper"
+      }
+    }
+    val: {
+      double_val: 6.4
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "input-power-lower"
+      }
+    }
+    val: {
+      double_val: -11.3
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "input-power-upper"
+      }
+    }
+    val: {
+      double_val: 4.5
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "input-power-lower"
+      }
+    }
+    val: {
+      double_val: -8.3
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "output-power-upper"
+      }
+    }
+    val: {
+      double_val: 6.4
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "output-power-lower"
+      }
+    }
+    val: {
+      double_val: -7.4
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "output-power-upper"
+      }
+    }
+    val: {
+      double_val: 4.5
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "output-power-lower"
+      }
+    }
+    val: {
+      double_val: -4.3
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "CRITICAL"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "severity"
+      }
+    }
+    val: {
+      string_val: "CRITICAL"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "FourHundredGigE0/0/0/2"
+        }
+      }
+      elem: {
+        name: "transceiver"
+      }
+      elem: {
+        name: "thresholds"
+      }
+      elem: {
+        name: "threshold"
+        key: {
+          key: "severity"
+          value: "WARNING"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "severity"
+      }
+    }
+    val: {
+      string_val: "WARNING"
+    }
+  }
+}

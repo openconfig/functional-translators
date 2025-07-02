@@ -1,0 +1,47 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "example-interface"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "description"
+      }
+    }
+    val: {
+      string_val: "a random description"
+    }
+  }
+  delete: {
+    elem: {
+      name: "interfaces"
+    }
+    elem: {
+      name: "interface"
+      key: {
+        key: "name"
+        value: "interface-to-delete"
+      }
+    }
+    elem: {
+      name: "state"
+    }
+    elem: {
+      name: "description"
+    }
+  }
+}

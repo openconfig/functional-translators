@@ -1,0 +1,25 @@
+update:  {
+  timestamp:  123
+  prefix:  {
+    origin:  "openconfig"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "does"
+      }
+      elem:  {
+        name:  "not"
+      }
+      elem:  {
+        name:  "match"
+      }
+      elem:  {
+        name:  "schema"
+      }
+    }
+    val:  {
+      string_val:  ""
+    }
+  }
+}

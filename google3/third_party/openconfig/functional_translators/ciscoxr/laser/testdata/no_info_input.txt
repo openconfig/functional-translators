@@ -1,0 +1,29 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "Cisco-IOS-XR-controller-optics-oper"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "optics-oper"
+      }
+      elem: {
+        name: "optics-ports"
+      }
+      elem: {
+        name: "optics-port"
+        key: {
+          key: "name"
+          value: "Optics0/0/0/2"
+        }
+      }
+      elem: {
+        name: "optics-info"
+      }
+    }
+    val: {
+      int_val: 5000
+    }
+  }
+}

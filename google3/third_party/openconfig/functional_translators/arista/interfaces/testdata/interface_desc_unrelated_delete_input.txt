@@ -1,0 +1,17 @@
+update:  {
+  timestamp:  123
+  prefix:  {
+    origin:  "openconfig"
+  }
+  delete:  {
+    elem:  {
+      name:  "some"
+    }
+    elem:  {
+      name:  "other"
+    }
+    elem:  {
+      name:  "path"
+    }
+  }
+}

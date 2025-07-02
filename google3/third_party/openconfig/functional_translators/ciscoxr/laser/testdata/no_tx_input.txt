@@ -1,0 +1,240 @@
+update:  {
+  timestamp:  123
+  prefix:  {
+    origin:  "Cisco-IOS-XR-controller-optics-oper"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "derived-optics-type"
+      }
+    }
+    val:  {
+      string_val:  "400G QSFP-DD FR4"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "temp-high-threshold"
+      }
+    }
+    val:  {
+      int_val:  8000
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "temp-high-warning-threshold"
+      }
+    }
+    val:  {
+      int_val:  7500
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "temp-low-threshold"
+      }
+    }
+    val:  {
+      int_val:  -1000
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "temp-low-warning-threshold"
+      }
+    }
+    val:  {
+      int_val:  -700
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "rx-high-threshold"
+      }
+    }
+    val:  {
+      int_val:  64
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "rx-low-threshold"
+      }
+    }
+    val:  {
+      int_val:  -113
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "rx-high-warning-threshold"
+      }
+    }
+    val:  {
+      int_val:  45
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "optics-oper"
+      }
+      elem:  {
+        name:  "optics-ports"
+      }
+      elem:  {
+        name:  "optics-port"
+        key:  {
+          key:  "name"
+          value:  "Optics0/0/0/2"
+        }
+      }
+      elem:  {
+        name:  "optics-info"
+      }
+      elem:  {
+        name:  "rx-low-warning-threshold"
+      }
+    }
+    val:  {
+      int_val:  -83
+    }
+  }
+}

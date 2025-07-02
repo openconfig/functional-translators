@@ -1,0 +1,18 @@
+update:  {
+  timestamp:  123
+  prefix:  {
+    origin:  "openconfig"
+  }
+  delete:  {
+    elem:  {
+      name:  "interfaces"
+    }
+    elem:  {
+      name:  "interface"
+      key:  {
+        key:  "name"
+        value:  "interface-to-delete"
+      }
+    }
+  }
+}
