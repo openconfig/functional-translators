@@ -21,9 +21,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
 	"google3/third_party/openconfig/functional_translators/ftconsts"
+	"google3/third_party/openconfig/functional_translators/ftutilities"
+	"github.com/openconfig/functional-translators/simplemapper"
 	"github.com/openconfig/functional-translators"
-	"google3/third_party/openconfig/functional_translators/simplemapper"
-	"google3/third_party/openconfig/functional_translators/translator"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

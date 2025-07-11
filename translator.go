@@ -20,7 +20,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/ftutilities"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

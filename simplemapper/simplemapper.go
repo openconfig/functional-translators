@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/ftutilities"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

@@ -19,7 +19,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/ftutilities"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
