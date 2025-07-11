@@ -20,7 +20,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
-	"google3/third_party/openconfig/functional_translators/ftconsts"
+	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
 	"github.com/openconfig/functional-translators"
