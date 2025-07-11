@@ -19,7 +19,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google3/third_party/openconfig/functional_translators/ftutilities"
+	"github.com/openconfig/functional-translators/ftutilities/ftutilities"
 )
 
 func TestTranslate(t *testing.T) {
