@@ -21,7 +21,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"github.com/openconfig/functional-translators/ftutilities/ftutilities"
+	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators"
 
 	xr2431 "github.com/openconfig/functional-translators/ciscoxr/laser/yang/native/gostructs"

@@ -21,7 +21,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"github.com/openconfig/functional-translators/ftutilities/ftutilities"
+	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
 	"github.com/openconfig/functional-translators"
 
