@@ -87,6 +87,9 @@ func New() *translator.FunctionalTranslator {
 }
 
 func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+	if sr.GetUpdate() == nil {
+		return nil, nil
+	}
 	schema, err := xr2431.Schema()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema: %v", err)

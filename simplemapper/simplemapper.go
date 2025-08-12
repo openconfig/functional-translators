@@ -279,6 +279,9 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 // Handler translates gNMI notifications. This should be used as the Translate function for a functional translator.
 // TODO(team): Write unit tests for this, besides those in the functional translators that use this.
 func (m *SimpleMapper) Handler(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+	if sr.GetUpdate() == nil {
+		return nil, nil
+	}
 	notification := sr.GetUpdate()
 	outgoingNotification, err := m.updateHandler(m.inSchema, m.outSchema, notification)
 	if err != nil {
