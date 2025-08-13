@@ -32,6 +32,9 @@ import (
 
 var (
 	translateMap = map[string][]string{
+		"/openconfig/components/component/transceiver/thresholds/threshold/state/severity": {
+			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/derived-optics-type",
+		},
 		"/openconfig/components/component/transceiver/thresholds/threshold/state/module-temperature-upper": {
 			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/temp-high-threshold",
 			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/temp-high-warning-threshold",
