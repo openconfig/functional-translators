@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package aristainterfacedesc
+package aristainterface
 
 import (
 	"testing"
@@ -22,7 +22,7 @@ import (
 	"github.com/openconfig/functional-translators/ftutilities"
 )
 
-func TestTranslate(t *testing.T) {
+func TestDescTranslate(t *testing.T) {
 	tests := []struct {
 		name           string
 		inputPath      string
@@ -68,7 +68,7 @@ func TestTranslate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ft := New()
+			ft := NewDescFT()
 			inputSR, err := ftutilities.LoadSubscribeResponse(test.inputPath)
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
