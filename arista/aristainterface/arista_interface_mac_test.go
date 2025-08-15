@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package aristainterfacemac
+package aristainterface
 
 import (
 	"testing"
@@ -489,7 +489,7 @@ func TestTranslate(t *testing.T) {
 		},
 	}
 
-	ft := New()
+	ft := NewMacFT()
 	for _, tc := range tests {
 
 		t.Run(tc.name+"-without-origin", func(t *testing.T) {
@@ -552,7 +552,7 @@ func BenchmarkTranslate(b *testing.B) {
 		},
 	}
 
-	ft := New()
+	ft := NewMacFT()
 
 	b.ResetTimer()
 	for range b.N {
