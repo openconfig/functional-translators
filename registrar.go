@@ -18,7 +18,7 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacedesc"
 	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacemac"
-	"github.com/openconfig/functional-translators/ciscoxr/laser/ciscoxrlaser"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators"
 )
