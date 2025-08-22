@@ -18,7 +18,7 @@ package aristainterfacedesc
 import (
 	"strings"
 
-	"github.com/golang/glog"
+	log "github.com/golang/glog"
 	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"

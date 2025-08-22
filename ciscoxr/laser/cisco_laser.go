@@ -18,7 +18,7 @@ package ciscoxrlaser
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"

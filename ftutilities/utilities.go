@@ -21,7 +21,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/golang/glog"
+	log "github.com/golang/glog"
 	"google.golang.org/protobuf/encoding/prototext"
 	"github.com/openconfig/ygot/ygot"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
