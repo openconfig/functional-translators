@@ -16,11 +16,11 @@
 package registrar
 
 import (
-	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacedesc"
-	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacemac"
-	"github.com/openconfig/functional-translators/ciscoxr/laser/ciscoxrlaser"
+	"google3/third_party/openconfig/functional_translators/arista/interfaces/aristainterfacedesc"
+	"google3/third_party/openconfig/functional_translators/arista/interfaces/aristainterfacemac"
+	"google3/third_party/openconfig/functional_translators/ciscoxr/laser/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/translator"
 )
 
 var (

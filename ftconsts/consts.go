@@ -61,9 +61,6 @@ const (
 	// CiscoXRCarrierTranslator is the name of a translator that provides phy-carrier-transitions information.
 	CiscoXRCarrierTranslator = "ciscoxr-carrier-ft"
 
-	// CiscoXRComponentPartNoTranslator is the name of a translator that provides component part numbers.
-	CiscoXRComponentPartNoTranslator = "ciscoxr-component-part-no-ft"
-
 	// CiscoXRFabricTranslator is the name of a translator that provides fabric information.
 	CiscoXRFabricTranslator = "ciscoxr-fabric-ft"
 

@@ -18,12 +18,12 @@ package aristainterfacemac
 import (
 	"strings"
 
-	"github.com/golang/glog"
-	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
+	log "github.com/golang/glog"
+	"google3/third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig/interfaces"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/translator"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

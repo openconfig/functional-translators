@@ -18,14 +18,14 @@ package ciscoxrlaser
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
-	"github.com/openconfig/functional-translators"
+	"google3/third_party/openconfig/functional_translators/translator"
 
-	xr2431 "github.com/openconfig/functional-translators/ciscoxr/laser/yang/native/gostructs"
-	lc "github.com/openconfig/functional-translators/ciscoxr/laser/yang/openconfig/gostructs"
+	xr2431 "google3/third_party/openconfig/functional_translators/ciscoxr/laser/yang/native/gostructs"
+	lc "google3/third_party/openconfig/functional_translators/ciscoxr/laser/yang/openconfig/gostructs"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
