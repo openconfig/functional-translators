@@ -20,7 +20,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/golang/glog"
+	log "github.com/golang/glog"
 	"google.golang.org/protobuf/proto"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"

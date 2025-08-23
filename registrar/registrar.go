@@ -16,11 +16,10 @@
 package registrar
 
 import (
-	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacedesc"
-	"github.com/openconfig/functional-translators/arista/interfaces/aristainterfacemac"
-	"github.com/openconfig/functional-translators/ciscoxr/laser/ciscoxrlaser"
+	"github.com/openconfig/functional-translators/arista/aristainterface"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"github.com/openconfig/functional-translators"
+	"github.com/openconfig/functional-translators/translator"
 )
 
 var (
@@ -29,8 +28,8 @@ var (
 	// TODO: Add the remaining functional translators already listed in ftconsts.go when released.
 	FunctionalTranslatorRegistry = map[string]*translator.FunctionalTranslator{
 		// go/keep-sorted start
-		ftconsts.AristaInterfaceDescriptionFunctionalTranslator: aristainterfacedesc.New(),
-		ftconsts.AristaInterfaceMacFunctionalTranslator:         aristainterfacemac.New(),
+		ftconsts.AristaInterfaceDescriptionFunctionalTranslator: aristainterface.NewDescFT(),
+		ftconsts.AristaInterfaceMacFunctionalTranslator:         aristainterface.NewMacFT(),
 		ftconsts.CiscoXRLaserTranslator:                         ciscoxrlaser.New(),
 		// go/keep-sorted end
 	}

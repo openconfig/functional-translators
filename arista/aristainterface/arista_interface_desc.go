@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package aristainterfacedesc implements a functional translator for interface description.
-package aristainterfacedesc
+// Package aristainterface implements functional translators for interfaces.
+package aristainterface
 
 import (
 	"strings"
 
-	"github.com/golang/glog"
-	"github.com/openconfig/functional-translators/arista/interfaces/yang/openconfig"
+	log "github.com/golang/glog"
+	"github.com/openconfig/functional-translators/arista/aristainterface/yang/openconfig"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
-	"github.com/openconfig/functional-translators"
+	"github.com/openconfig/functional-translators/translator"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
-func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
+func descDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	prefix := n.GetPrefix()
 	deletes := n.GetDelete()
 
@@ -45,13 +45,13 @@ func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	return returnDeletes, nil
 }
 
-// New returns a new FunctionalTranslator for Arista interface descriptions.
-func New() *translator.FunctionalTranslator {
-	m, err := simplemapper.NewSimpleMapper(interfaces.Schema, interfaces.Schema,
+// NewDescFT returns a new FunctionalTranslator for Arista interface descriptions.
+func NewDescFT() *translator.FunctionalTranslator {
+	m, err := simplemapper.NewSimpleMapper(openconfig.Schema, openconfig.Schema,
 		map[string]string{
 			"/openconfig/interfaces/interface[name=<interfaceName>]/state/description": "/openconfig/interfaces/interface[name=<interfaceName>]/config/description",
 		},
-		deleteHandler,
+		descDeleteHandler,
 	)
 	if err != nil {
 		log.Fatalf("Failed to create mapper: %v", err)
