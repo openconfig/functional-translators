@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	log "github.com/golang/glog"
-	"google3/third_party/openconfig/functional_translators/arista/aristainterface/yang/openconfig/interfaces"
+	"github.com/openconfig/functional-translators/arista/aristainterface/yang/openconfig"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
@@ -47,7 +47,7 @@ func descDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 
 // NewDescFT returns a new FunctionalTranslator for Arista interface descriptions.
 func NewDescFT() *translator.FunctionalTranslator {
-	m, err := simplemapper.NewSimpleMapper(interfaces.Schema, interfaces.Schema,
+	m, err := simplemapper.NewSimpleMapper(openconfig.Schema, openconfig.Schema,
 		map[string]string{
 			"/openconfig/interfaces/interface[name=<interfaceName>]/state/description": "/openconfig/interfaces/interface[name=<interfaceName>]/config/description",
 		},

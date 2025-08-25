@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	log "github.com/golang/glog"
-	"google3/third_party/openconfig/functional_translators/arista/aristainterface/yang/openconfig/interfaces"
+	"github.com/openconfig/functional-translators/arista/aristainterface/yang/openconfig"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
@@ -71,7 +71,7 @@ func macDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 
 // NewMacFT returns a new FunctionalTranslator for Arista interface mac addresses.
 func NewMacFT() *translator.FunctionalTranslator {
-	m, err := simplemapper.NewSimpleMapper(interfaces.Schema, interfaces.Schema,
+	m, err := simplemapper.NewSimpleMapper(openconfig.Schema, openconfig.Schema,
 		map[string]string{
 			"/openconfig/interfaces/interface[name=<lagIntfName>]/ethernet/state/mac-address":      "/openconfig/lacp/interfaces/interface[name=<lagIntfName>]/state/system-id-mac",
 			"/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address": "/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address",

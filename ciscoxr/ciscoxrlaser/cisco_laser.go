@@ -24,8 +24,8 @@ import (
 	"github.com/openconfig/functional-translators/ftutilities"
 	"google3/third_party/openconfig/functional_translators/translator"
 
-	xr2431 "google3/third_party/openconfig/functional_translators/ciscoxr/ciscoxrlaser/yang/native/gostructs"
-	lc "google3/third_party/openconfig/functional_translators/ciscoxr/ciscoxrlaser/yang/openconfig/gostructs"
+	xr2431 "github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser/yang/native"
+	lc "github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser/yang/openconfig"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )

@@ -19,7 +19,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google3/third_party/openconfig/functional_translators/arista/aristainterface/yang/openconfig/interfaces"
+	"github.com/openconfig/functional-translators/arista/aristainterface/yang/openconfig"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -475,8 +475,8 @@ func TestNewSimpleMapper(t *testing.T) {
 	}{
 		{
 			name:         "success schema path starts with slash valid origin",
-			inSchemaGen:  interfaces.Schema,
-			outSchemaGen: interfaces.Schema,
+			inSchemaGen:  openconfig.Schema,
+			outSchemaGen: openconfig.Schema,
 			outputToInput: map[string]string{
 				"/openconfig/interfaces/interface[name=<interfaceName>]/state/description": "/openconfig/interfaces/interface[name=<interfaceName>]/config/description",
 			},
@@ -491,8 +491,8 @@ func TestNewSimpleMapper(t *testing.T) {
 		},
 		{
 			name:         "success schema path starts with valid origin",
-			inSchemaGen:  interfaces.Schema,
-			outSchemaGen: interfaces.Schema,
+			inSchemaGen:  openconfig.Schema,
+			outSchemaGen: openconfig.Schema,
 			outputToInput: map[string]string{
 				"openconfig/interfaces/interface[name=<interfaceName>]/state/description": "openconfig/interfaces/interface[name=<interfaceName>]/config/description",
 			},
@@ -507,8 +507,8 @@ func TestNewSimpleMapper(t *testing.T) {
 		},
 		{
 			name:         "success schema path without valid origin",
-			inSchemaGen:  interfaces.Schema,
-			outSchemaGen: interfaces.Schema,
+			inSchemaGen:  openconfig.Schema,
+			outSchemaGen: openconfig.Schema,
 			outputToInput: map[string]string{
 				"interfaces/interface[name=<interfaceName>]/state/description": "interfaces/interface[name=<interfaceName>]/config/description",
 			},
@@ -523,8 +523,8 @@ func TestNewSimpleMapper(t *testing.T) {
 		},
 		{
 			name:         "success schema path without valid origin starts with slash",
-			inSchemaGen:  interfaces.Schema,
-			outSchemaGen: interfaces.Schema,
+			inSchemaGen:  openconfig.Schema,
+			outSchemaGen: openconfig.Schema,
 			outputToInput: map[string]string{
 				"/interfaces/interface[name=<interfaceName>]/state/description": "/interfaces/interface[name=<interfaceName>]/config/description",
 			},
@@ -539,8 +539,8 @@ func TestNewSimpleMapper(t *testing.T) {
 		},
 		{
 			name:         "success many input to one output",
-			inSchemaGen:  interfaces.Schema,
-			outSchemaGen: interfaces.Schema,
+			inSchemaGen:  openconfig.Schema,
+			outSchemaGen: openconfig.Schema,
 			outputToInput: map[string]string{
 				"/openconfig/interfaces/interface[name=<lagIntfName>]/ethernet/state/mac-address":      "/openconfig/lacp/interfaces/interface[name=<lagIntfName>]/state/system-id-mac",
 				"/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address": "/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address",
