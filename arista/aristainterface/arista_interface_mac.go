@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package aristainterfacemac implements a functional translator for the MAC address.
-package aristainterfacemac
+package aristainterface
 
 import (
 	"strings"
 
 	log "github.com/golang/glog"
-	"google3/third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig/interfaces"
+	"google3/third_party/openconfig/functional_translators/arista/aristainterface/yang/openconfig/interfaces"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
@@ -49,7 +48,7 @@ func intfMacPath(intfName string) *gnmipb.Path {
 	}
 }
 
-func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
+func macDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	prefix := n.GetPrefix()
 	deletes := n.GetDelete()
 	var returnDeletes []*gnmipb.Path
@@ -70,14 +69,14 @@ func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	return returnDeletes, nil
 }
 
-// New returns a new FunctionalTranslator for Arista interface descriptions.
-func New() *translator.FunctionalTranslator {
+// NewMacFT returns a new FunctionalTranslator for Arista interface mac addresses.
+func NewMacFT() *translator.FunctionalTranslator {
 	m, err := simplemapper.NewSimpleMapper(interfaces.Schema, interfaces.Schema,
 		map[string]string{
 			"/openconfig/interfaces/interface[name=<lagIntfName>]/ethernet/state/mac-address":      "/openconfig/lacp/interfaces/interface[name=<lagIntfName>]/state/system-id-mac",
 			"/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address": "/openconfig/interfaces/interface[name=<ethernetIntfName>]/ethernet/state/mac-address",
 		},
-		deleteHandler,
+		macDeleteHandler,
 	)
 	if err != nil {
 		log.Fatalf("Failed to create mapper: %v", err)

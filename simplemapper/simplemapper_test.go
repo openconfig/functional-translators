@@ -19,7 +19,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google3/third_party/openconfig/functional_translators/arista/interfaces/yang/openconfig/interfaces"
+	"google3/third_party/openconfig/functional_translators/arista/aristainterface/yang/openconfig/interfaces"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
