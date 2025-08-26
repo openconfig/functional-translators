@@ -22,7 +22,7 @@ import (
 	"github.com/openconfig/ygot/ytypes"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
-	"google3/third_party/openconfig/functional_translators/translator"
+	"github.com/openconfig/functional-translators/translator"
 
 	xr2431 "github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser/yang/native"
 	lc "github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser/yang/openconfig"

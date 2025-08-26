@@ -19,7 +19,7 @@ import (
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"google3/third_party/openconfig/functional_translators/translator"
+	"github.com/openconfig/functional-translators/translator"
 )
 
 var (

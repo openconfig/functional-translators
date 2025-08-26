@@ -22,7 +22,7 @@ import (
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/simplemapper"
-	"google3/third_party/openconfig/functional_translators/translator"
+	"github.com/openconfig/functional-translators/translator"
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
