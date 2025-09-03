@@ -1,0 +1,17 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  delete: {
+    elem: { name: "Sysdb" }
+    elem: { name: "cfm" }
+    elem: { name: "status" }
+    elem: { name: "mdStatus" }
+    elem: { name: "domain2" }
+    elem: { name: "maStatus" }
+    elem: { name: "maNameFormatShortInt_10" }
+    elem: { name: "localMepStatus" }
+    elem: { name: "2" }
+  }
+}

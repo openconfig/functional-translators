@@ -1,0 +1,27 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  delete: {
+    elem: { name: "oam" }
+    elem: { name: "cfm" }
+    elem: { name: "domains" }
+    elem: {
+      name: "maintenance-domain"
+      key: { key: "domain-name" value: "domain2" }
+    }
+    elem: { name: "maintenance-associations" }
+    elem: {
+      name: "maintenance-association"
+      key: { key: "association-name" value: "maNameFormatShortInt_10" }
+    }
+    elem: { name: "mep-endpoints" }
+    elem: {
+      name: "mep-endpoint"
+      key: { key: "mep-id" value: "2" }
+    }
+    elem: { name: "state" }
+    elem: { name: "present-rdi" }
+  }
+}

@@ -1,0 +1,15 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "invalid" }
+      elem: { name: "path" }
+    }
+    val: {
+      string_val: "some-boolean-value"
+    }
+  }
+}

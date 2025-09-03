@@ -1,0 +1,24 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "Sysdb" }
+      elem: { name: "cfm" }
+      elem: { name: "status" }
+      elem: { name: "mdStatus" }
+      elem: { name: "domain2" }
+      elem: { name: "maStatus" }
+      elem: { name: "maNameFormatShortInt_10" }
+      elem: { name: "localMepStatus" }
+      elem: { name: "2" }
+      elem: { name: "rdiTxCondition" }
+      elem: { name: "rdi" }
+    }
+    val: {
+      bool_val: true
+    }
+  }
+}
