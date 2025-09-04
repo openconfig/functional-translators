@@ -73,6 +73,9 @@ const (
 	// CiscoXRFpdTranslator is the name of a translator that provides fpd status translations.
 	CiscoXRFpdTranslator = "ciscoxr-fpd-ft"
 
+	// CiscoXRIPv6Translator is the name of a translator that provides IPv6 information.
+	CiscoXRIPv6Translator = "ciscoxr-ipv6-ft"
+
 	// CiscoXRLagMacFunctionalTranslator is the name of a translator that provides lag mac address translations.
 	CiscoXRLagMacFunctionalTranslator = "ciscoxr-lagmac-ft"
 

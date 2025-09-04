@@ -169,6 +169,9 @@ var ValidOrigins = map[string]struct{}{
 	// Cisco XR-ipv4-io-oper
 	"Cisco-IOS-XR-ipv4-io-oper": {},
 
+	// Cisco XR-ipv6-ma-oper
+	"Cisco-IOS-XR-ipv6-ma-oper": {},
+
 	// Cisco XR-ipv6-nd-oper
 	"Cisco-IOS-XR-ipv6-nd-oper": {},
 

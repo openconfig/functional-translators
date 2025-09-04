@@ -1,0 +1,99 @@
+update: {
+  prefix: {
+    origin: "openconfig"
+    target: "target"
+  }
+  timestamp: 1756337092061000000
+  update: {
+    path: {
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "TenGigE0/0/0/3/0"
+        }
+      }
+      elem: {
+        name: "subinterfaces"
+      }
+      elem: {
+        name: "subinterface"
+        key: {
+          key: "index"
+          value: "0"
+        }
+      }
+      elem: {
+        name: "ipv6"
+      }
+      elem: {
+        name: "addresses"
+      }
+      elem: {
+        name: "address"
+        key: {
+          key: "address"
+          value: "2607:f8b0:f800:a02::1"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "ip"
+      }
+    }
+    val: {
+      string_val: "2607:f8b0:f800:a02::1"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "TenGigE0/0/0/3/0"
+        }
+      }
+      elem: {
+        name: "subinterfaces"
+      }
+      elem: {
+        name: "subinterface"
+        key: {
+          key: "index"
+          value: "0"
+        }
+      }
+      elem: {
+        name: "ipv6"
+      }
+      elem: {
+        name: "addresses"
+      }
+      elem: {
+        name: "address"
+        key: {
+          key: "address"
+          value: "2607:f8b0:f800:a02::1"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "prefix-length"
+      }
+    }
+    val: {
+      uint_val: 64
+    }
+  }
+}

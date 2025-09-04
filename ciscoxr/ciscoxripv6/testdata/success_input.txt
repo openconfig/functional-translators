@@ -1,0 +1,245 @@
+update:  {
+  timestamp:  1756337092061000000
+  prefix:  {
+    origin:  "Cisco-IOS-XR-ipv6-ma-oper"
+    elem:  {
+      name:  "ipv6-network"
+    }
+    elem:  {
+      name:  "nodes"
+    }
+    elem:  {
+      name:  "node"
+      key:  {
+        key:  "node-name"
+        value:  "0/0/CPU0"
+      }
+    }
+    elem:  {
+      name:  "interface-data"
+    }
+    elem:  {
+      name:  "vrfs"
+    }
+    elem:  {
+      name:  "vrf"
+      key:  {
+        key:  "vrf-name"
+        value:  "default"
+      }
+    }
+    elem:  {
+      name:  "briefs"
+    }
+    elem:  {
+      name:  "brief"
+      key:  {
+        key:  "interface-name"
+        value:  "TenGigE0/0/0/3/0"
+      }
+    }
+    target:  "target"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "line-state"
+      }
+    }
+    val:  {
+      string_val:  "up"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "vrf-name"
+      }
+    }
+    val:  {
+      string_val:  "default"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "address"
+      }
+    }
+    val:  {
+      string_val:  "2607:f8b0:f800:a02::1"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "prefix-length"
+      }
+    }
+    val:  {
+      uint_val:  64
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "address-state"
+      }
+    }
+    val:  {
+      string_val:  "active"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "is-anycast"
+      }
+    }
+    val:  {
+      bool_val:  false
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "route-tag"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "algorithm"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "address"
+      }
+      elem:  {
+        name:  "arm-flags"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "address"
+      }
+    }
+    val:  {
+      string_val:  "fe80::f6ee:31ff:fe51:96a0"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "prefix-length"
+      }
+    }
+    val:  {
+      uint_val:  128
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "address-state"
+      }
+    }
+    val:  {
+      string_val:  "active"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "is-anycast"
+      }
+    }
+    val:  {
+      bool_val:  false
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "route-tag"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "algorithm"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "link-local-address"
+      }
+      elem:  {
+        name:  "arm-flags"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+}
