@@ -1,0 +1,13 @@
+update: {
+  timestamp: 1
+  prefix: {
+    origin: "Cisco-IOS-XR-ipv4-io-oper"
+    elem: {
+      name: "ipv4-network"
+    }
+    elem: {
+      name: "nodes"
+    }
+    target: "dev"
+  }
+}

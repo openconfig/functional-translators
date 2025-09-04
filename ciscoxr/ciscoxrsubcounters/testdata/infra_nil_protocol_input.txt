@@ -1,0 +1,49 @@
+update: {
+  prefix: {
+    origin: "Cisco-IOS-XR-infra-statsd-oper"
+    target: "dev"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "infra-statistics"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-name"
+          value: "Bundle-Ether42.42"
+        }
+      }
+      elem: {
+        name: "interface-name"
+      }
+    }
+    val: {
+      string_val: "Bundle-Ether42.42"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "infra-statistics"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-name"
+          value: "Bundle-Ether42.42"
+        }
+      }
+      elem: {
+        name: "protocols"
+      }
+    }
+  }
+}

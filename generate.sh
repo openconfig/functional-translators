@@ -20,6 +20,7 @@ git clone https://github.com/YangModels/yang.git
 
 ./arista/aristainterface/generate.sh
 ./ciscoxr/ciscoxrlaser/generate.sh
+./ciscoxr/ciscoxrsubcounters/generate.sh
 
 rm -rf public
 rm -rf yang

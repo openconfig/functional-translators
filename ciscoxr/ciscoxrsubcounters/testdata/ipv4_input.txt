@@ -1,0 +1,63 @@
+update:  {
+  timestamp:  1756312844109000000
+  prefix:  {
+    origin:  "Cisco-IOS-XR-ipv4-io-oper"
+    elem:  {
+      name:  "ipv4-network"
+    }
+    elem:  {
+      name:  "nodes"
+    }
+    elem:  {
+      name:  "node"
+      key:  {
+        key:  "node-name"
+        value:  "0/0/CPU0"
+      }
+    }
+    elem:  {
+      name:  "interface-data"
+    }
+    elem:  {
+      name:  "vrfs"
+    }
+    elem:  {
+      name:  "vrf"
+      key:  {
+        key:  "vrf-name"
+        value:  "default"
+      }
+    }
+    elem:  {
+      name:  "details"
+    }
+    elem:  {
+      name:  "detail"
+      key:  {
+        key:  "interface-name"
+        value:  "TenGigE0/0/0/3/0"
+      }
+    }
+    target:  "target"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "primary-address"
+      }
+    }
+    val:  {
+      string_val:  "10.56.72.103"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "prefix-length"
+      }
+    }
+    val:  {
+      uint_val:  31
+    }
+  }
+}

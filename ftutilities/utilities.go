@@ -160,6 +160,18 @@ var ValidOrigins = map[string]struct{}{
 	// Cisco XR-fabric-plane-health-oper
 	"Cisco-IOS-XR-fabric-plane-health-oper": {},
 
+	// Cisco XR-infra-statsd-oper
+	"Cisco-IOS-XR-infra-statsd-oper": {},
+
+	// Cisco XR-ipv4-arp-oper
+	"Cisco-IOS-XR-ipv4-arp-oper": {},
+
+	// Cisco XR-ipv4-io-oper
+	"Cisco-IOS-XR-ipv4-io-oper": {},
+
+	// Cisco XR-ipv6-nd-oper
+	"Cisco-IOS-XR-ipv6-nd-oper": {},
+
 	// Cisco XR-platforms-ofa-oper
 	"Cisco-IOS-XR-platforms-ofa-oper": {},
 
@@ -174,15 +186,6 @@ var ValidOrigins = map[string]struct{}{
 
 	// Cisco XR-qos-ma-oper
 	"Cisco-IOS-XR-qos-ma-oper": {},
-
-	// Cisco XR-infra-statsd-oper
-	"Cisco-IOS-XR-infra-statsd-oper": {},
-
-	// Cisco XR-ipv4-arp-oper
-	"Cisco-IOS-XR-ipv4-arp-oper": {},
-
-	// Cisco XR-ipv6-nd-oper
-	"Cisco-IOS-XR-ipv6-nd-oper": {},
 }
 
 // StringToPath converts a string to a gNMI path, potentially including an origin.

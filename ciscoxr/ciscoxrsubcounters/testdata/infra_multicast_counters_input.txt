@@ -1,0 +1,52 @@
+update:  {
+  timestamp:  1756312844082000000
+  prefix:  {
+    origin:  "Cisco-IOS-XR-infra-statsd-oper"
+    elem:  {
+      name:  "infra-statistics"
+    }
+    elem:  {
+      name:  "interfaces"
+    }
+    elem:  {
+      name:  "interface"
+      key:  {
+        key:  "interface-name"
+        value:  "TenGigE0/0/0/3/0"
+      }
+    }
+    elem:  {
+      name:  "protocols"
+    }
+    elem:  {
+      name:  "protocol"
+      key:  {
+        key:  "protocol-name"
+        value:  "IPV4_MULTICAST"
+      }
+    }
+    target:  "target"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "packets-received"
+      }
+    }
+    val:  {
+      uint_val:  136929
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "packets-sent"
+      }
+    }
+    val:  {
+      uint_val:  0
+    }
+  }
+}
+
+

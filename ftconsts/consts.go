@@ -85,6 +85,10 @@ const (
 	// CiscoXRQosTranslator is the name of a translator that provides QOS information.
 	CiscoXRQosTranslator = "ciscoxr-qos-ft"
 
+	// CiscoXRSubinterfaceCounterTranslator is the name of a translator that provides subinterface
+	// counter information, as well as IPv4 address information.
+	CiscoXRSubinterfaceCounterTranslator = "ciscoxr-subinterface-counter-ft"
+
 	// CiscoXRTransceiverTranslator is the name of a translator that provides transceiver information.
 	CiscoXRTransceiverTranslator = "ciscoxr-transceiver-ft"
 

@@ -1,0 +1,25 @@
+update: {
+  timestamp: 1
+  prefix: {
+    origin: "Cisco-IOS-XR-ipv4-io-oper"
+    elem: {
+      name: "ipv4-network"
+    }
+    elem: {
+      name: "nodes"
+    }
+    elem: {
+      name: "node"
+      key: {
+        key: "node-name"
+        value: "0/0/CPU0"
+      }
+    }
+    elem: {
+      name: "interface-data"
+    }
+    elem: {
+      name: "vrfs"
+    }
+  }
+}
