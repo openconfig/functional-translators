@@ -71,7 +71,7 @@ func New() *translator.FunctionalTranslator {
 			ID:               ftconsts.CiscoXRSubinterfaceCounterTranslator,
 			Translate:        translate,
 			OutputToInputMap: paths,
-			Metadata: []*translator.DeviceMetadata{
+			Metadata: []*translator.FTMetadata{
 				{
 					Vendor: ftconsts.VendorCiscoXR,
 				},

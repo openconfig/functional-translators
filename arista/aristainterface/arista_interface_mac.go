@@ -92,8 +92,8 @@ func NewMacFT() *translator.FunctionalTranslator {
 			Translate:        m.Handler,
 			ID:               ftconsts.AristaInterfaceMacFunctionalTranslator,
 			OutputToInputMap: p,
-			Metadata: []*translator.DeviceMetadata{
-				&translator.DeviceMetadata{
+			Metadata: []*translator.FTMetadata{
+				{
 					Vendor: "arista",
 				},
 			},

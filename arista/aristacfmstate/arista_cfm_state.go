@@ -69,7 +69,7 @@ func New() *translator.FunctionalTranslator {
 			ID:               ftconsts.AristaCfmStateFunctionalTranslator,
 			Translate:        translate,
 			OutputToInputMap: ftutilities.MustStringMapPaths(translateMap),
-			Metadata: []*translator.DeviceMetadata{
+			Metadata: []*translator.FTMetadata{
 				{
 					Vendor:          ftconsts.VendorArista,
 					SoftwareVersion: "4.33.0F",

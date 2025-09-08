@@ -25,6 +25,13 @@ import (
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
+// FTMetadata contains metadata to identify when a FT should be used.
+type FTMetadata struct {
+	Vendor          string
+	HardwareModel   string
+	SoftwareVersion string
+}
+
 // DeviceMetadata contains metadata to identify a type of device.
 type DeviceMetadata struct {
 	Vendor          string
@@ -37,7 +44,7 @@ type FunctionalTranslatorOptions struct {
 	ID               string
 	Translate        func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error)
 	OutputToInputMap map[string][]*gnmipb.Path
-	Metadata         []*DeviceMetadata
+	Metadata         []*FTMetadata
 	// MatchPaths is a function when given a superset of output paths and device metadata, returns
 	// a MatchedPaths which contains the subset of output paths supported by the FT (OutputPaths)
 	// and a set of paths (InputPaths) needed to provide those paths as output.
@@ -51,7 +58,7 @@ type FunctionalTranslator struct {
 	ID               string
 	translate        func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error)
 	OutputToInputMap map[string][]*gnmipb.Path
-	Metadata         []*DeviceMetadata
+	Metadata         []*FTMetadata
 	matchPaths       func(map[string]*gnmipb.Path, *DeviceMetadata) (*MatchedPaths, error)
 }
 

@@ -66,8 +66,8 @@ func NewDescFT() *translator.FunctionalTranslator {
 			Translate:        m.Handler,
 			ID:               ftconsts.AristaInterfaceDescriptionFunctionalTranslator,
 			OutputToInputMap: p,
-			Metadata: []*translator.DeviceMetadata{
-				&translator.DeviceMetadata{
+			Metadata: []*translator.FTMetadata{
+				{
 					Vendor: "arista",
 				},
 			},

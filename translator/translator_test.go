@@ -21,7 +21,7 @@ import (
 func TestMetadataMatch(t *testing.T) {
 	tests := []struct {
 		name       string
-		ftMetaData []*DeviceMetadata
+		ftMetaData []*FTMetadata
 		wantMatch  bool
 	}{
 		{
@@ -31,8 +31,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "partial requirement",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor: "vendor",
 				},
 			},
@@ -40,8 +40,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "requirement exact match",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor:          "vendor",
 					SoftwareVersion: "sw",
 					HardwareModel:   "hw",
@@ -51,8 +51,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "requirement case insensitive match",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor:          "Vendor",
 					SoftwareVersion: "SW",
 					HardwareModel:   "HW",
@@ -62,11 +62,11 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "match one",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor: "non-vendor",
 				},
-				&DeviceMetadata{
+				{
 					Vendor: "vendor",
 				},
 			},
@@ -74,11 +74,11 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "match all",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor: "vendor",
 				},
-				&DeviceMetadata{
+				{
 					SoftwareVersion: "sw",
 				},
 			},
@@ -86,14 +86,14 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "match none",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor: "non-vendor",
 				},
-				&DeviceMetadata{
+				{
 					SoftwareVersion: "non-sw",
 				},
-				&DeviceMetadata{
+				{
 					HardwareModel: "non-hw",
 				},
 			},
@@ -101,8 +101,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "vendor mismatch",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					Vendor: "non-vendor",
 				},
 			},
@@ -110,8 +110,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "sw mismatch",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					SoftwareVersion: "non-sw",
 				},
 			},
@@ -119,8 +119,8 @@ func TestMetadataMatch(t *testing.T) {
 		},
 		{
 			name: "hw mismatch",
-			ftMetaData: []*DeviceMetadata{
-				&DeviceMetadata{
+			ftMetaData: []*FTMetadata{
+				{
 					HardwareModel: "non-hw",
 				},
 			},
