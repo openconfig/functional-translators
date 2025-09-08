@@ -145,3 +145,272 @@ func TestMetadataMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestMetadataMatchSWRange(t *testing.T) {
+	tests := []struct {
+		name       string
+		swVersion  string
+		ftMetaData []*FTMetadata
+		wantMatch  bool
+	}{
+		{
+			name:      "sw range match",
+			swVersion: "1.5",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range match, sw version longer than max",
+			swVersion: "2.0.1",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range match, numeric suffix",
+			swVersion: "1.5.1",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range match, letter suffix",
+			swVersion: "4.34.2F-(some-random-suffix)",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "4.34",
+						ExclusiveMax: "4.35",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range mismatch",
+			swVersion: "2.5",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+
+		{
+			name:      "sw range mismatch, numeric suffix",
+			swVersion: "2.5.1",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range match, letter suffix",
+			swVersion: "4.34.2F",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "4.34",
+						ExclusiveMax: "4.35",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range match, equal min",
+			swVersion: "1.0",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range mismatch, equal max",
+			swVersion: "2.0",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range match, letter comparison",
+			swVersion: "1.5B",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.5A",
+						ExclusiveMax: "1.5C",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw range mismatch, after, letter comparison",
+			swVersion: "1.5D",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.5A",
+						ExclusiveMax: "1.5C",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range mismatch, before, letter comparison",
+			swVersion: "1.5A",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.5B",
+						ExclusiveMax: "1.5C",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range match, letter is greater than number",
+			swVersion: "1.A",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.9",
+						ExclusiveMax: "1.B",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw outside range, letter is greater than number",
+			swVersion: "1.B",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.8",
+						ExclusiveMax: "1.9",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range mismatch, less than min",
+			swVersion: "0.9",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.0",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "longer version in range, inside range",
+			swVersion: "1.3",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.2.3.4.5",
+						ExclusiveMax: "2.1.0",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "longer version in range, outside range",
+			swVersion: "1.3",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.2.3.4.5",
+						ExclusiveMax: "1.3.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+		{
+			name:      "sw range match, identical letter components",
+			swVersion: "1.A.2",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.A.1",
+						ExclusiveMax: "1.A.3",
+					},
+				},
+			},
+			wantMatch: true,
+		},
+		{
+			name:      "sw version is prefix of min version",
+			swVersion: "1.2",
+			ftMetaData: []*FTMetadata{
+				{
+					SoftwareVersionRange: &SWRange{
+						InclusiveMin: "1.2.3",
+						ExclusiveMax: "2.0",
+					},
+				},
+			},
+			wantMatch: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var ft FunctionalTranslator
+			ft.Metadata = tc.ftMetaData
+			got := ft.metadataMatch(&DeviceMetadata{SoftwareVersion: tc.swVersion})
+			if got != tc.wantMatch {
+				t.Errorf("swVersionMatch got %v, want %v for swVersion %s against ft: %v", got, tc.wantMatch, tc.swVersion, ft.Metadata)
+			}
+		})
+	}
+}

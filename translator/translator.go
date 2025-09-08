@@ -17,7 +17,9 @@ package translator
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/openconfig/functional-translators/ftutilities"
@@ -25,11 +27,91 @@ import (
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
+var (
+	// versionCompRE is used to extract all components from a version string,
+	// e.g. "12.1X1.2" to [12 1 X 1 2]
+	versionCompRE = regexp.MustCompile(`(\d+|[A-Z]+)`)
+)
+
+// SWRange represents a range of software versions.
+type SWRange struct {
+	InclusiveMin string
+	ExclusiveMax string
+}
+
+type compareResult int
+
+const (
+	lessThan compareResult = iota
+	equal
+	greaterThan
+)
+
+// Contains evaluates whether the software version of the device matches the given FT metadata.
+// For example, whether a version string "4.34.2F-12345" is within the range [4.34.2F, 4.34.2G).
+// Empty version is effectively "0".
+// Numbers are compared to numbers as numbers. Letters are compared to letters as strings,
+// e.g. "X" > "AB".
+// Numbers are compared to strings as strings, e.g. "A" > "12".
+func (r *SWRange) Contains(version string) bool {
+	// version must be >= Min
+	if compareVersions(version, r.InclusiveMin) == lessThan {
+		return false
+	}
+	// version must be < Max
+	return compareVersions(version, r.ExclusiveMax) == lessThan
+}
+
+// compareVersions returns whether v1 is less than, equal to, or greater than v2.
+func compareVersions(v1, v2 string) compareResult {
+	c1 := versionCompRE.FindAllString(strings.ToUpper(v1), -1)
+	c2 := versionCompRE.FindAllString(strings.ToUpper(v2), -1)
+	maxLen := len(c1)
+	if len(c2) > maxLen {
+		maxLen = len(c2)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		s1, s2 := "0", "0"
+		if i < len(c1) {
+			s1 = c1[i]
+		}
+		if i < len(c2) {
+			s2 = c2[i]
+		}
+
+		n1, err1 := strconv.Atoi(s1)
+		n2, err2 := strconv.Atoi(s2)
+
+		if err1 == nil && err2 == nil { // Both are numbers
+			if n1 < n2 {
+				return lessThan
+			}
+			if n1 > n2 {
+				return greaterThan
+			}
+		} else { // At least one is not a number, compare as strings
+			if s1 < s2 {
+				return lessThan
+			}
+			if s1 > s2 {
+				return greaterThan
+			}
+		}
+	}
+	return equal
+}
+
 // FTMetadata contains metadata to identify when a FT should be used.
 type FTMetadata struct {
-	Vendor          string
-	HardwareModel   string
+	Vendor        string
+	HardwareModel string
+	// SoftwareVersion is a single version string. Cannot be set with SoftwareVersionRange.
 	SoftwareVersion string
+	// SoftwareVersionRange is a range of version strings. Cannot be set with SoftwareVersion.
+	// If you want to construct a range that includes the max version, since [a,b] = [a,b) U {b}, you
+	// can use two FTMetadata, one with a SW range [a,b) and one with the singleton version {b}.
+	SoftwareVersionRange *SWRange
 }
 
 // DeviceMetadata contains metadata to identify a type of device.
@@ -117,6 +199,19 @@ type MatchedPaths struct {
 	OutputToInput map[string][]string
 }
 
+// swVersionMatch returns true if the given device metadata matches the FT metadata for software
+// version. The SoftwareVersion and SoftwareVersionRange fields must be set mutually exclusively.
+func (m *FTMetadata) swVersionMatch(got *DeviceMetadata) bool {
+	switch {
+	case m.SoftwareVersion == "" && m.SoftwareVersionRange == nil:
+		return true
+	case m.SoftwareVersion != "":
+		return strings.EqualFold(m.SoftwareVersion, got.SoftwareVersion)
+	default:
+		return m.SoftwareVersionRange.Contains(got.SoftwareVersion)
+	}
+}
+
 func (ft *FunctionalTranslator) metadataMatch(got *DeviceMetadata) bool {
 	if len(ft.Metadata) == 0 {
 		return true
@@ -128,7 +223,7 @@ func (ft *FunctionalTranslator) metadataMatch(got *DeviceMetadata) bool {
 		if m.HardwareModel != "" && !strings.EqualFold(m.HardwareModel, got.HardwareModel) {
 			continue
 		}
-		if m.SoftwareVersion != "" && !strings.EqualFold(m.SoftwareVersion, got.SoftwareVersion) {
+		if !m.swVersionMatch(got) {
 			continue
 		}
 		return true
