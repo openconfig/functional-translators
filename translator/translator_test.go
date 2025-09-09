@@ -15,6 +15,7 @@
 package translator
 
 import (
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 	"testing"
 )
 
@@ -413,4 +414,84 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSensibility tests that the FunctionalTranslator reasonably initializes and handles FTs to
+// avoid panics.
+func TestSensibility(t *testing.T) {
+	t.Run("simple-ft-new", func(t *testing.T) {
+		ft, err := NewFunctionalTranslator(FunctionalTranslatorOptions{
+			ID: "test",
+			Translate: func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+				return nil, nil
+			},
+			Metadata: []*FTMetadata{
+				{
+					Vendor: "test",
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("NewFunctionalTranslator got unexpected error %v", err)
+		}
+		if ft == nil {
+			t.Fatalf("NewFunctionalTranslator got nil, want non-nil")
+		}
+	})
+
+	t.Run("nil-translate-new", func(t *testing.T) {
+		_, err := NewFunctionalTranslator(FunctionalTranslatorOptions{
+			ID: "test",
+			Metadata: []*FTMetadata{
+				{
+					Vendor: "test",
+				},
+			},
+		})
+		if err == nil {
+			t.Errorf("NewFunctionalTranslator got no error, want error")
+		}
+	})
+
+	t.Run("nil-translate", func(t *testing.T) {
+		nilTranslateFT := &FunctionalTranslator{
+			ID: "test",
+			Metadata: []*FTMetadata{
+				{
+					Vendor: "test",
+				},
+			},
+		}
+		if _, err := nilTranslateFT.Translate(nil); err == nil {
+			t.Errorf("nilTranslateFT.Translate(nil) got no error, want error")
+		}
+	})
+
+	t.Run("nil-match-paths", func(t *testing.T) {
+		nilMatchPathsFT := &FunctionalTranslator{
+			ID: "test",
+			Metadata: []*FTMetadata{
+				{
+					Vendor: "test",
+				},
+			},
+		}
+		if _, err := nilMatchPathsFT.MatchPaths(nil, nil); err == nil {
+			t.Errorf("nilMatchPathsFT.MatchPaths(nil, nil) got no error, want error")
+		}
+	})
+
+	t.Run("nil-output-to-input", func(t *testing.T) {
+		nilOutputToInputFT := &FunctionalTranslator{
+			ID: "test",
+			Metadata: []*FTMetadata{
+				{
+					Vendor: "test",
+				},
+			},
+		}
+		if _, _, err := nilOutputToInputFT.OutputToInput(nil); err == nil {
+			t.Errorf("nilOutputToInputFT.OutputToInput(nil) got no error, want error")
+		}
+	})
 }
