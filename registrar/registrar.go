@@ -18,7 +18,10 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrsubcounters"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/translator"
 )
@@ -32,7 +35,10 @@ var (
 		ftconsts.AristaCfmStateFunctionalTranslator:             aristacfmstate.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator: aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:         aristainterface.NewMacFT(),
+		ftconsts.CiscoXRIPv6Translator:                          ciscoxripv6.New(),
 		ftconsts.CiscoXRLaserTranslator:                         ciscoxrlaser.New(),
+		ftconsts.CiscoXRMountTranslator:                         ciscoxrmount.New(),
+		ftconsts.CiscoXRSubinterfaceCounterTranslator:           ciscoxrsubcounters.New(),
 		// go/keep-sorted end
 	}
 )
