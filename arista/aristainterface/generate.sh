@@ -22,6 +22,8 @@ YANG_FILES=(
   arista/aristainterface/yang/openconfig/restriction.yang
 )
 
+mkdir -p $OUT_PATH
+
 # We explicitly do not compress paths so we can get/set State paths.
 go run github.com/openconfig/ygot/generator \
   -compress_paths=false -exclude_modules=ietf-interfaces \

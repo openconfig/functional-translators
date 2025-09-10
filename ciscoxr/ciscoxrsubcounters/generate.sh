@@ -40,6 +40,9 @@ OC_YANG_FILES=(
   public/release/models/interfaces/openconfig-interfaces.yang
 )
 
+mkdir -p $NATIVE_OUT_PATH
+mkdir -p $OC_OUT_PATH
+
 go run github.com/openconfig/ygot/generator \
   -compress_paths=false \
   -output_dir=${NATIVE_OUT_PATH} -package_name=native \
