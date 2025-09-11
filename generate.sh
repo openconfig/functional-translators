@@ -22,6 +22,7 @@ bash arista/aristainterface/generate.sh
 bash ciscoxr/ciscoxrlaser/generate.sh
 bash ciscoxr/ciscoxrsubcounters/generate.sh
 bash ciscoxr/ciscoxrmount/generate.sh
+bash ciscoxr/ciscoxrqos/generate.sh
 
 rm -rf public
 rm -rf yang

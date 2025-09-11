@@ -21,6 +21,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrqos"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrsubcounters"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/translator"
@@ -38,6 +39,7 @@ var (
 		ftconsts.CiscoXRIPv6Translator:                          ciscoxripv6.New(),
 		ftconsts.CiscoXRLaserTranslator:                         ciscoxrlaser.New(),
 		ftconsts.CiscoXRMountTranslator:                         ciscoxrmount.New(),
+		ftconsts.CiscoXRQosTranslator:                           ciscoxrqos.New(),
 		ftconsts.CiscoXRSubinterfaceCounterTranslator:           ciscoxrsubcounters.New(),
 		// go/keep-sorted end
 	}
