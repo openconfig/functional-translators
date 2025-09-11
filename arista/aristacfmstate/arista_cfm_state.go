@@ -71,36 +71,11 @@ func New() *translator.FunctionalTranslator {
 			OutputToInputMap: ftutilities.MustStringMapPaths(translateMap),
 			Metadata: []*translator.FTMetadata{
 				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.33.0F",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.33.0F-DPE",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0F",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0F-DPE",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0F-DPE-42073180.narmadawbbrel (engineering build)",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0F-DPE-41679138.narmadawbbrel (engineering build)",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0F-DPE-41297507.narmadawbbrel (engineering build)",
-				},
-				{
-					Vendor:          ftconsts.VendorArista,
-					SoftwareVersion: "4.34.0FX-wbb-DPE",
+					Vendor: ftconsts.VendorArista,
+					SoftwareVersionRange: &translator.SWRange{
+						InclusiveMin: "4.33.0F",
+						ExclusiveMax: "4.35",
+					},
 				},
 			},
 		},
