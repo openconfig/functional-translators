@@ -24,6 +24,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrqos"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrsubcounters"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrtransceiver"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrvendordrops"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/translator"
 )
@@ -43,6 +44,7 @@ var (
 		ftconsts.CiscoXRQosTranslator:                           ciscoxrqos.New(),
 		ftconsts.CiscoXRSubinterfaceCounterTranslator:           ciscoxrsubcounters.New(),
 		ftconsts.CiscoXRTransceiverTranslator:                   ciscoxrtransceiver.New(),
+		ftconsts.CiscoXRVendorDropsTranslator:                   ciscoxrvendordrops.New(),
 		// go/keep-sorted end
 	}
 )
