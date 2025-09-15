@@ -1,0 +1,98 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Bundle-Ether2"
+        }
+      }
+      elem: {
+        name: "subinterfaces"
+      }
+      elem: {
+        name: "subinterface"
+        key: {
+          key: "index"
+          value: "0"
+        }
+      }
+      elem: {
+        name: "ipv4"
+      }
+      elem: {
+        name: "neighbors"
+      }
+      elem: {
+        name: "neighbor"
+        key: {
+          key: "ip"
+          value: "10.61.62.58"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "link-layer-address"
+      }
+    }
+    val: {
+      string_val: "cc:79:d7:1d:ac:12"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Bundle-Ether2"
+        }
+      }
+      elem: {
+        name: "subinterfaces"
+      }
+      elem: {
+        name: "subinterface"
+        key: {
+          key: "index"
+          value: "0"
+        }
+      }
+      elem: {
+        name: "ipv4"
+      }
+      elem: {
+        name: "neighbors"
+      }
+      elem: {
+        name: "neighbor"
+        key: {
+          key: "ip"
+          value: "10.61.62.58"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "ip"
+      }
+    }
+    val: {
+      string_val: "10.61.62.58"
+    }
+  }
+}

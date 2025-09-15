@@ -1,0 +1,43 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "Cisco-IOS-XR-ipv4-arp-oper"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "arp"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "0/0/CPU0"
+        }
+      }
+      elem: {
+        name: "entries"
+      }
+      elem: {
+        name: "entry"
+        key: {
+          key: "address"
+          value: "10.61.62.58"
+        }
+        key: {
+          key: "interface-name"
+          value: "Bundle-Ether2"
+        }
+      }
+      elem: {
+        name: "hardware-address"
+      }
+    }
+    val: {
+      string_val: "cc:79:d7:1d:ac:12"
+    }
+  }
+}

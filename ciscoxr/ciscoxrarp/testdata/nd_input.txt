@@ -1,0 +1,49 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "Cisco-IOS-XR-ipv6-nd-oper"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ipv6-node-discovery"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "0/0/CPU0"
+        }
+      }
+      elem: {
+        name: "neighbor-interfaces"
+      }
+      elem: {
+        name: "neighbor-interface"
+        key: {
+          key: "interface-name"
+          value: "Bundle-Ether2"
+        }
+      }
+      elem: {
+        name: "host-addresses"
+      }
+      elem: {
+        name: "host-address"
+        key: {
+          key: "host-address"
+          value: "2001:db8:1::1"
+        }
+      }
+      elem: {
+        name: "link-layer-address"
+      }
+    }
+    val: {
+      string_val: "cc:79:d7:1d:ac:12"
+    }
+  }
+}

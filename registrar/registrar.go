@@ -18,6 +18,7 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
@@ -38,6 +39,7 @@ var (
 		ftconsts.AristaCfmStateFunctionalTranslator:             aristacfmstate.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator: aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:         aristainterface.NewMacFT(),
+		ftconsts.CiscoXRArpTranslator:                           ciscoxrarp.New(),
 		ftconsts.CiscoXRIPv6Translator:                          ciscoxripv6.New(),
 		ftconsts.CiscoXRLaserTranslator:                         ciscoxrlaser.New(),
 		ftconsts.CiscoXRMountTranslator:                         ciscoxrmount.New(),
