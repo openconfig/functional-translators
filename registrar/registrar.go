@@ -20,6 +20,7 @@ import (
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfragment"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
@@ -42,6 +43,7 @@ var (
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
 		ftconsts.CiscoXR8000IntegratedCircuitResourceFunctionalTranslator: ciscoxr8000icresource.New(),
 		ftconsts.CiscoXRArpTranslator:                                     ciscoxrarp.New(),
+		ftconsts.CiscoXRFragmentTranslator:                                ciscoxrfragment.New(),
 		ftconsts.CiscoXRIPv6Translator:                                    ciscoxripv6.New(),
 		ftconsts.CiscoXRLaserTranslator:                                   ciscoxrlaser.New(),
 		ftconsts.CiscoXRMountTranslator:                                   ciscoxrmount.New(),
