@@ -17,30 +17,30 @@ NATIVE_OUT_PATH=ciscoxr/ciscoxrarp/yang/native
 OC_OUT_PATH=ciscoxr/ciscoxrarp/yang/openconfig
 
 NATIVE_YANG_FILES=(
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub1.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub2.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub3.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv6-nd-oper.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv6-nd-oper-sub1.yang 
-  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-types.yang 
-  yang/vendor/cisco/xr/2431/cisco-semver.yang 
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub1.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub2.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv4-arp-oper-sub3.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv6-nd-oper.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-ipv6-nd-oper-sub1.yang
+  yang/vendor/cisco/xr/2431/Cisco-IOS-XR-types.yang
+  yang/vendor/cisco/xr/2431/cisco-semver.yang
   yang/vendor/cisco/xr/2431/ietf-inet-types.yang
 )
 OC_YANG_FILES=(
-  public/release/models/platform/openconfig-platform.yang 
-  public/release/models/platform/openconfig-platform-types.yang 
-  public/release/models/platform/openconfig-platform-port.yang 
-  public/release/models/platform/openconfig-platform-common.yang 
-  public/release/models/platform/openconfig-platform-integrated-circuit.yang 
-  public/release/models/platform/openconfig-platform-transceiver.yang 
-  public/release/models/interfaces/openconfig-interfaces.yang 
-  public/release/models/types/openconfig-types.yang 
-  public/release/models/optical-transport/openconfig-transport-types.yang 
-  public/release/models/openconfig-extensions.yang 
-  public/release/models/types/openconfig-yang-types.yang 
-  public/release/models/system/openconfig-alarm-types.yang 
-  public/release/models/interfaces/openconfig-if-ip.yang 
+  public/release/models/platform/openconfig-platform.yang
+  public/release/models/platform/openconfig-platform-types.yang
+  public/release/models/platform/openconfig-platform-port.yang
+  public/release/models/platform/openconfig-platform-common.yang
+  public/release/models/platform/openconfig-platform-integrated-circuit.yang
+  public/release/models/platform/openconfig-platform-transceiver.yang
+  public/release/models/interfaces/openconfig-interfaces.yang
+  public/release/models/types/openconfig-types.yang
+  public/release/models/optical-transport/openconfig-transport-types.yang
+  public/release/models/openconfig-extensions.yang
+  public/release/models/types/openconfig-yang-types.yang
+  public/release/models/system/openconfig-alarm-types.yang
+  public/release/models/interfaces/openconfig-if-ip.yang
 )
 
 mkdir -p $NATIVE_OUT_PATH

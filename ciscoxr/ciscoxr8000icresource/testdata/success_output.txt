@@ -1,0 +1,201 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "counter-bank-NPU-32"
+        }
+      }
+      elem: {
+        name: "integrated-circuit"
+      }
+      elem: {
+        name: "utilization"
+      }
+      elem: {
+        name: "resources"
+      }
+      elem: {
+        name: "resource"
+        key: {
+          key: "name"
+          value: "counter-bank-31"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "max-limit"
+      }
+    }
+    val: {
+      uint_val: 32
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "counter-bank-NPU-32"
+        }
+      }
+      elem: {
+        name: "integrated-circuit"
+      }
+      elem: {
+        name: "utilization"
+      }
+      elem: {
+        name: "resources"
+      }
+      elem: {
+        name: "resource"
+        key: {
+          key: "name"
+          value: "counter-bank-31"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "name"
+      }
+    }
+    val: {
+      string_val: "counter-bank-31"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "counter-bank-NPU-32"
+        }
+      }
+      elem: {
+        name: "integrated-circuit"
+      }
+      elem: {
+        name: "utilization"
+      }
+      elem: {
+        name: "resources"
+      }
+      elem: {
+        name: "resource"
+        key: {
+          key: "name"
+          value: "counter-bank-31"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "used"
+      }
+    }
+    val: {
+      uint_val: 31
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "counter-bank-NPU-32"
+        }
+      }
+      elem: {
+        name: "integrated-circuit"
+      }
+      elem: {
+        name: "utilization"
+      }
+      elem: {
+        name: "resources"
+      }
+      elem: {
+        name: "resource"
+        key: {
+          key: "name"
+          value: "counter-bank-31"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "used-threshold-upper"
+      }
+    }
+    val: {
+      uint_val: 255
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
+          value: "counter-bank-NPU-32"
+        }
+      }
+      elem: {
+        name: "integrated-circuit"
+      }
+      elem: {
+        name: "utilization"
+      }
+      elem: {
+        name: "resources"
+      }
+      elem: {
+        name: "resource"
+        key: {
+          key: "name"
+          value: "counter-bank-31"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "used-threshold-upper-clear"
+      }
+    }
+    val: {
+      uint_val: 254
+    }
+  }
+}

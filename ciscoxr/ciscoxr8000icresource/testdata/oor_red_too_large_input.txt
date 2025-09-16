@@ -1,0 +1,268 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "Cisco-IOS-XR-platforms-ofa-oper"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ofa"
+      }
+      elem: {
+        name: "stats"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "Cisco-IOS-XR-8000-platforms-npu-resources-oper:hw-resources-datas"
+      }
+      elem: {
+        name: "hw-resources-data"
+        key: {
+          key: "resource"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "npu-hwr"
+        key: {
+          key: "npu-id"
+          value: "32"
+        }
+      }
+      elem: {
+        name: "bank"
+        key: {
+          key: "bank-id"
+          value: "31"
+        }
+      }
+      elem: {
+        name: "bank-name"
+      }
+    }
+    val: {
+      string_val: "unread-value"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ofa"
+      }
+      elem: {
+        name: "stats"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "Cisco-IOS-XR-8000-platforms-npu-resources-oper:hw-resources-datas"
+      }
+      elem: {
+        name: "hw-resources-data"
+        key: {
+          key: "resource"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "npu-hwr"
+        key: {
+          key: "npu-id"
+          value: "32"
+        }
+      }
+      elem: {
+        name: "bank"
+        key: {
+          key: "bank-id"
+          value: "31"
+        }
+      }
+      elem: {
+        name: "counter"
+      }
+      elem: {
+        name: "max-entries"
+      }
+    }
+    val: {
+      uint_val: 32
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ofa"
+      }
+      elem: {
+        name: "stats"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "Cisco-IOS-XR-8000-platforms-npu-resources-oper:hw-resources-datas"
+      }
+      elem: {
+        name: "hw-resources-data"
+        key: {
+          key: "resource"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "npu-hwr"
+        key: {
+          key: "npu-id"
+          value: "32"
+        }
+      }
+      elem: {
+        name: "bank"
+        key: {
+          key: "bank-id"
+          value: "31"
+        }
+      }
+      elem: {
+        name: "counter"
+      }
+      elem: {
+        name: "inuse-entries"
+      }
+    }
+    val: {
+      uint_val: 31
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ofa"
+      }
+      elem: {
+        name: "stats"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "Cisco-IOS-XR-8000-platforms-npu-resources-oper:hw-resources-datas"
+      }
+      elem: {
+        name: "hw-resources-data"
+        key: {
+          key: "resource"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "npu-hwr"
+        key: {
+          key: "npu-id"
+          value: "32"
+        }
+      }
+      elem: {
+        name: "bank"
+        key: {
+          key: "bank-id"
+          value: "31"
+        }
+      }
+      elem: {
+        name: "oor-state"
+      }
+      elem: {
+        name: "red-oor-threshold"
+      }
+    }
+    val: {
+      uint_val: 257
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "ofa"
+      }
+      elem: {
+        name: "stats"
+      }
+      elem: {
+        name: "nodes"
+      }
+      elem: {
+        name: "node"
+        key: {
+          key: "node-name"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "Cisco-IOS-XR-8000-platforms-npu-resources-oper:hw-resources-datas"
+      }
+      elem: {
+        name: "hw-resources-data"
+        key: {
+          key: "resource"
+          value: "counter-bank"
+        }
+      }
+      elem: {
+        name: "npu-hwr"
+        key: {
+          key: "npu-id"
+          value: "32"
+        }
+      }
+      elem: {
+        name: "bank"
+        key: {
+          key: "bank-id"
+          value: "31"
+        }
+      }
+      elem: {
+        name: "oor-state"
+      }
+      elem: {
+        name: "yellow-oor-threshold"
+      }
+    }
+    val: {
+      uint_val: 254
+    }
+  }
+}

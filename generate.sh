@@ -18,12 +18,15 @@ OC_VERSION="v5.3.0"
 git clone https://github.com/openconfig/public.git --branch $OC_VERSION
 git clone https://github.com/YangModels/yang.git
 
+# go/keep-sorted start
 bash arista/aristainterface/generate.sh
+bash ciscoxr/ciscoxr8000icresource/generate.sh
+bash ciscoxr/ciscoxrarp/generate.sh
 bash ciscoxr/ciscoxrlaser/generate.sh
-bash ciscoxr/ciscoxrsubcounters/generate.sh
 bash ciscoxr/ciscoxrmount/generate.sh
 bash ciscoxr/ciscoxrqos/generate.sh
-bash ciscoxr/ciscoxrarp/generate.sh
+bash ciscoxr/ciscoxrsubcounters/generate.sh
+# go/keep-sorted end
 
 rm -rf public
 rm -rf yang

@@ -18,6 +18,7 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
@@ -36,17 +37,18 @@ var (
 	// TODO: Add the remaining functional translators already listed in ftconsts.go when released.
 	FunctionalTranslatorRegistry = map[string]*translator.FunctionalTranslator{
 		// go/keep-sorted start
-		ftconsts.AristaCfmStateFunctionalTranslator:             aristacfmstate.New(),
-		ftconsts.AristaInterfaceDescriptionFunctionalTranslator: aristainterface.NewDescFT(),
-		ftconsts.AristaInterfaceMacFunctionalTranslator:         aristainterface.NewMacFT(),
-		ftconsts.CiscoXRArpTranslator:                           ciscoxrarp.New(),
-		ftconsts.CiscoXRIPv6Translator:                          ciscoxripv6.New(),
-		ftconsts.CiscoXRLaserTranslator:                         ciscoxrlaser.New(),
-		ftconsts.CiscoXRMountTranslator:                         ciscoxrmount.New(),
-		ftconsts.CiscoXRQosTranslator:                           ciscoxrqos.New(),
-		ftconsts.CiscoXRSubinterfaceCounterTranslator:           ciscoxrsubcounters.New(),
-		ftconsts.CiscoXRTransceiverTranslator:                   ciscoxrtransceiver.New(),
-		ftconsts.CiscoXRVendorDropsTranslator:                   ciscoxrvendordrops.New(),
+		ftconsts.AristaCfmStateFunctionalTranslator:                       aristacfmstate.New(),
+		ftconsts.AristaInterfaceDescriptionFunctionalTranslator:           aristainterface.NewDescFT(),
+		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
+		ftconsts.CiscoXR8000IntegratedCircuitResourceFunctionalTranslator: ciscoxr8000icresource.New(),
+		ftconsts.CiscoXRArpTranslator:                                     ciscoxrarp.New(),
+		ftconsts.CiscoXRIPv6Translator:                                    ciscoxripv6.New(),
+		ftconsts.CiscoXRLaserTranslator:                                   ciscoxrlaser.New(),
+		ftconsts.CiscoXRMountTranslator:                                   ciscoxrmount.New(),
+		ftconsts.CiscoXRQosTranslator:                                     ciscoxrqos.New(),
+		ftconsts.CiscoXRSubinterfaceCounterTranslator:                     ciscoxrsubcounters.New(),
+		ftconsts.CiscoXRTransceiverTranslator:                             ciscoxrtransceiver.New(),
+		ftconsts.CiscoXRVendorDropsTranslator:                             ciscoxrvendordrops.New(),
 		// go/keep-sorted end
 	}
 )
