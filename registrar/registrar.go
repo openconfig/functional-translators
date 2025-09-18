@@ -21,6 +21,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfabric"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfpd"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfragment"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
@@ -45,6 +46,7 @@ var (
 		ftconsts.CiscoXR8000IntegratedCircuitResourceFunctionalTranslator: ciscoxr8000icresource.New(),
 		ftconsts.CiscoXRArpTranslator:                                     ciscoxrarp.New(),
 		ftconsts.CiscoXRFabricTranslator:                                  ciscoxrfabric.New(),
+		ftconsts.CiscoXRFpdTranslator:                                     ciscoxrfpd.New(),
 		ftconsts.CiscoXRFragmentTranslator:                                ciscoxrfragment.New(),
 		ftconsts.CiscoXRIPv6Translator:                                    ciscoxripv6.New(),
 		ftconsts.CiscoXRLaserTranslator:                                   ciscoxrlaser.New(),
