@@ -22,6 +22,7 @@ git clone https://github.com/YangModels/yang.git
 bash arista/aristainterface/generate.sh
 bash ciscoxr/ciscoxr8000icresource/generate.sh
 bash ciscoxr/ciscoxrarp/generate.sh
+bash ciscoxr/ciscoxrcarrier/generate.sh
 bash ciscoxr/ciscoxrfabric/generate.sh
 bash ciscoxr/ciscoxrfpd/generate.sh
 bash ciscoxr/ciscoxrfragment/generate.sh
