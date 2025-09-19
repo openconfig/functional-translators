@@ -25,6 +25,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfpd"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrfragment"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxripv6"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlagmac"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrqos"
@@ -51,6 +52,7 @@ var (
 		ftconsts.CiscoXRFpdTranslator:                                     ciscoxrfpd.New(),
 		ftconsts.CiscoXRFragmentTranslator:                                ciscoxrfragment.New(),
 		ftconsts.CiscoXRIPv6Translator:                                    ciscoxripv6.New(),
+		ftconsts.CiscoXRLagMacFunctionalTranslator:                        ciscoxrlagmac.New(),
 		ftconsts.CiscoXRLaserTranslator:                                   ciscoxrlaser.New(),
 		ftconsts.CiscoXRMountTranslator:                                   ciscoxrmount.New(),
 		ftconsts.CiscoXRQosTranslator:                                     ciscoxrqos.New(),

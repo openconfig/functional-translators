@@ -26,6 +26,7 @@ bash ciscoxr/ciscoxrcarrier/generate.sh
 bash ciscoxr/ciscoxrfabric/generate.sh
 bash ciscoxr/ciscoxrfpd/generate.sh
 bash ciscoxr/ciscoxrfragment/generate.sh
+bash ciscoxr/ciscoxrlagmac/generate.sh
 bash ciscoxr/ciscoxrlaser/generate.sh
 bash ciscoxr/ciscoxrmount/generate.sh
 bash ciscoxr/ciscoxrqos/generate.sh

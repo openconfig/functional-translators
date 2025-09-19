@@ -1,0 +1,60 @@
+module restriction {
+  description
+    "This module removes paths that are not used by the interfaces FT
+    to improve performance.";
+
+  namespace "uri:wbb-proxy:ciscoxr:interfaces:restriction";
+  prefix "wbbproxy-ciscoxr-intf";
+
+  import openconfig-interfaces { prefix oc-if; }
+  import openconfig-if-ethernet { prefix oc-eth; }
+  import openconfig-lacp { prefix oc-lacp; }
+
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:type" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:mtu" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:loopback-mode" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:config/oc-if:enabled" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:name" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:type" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:mtu" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:loopback-mode" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:enabled" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:ifindex" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:admin-status" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:oper-status" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:last-change" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:logical" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:management" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:cpu" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-octets" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-unicast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-broadcast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-multicast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-discards" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-errors" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-unknown-protos" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:in-fcs-errors" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-octets" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-unicast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-broadcast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-multicast-pkts" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-discards" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:out-errors" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:carrier-transitions" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:state/oc-if:counters/oc-if:last-clear" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:hold-time" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-if:subinterfaces" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:config/oc-lacp:system-priority" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:state/oc-lacp:system-priority" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:config/oc-lacp:interval" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:config/oc-lacp:lacp-mode" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:config/oc-lacp:system-priority" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:state/oc-lacp:name" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:state/oc-lacp:interval" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:state/oc-lacp:lacp-mode" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:state/oc-lacp:system-priority" { deviate not-supported; }
+  deviation "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:members/oc-lacp:member" { deviate not-supported; }
+  deviation "/oc-if:interfaces/oc-if:interface/oc-eth:ethernet/oc-eth:config" { deviate not-supported; }
+}
