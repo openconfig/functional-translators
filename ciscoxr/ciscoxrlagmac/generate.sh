@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-OC_OUT_PATH=ciscoxr/ciscoxrlagmac/yang/openconfig
+OC_OUT_PATH=ciscoxr/ciscoxrsubcounters/yang/openconfig
 
 OC_YANG_FILES=(
   public/release/models/interfaces/openconfig-interfaces.yang

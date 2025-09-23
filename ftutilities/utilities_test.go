@@ -1122,3 +1122,437 @@ func TestGNMIPathToSchemaStrings(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateOrGetCKN(t *testing.T) {
+	tests := []struct {
+		name                  string
+		CKN                   string
+		setup                 func(intfInfo *InterfaceMacSecInfo)
+		expectNewCKNMap       bool
+		expectCKNInMap        bool
+		expectedTotalCKNCount int
+	}{
+		{
+			name: "Create CKN2 in map that already has CKN1",
+			CKN:  "CKN2",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = map[string]*CKNInfo{
+					"CKN1": {
+						principal:    true,
+						success:      true,
+						principalSet: true,
+						successSet:   true,
+					},
+				}
+			},
+			expectNewCKNMap:       true,
+			expectCKNInMap:        true,
+			expectedTotalCKNCount: 2,
+		},
+		{
+			name: "Retrieve existing CKN1",
+			CKN:  "CKN1",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = map[string]*CKNInfo{
+					"CKN1": {
+						principal:    true,
+						success:      true,
+						principalSet: true,
+						successSet:   true,
+					},
+				}
+			},
+			expectNewCKNMap:       false,
+			expectCKNInMap:        true,
+			expectedTotalCKNCount: 1,
+		},
+		{
+			name: "Create CKN when cknStatuses map is initially nil",
+			CKN:  "CKN3",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = nil
+			},
+			expectNewCKNMap:       true,
+			expectCKNInMap:        true,
+			expectedTotalCKNCount: 1,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testInterfaceInfo := &InterfaceMacSecInfo{
+				interfaceName: "Ethernet22",
+			}
+			if tc.setup != nil {
+				tc.setup(testInterfaceInfo)
+			}
+
+			var preExistingCKN1Info *CKNInfo
+			if testInterfaceInfo.cknStatuses != nil {
+				preExistingCKN1Info = testInterfaceInfo.cknStatuses["CKN1"]
+			}
+
+			gotCKNInfo := testInterfaceInfo.CreateOrGetCKN(tc.CKN)
+
+			if gotCKNInfo == nil {
+				t.Fatalf("CreateOrGetCKN(%q) returned nil, expected non-nil", tc.CKN)
+			}
+			if tc.expectNewCKNMap {
+				expectedFreshCKN := &CKNInfo{}
+				if diff := cmp.Diff(expectedFreshCKN, gotCKNInfo, cmp.AllowUnexported(CKNInfo{})); diff != "" {
+					t.Errorf("CreateOrGetCKN(%q) returned a CKNInfo with non-default values for a new CKN (-want +got):\n%s", tc.CKN, diff)
+				}
+			}
+			if tc.CKN == "CKN1" && preExistingCKN1Info != nil {
+				if gotCKNInfo != preExistingCKN1Info {
+					t.Errorf("CreateOrGetCKN(%q) expected to return existing instance %p, but got %p", tc.CKN, preExistingCKN1Info, gotCKNInfo)
+				}
+			}
+			finalCKNMap := testInterfaceInfo.CloneStatuses()
+			if tc.expectCKNInMap {
+				if _, ok := finalCKNMap[tc.CKN]; !ok {
+					t.Errorf("ckn %q not found in internal map after CreateOrGetCKN", tc.CKN)
+				}
+			}
+			if len(finalCKNMap) != tc.expectedTotalCKNCount {
+				t.Errorf("expected total %d CKNs in map, got %d", tc.expectedTotalCKNCount, len(finalCKNMap))
+			}
+		})
+	}
+}
+
+func TestResetCPStatus(t *testing.T) {
+	tests := []struct {
+		name                string
+		initialCPStatus     bool
+		initialCPStatusSet  bool
+		expectedCPStatus    bool
+		expectedCPStatusSet bool
+	}{
+		{
+			name:                "cpStatus true, cpStatusSet true",
+			initialCPStatus:     true,
+			initialCPStatusSet:  true,
+			expectedCPStatus:    false,
+			expectedCPStatusSet: false,
+		},
+		{
+			name:                "cpStatus false, cpStatusSet true",
+			initialCPStatus:     false,
+			initialCPStatusSet:  true,
+			expectedCPStatus:    false,
+			expectedCPStatusSet: false,
+		},
+		{
+			name:                "cpStatus false, cpStatusSet false",
+			initialCPStatus:     false,
+			initialCPStatusSet:  false,
+			expectedCPStatus:    false,
+			expectedCPStatusSet: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ifaceInfo := &InterfaceMacSecInfo{}
+			if tc.initialCPStatusSet {
+				ifaceInfo.SetIntfCPStatus(tc.initialCPStatus)
+			}
+			ifaceInfo.ResetCPStatus()
+			finalStatus, finalSet := ifaceInfo.IntfCPStatus()
+
+			if finalStatus != tc.expectedCPStatus {
+				t.Errorf("After ResetCPStatus(), cpStatus = %v, want %v (initial cpStatus=%v, initial cpStatusSet=%v)", finalStatus, tc.expectedCPStatus, tc.initialCPStatus, tc.initialCPStatusSet)
+			}
+			if finalSet != tc.expectedCPStatusSet {
+				t.Errorf("After ResetCPStatus(), cpStatusSet = %v, want %v (initial cpStatus=%v, initial cpStatusSet=%v)", finalSet, tc.expectedCPStatusSet, tc.initialCPStatus, tc.initialCPStatusSet)
+			}
+		})
+	}
+}
+
+func TestIntfSuccess(t *testing.T) {
+	tests := []struct {
+		name                 string
+		CKN                  string
+		setup                func(intfInfo *InterfaceMacSecInfo)
+		expectedCKNStatus    bool
+		expectedCKNStatusSet bool
+	}{
+		{
+			name: "CKN exists, success is true",
+			CKN:  "CKN1",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = map[string]*CKNInfo{
+					"CKN1": {
+						principal:    true,
+						success:      true,
+						principalSet: true,
+						successSet:   true,
+					},
+				}
+			},
+			expectedCKNStatus:    true,
+			expectedCKNStatusSet: true,
+		},
+		{
+			name: "CKN exists, map is empty",
+			CKN:  "CKN1",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = map[string]*CKNInfo{}
+			},
+			expectedCKNStatus:    false,
+			expectedCKNStatusSet: false,
+		},
+		{
+			name: "CKN does not exist in the map",
+			CKN:  "CKN2",
+			setup: func(intfInfo *InterfaceMacSecInfo) {
+				intfInfo.cknStatuses = map[string]*CKNInfo{
+					"CKN1": {
+						principal:    true,
+						success:      true,
+						principalSet: true,
+						successSet:   true,
+					},
+				}
+			},
+			expectedCKNStatus:    false,
+			expectedCKNStatusSet: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testInterfaceInfo := &InterfaceMacSecInfo{
+				interfaceName: "Ethernet22",
+			}
+			if tc.setup != nil {
+				tc.setup(testInterfaceInfo)
+			}
+			gotCKNStatus, gotCKNStatusSet := testInterfaceInfo.IntfSuccess(tc.CKN)
+			if gotCKNStatus != tc.expectedCKNStatus {
+				t.Errorf("IntfSuccess(%q) = %v, want %v", tc.CKN, gotCKNStatus, tc.expectedCKNStatus)
+			}
+			if gotCKNStatusSet != tc.expectedCKNStatusSet {
+				t.Errorf("IntfSuccess(%q) = %v, want %v", tc.CKN, gotCKNStatusSet, tc.expectedCKNStatusSet)
+			}
+		})
+	}
+}
+
+func TestInterfaceMacSecInfo(t *testing.T) {
+	info := &InterfaceMacSecInfo{
+		interfaceName: "Ethernet1",
+		cknStatuses:   make(map[string]*CKNInfo),
+	}
+	ckn1 := "ckn1"
+	ckn2 := "ckn2"
+
+	// This section tests the CP Status.
+	if _, ok := info.IntfCPStatus(); ok {
+		t.Error("IntfCPStatus should not be set initially")
+	}
+	info.SetIntfCPStatus(true)
+	if status, ok := info.IntfCPStatus(); !ok || !status {
+		t.Errorf("IntfCPStatus() = %v, %v, want true, true", status, ok)
+	}
+	info.ResetCPStatus()
+	if _, ok := info.IntfCPStatus(); ok {
+		t.Error("IntfCPStatus should be unset after ResetCPStatus")
+	}
+
+	// This section tests the CreateOrGetCKN function.
+	cknInfo1 := info.CreateOrGetCKN(ckn1)
+	if cknInfo1 == nil {
+		t.Fatalf("CreateOrGetCKN(%q) returned nil", ckn1)
+	}
+	if cknInfo1Again := info.CreateOrGetCKN(ckn1); cknInfo1Again != cknInfo1 {
+		t.Errorf("CreateOrGetCKN(%q) returned a new instance, want the existing one", ckn1)
+	}
+
+	// This section tests the Principal status.
+	if _, ok := info.IntfPrincipal(ckn1); ok {
+		t.Errorf("IntfPrincipal(%q) should not be set initially", ckn1)
+	}
+	info.SetIntfPrincipal(ckn1, true)
+	if principal, ok := info.IntfPrincipal(ckn1); !ok || !principal {
+		t.Errorf("IntfPrincipal(%q) = %v, %v, want true, true", ckn1, principal, ok)
+	}
+
+	// This section tests the Success status.
+	if _, ok := info.IntfSuccess(ckn1); ok {
+		t.Errorf("IntfSuccess(%q) should not be set initially", ckn1)
+	}
+	info.SetIntfSuccess(ckn1, true)
+	if success, ok := info.IntfSuccess(ckn1); !ok || !success {
+		t.Errorf("IntfSuccess(%q) = %v, %v, want true, true", ckn1, success, ok)
+	}
+
+	// This section tests the IsComplete function.
+	if !info.IsComplete(ckn1) {
+		t.Errorf("IsComplete(%q) = false, want true", ckn1)
+	}
+	info.CreateOrGetCKN(ckn2)
+	info.SetIntfPrincipal(ckn2, true)
+	if info.IsComplete(ckn2) {
+		t.Errorf("IsComplete(%q) = true, want false", ckn2)
+	}
+
+	// This section tests the CloneStatuses function.
+	cloned := info.CloneStatuses()
+	if len(cloned) != 2 {
+		t.Errorf("len(CloneStatuses()) = %d, want 2", len(cloned))
+	}
+	if _, ok := cloned[ckn1]; !ok {
+		t.Errorf("Cloned statuses missing ckn %q", ckn1)
+	}
+	// This modifies the original and checks that the clone is unaffected.
+	info.cknStatuses[ckn1].success = false
+	if cloned[ckn1].success != false {
+		t.Error("CloneStatuses() did not create a shallow copy")
+	}
+
+	// This section tests the RemoveCkn function.
+	info.RemoveCkn(ckn1)
+	if _, ok := info.cknStatuses[ckn1]; ok {
+		t.Errorf("CKN %q should have been removed", ckn1)
+	}
+	if _, ok := info.IntfPrincipal(ckn1); ok {
+		t.Errorf("IntfPrincipal(%q) should be unset after removal", ckn1)
+	}
+}
+
+func TestTargetMacSecInfo(t *testing.T) {
+	targetInfo := NewTargetMacSecInfo("hostname1")
+	if targetInfo.TargetHostname != "hostname1" {
+		t.Errorf("NewTargetMacSecInfo() hostname = %q, want %q", targetInfo.TargetHostname, "hostname1")
+	}
+	if targetInfo.Interfaces == nil {
+		t.Error("NewTargetMacSecInfo() Interfaces map is nil")
+	}
+
+	intf1 := "Ethernet1"
+	intf2 := "Ethernet2"
+
+	// Test CreateOrGetInterface for a new interface.
+	ifaceInfo1 := targetInfo.CreateOrGetInterface(intf1)
+	if ifaceInfo1 == nil {
+		t.Fatalf("CreateOrGetInterface(%q) returned nil", intf1)
+	}
+	if ifaceInfo1.interfaceName != intf1 {
+		t.Errorf("ifaceInfo1.interfaceName = %q, want %q", ifaceInfo1.interfaceName, intf1)
+	}
+
+	// Test CreateOrGetInterface for an existing interface.
+	ifaceInfo1Again := targetInfo.CreateOrGetInterface(intf1)
+	if ifaceInfo1Again != ifaceInfo1 {
+		t.Errorf("CreateOrGetInterface(%q) returned a new instance, want the existing one", intf1)
+	}
+
+	// Test InterfaceInfo for an existing interface.
+	retrievedIface, ok := targetInfo.InterfaceInfo(intf1)
+	if !ok {
+		t.Errorf("InterfaceInfo(%q): ok = false, want true", intf1)
+	}
+	if retrievedIface != ifaceInfo1 {
+		t.Errorf("InterfaceInfo(%q) returned wrong info", intf1)
+	}
+
+	// Test InterfaceInfo for a non-existent interface.
+	_, ok = targetInfo.InterfaceInfo(intf2)
+	if ok {
+		t.Errorf("InterfaceInfo(%q): ok = true, want false", intf2)
+	}
+
+	// Test ClearInterfaceInfo.
+	targetInfo.CreateOrGetInterface(intf2) // Add a second interface to ensure it's not deleted.
+	targetInfo.ClearInterfaceInfo(intf1)
+	_, ok = targetInfo.InterfaceInfo(intf1)
+	if ok {
+		t.Errorf("InterfaceInfo(%q) after Clear: ok = true, want false", intf1)
+	}
+
+	// Verify the other interface is still present.
+	if _, ok := targetInfo.InterfaceInfo(intf2); !ok {
+		t.Errorf("InterfaceInfo(%q) was deleted unexpectedly", intf2)
+	}
+}
+
+func TestAristaMACSecMapCache(t *testing.T) {
+	cache := &AristaMACSecMapCache{
+		data: make(map[string]*TargetMacSecInfo),
+	}
+
+	target1 := "host1"
+	target2 := "host2"
+
+	// Test CreateOrUpdateTargetMacSecInfo for a new target.
+	info1 := cache.CreateOrUpdateTargetMacSecInfo(target1)
+	if info1 == nil {
+		t.Fatalf("CreateOrUpdateTargetMacSecInfo(%q) returned nil, want non-nil", target1)
+	}
+	if info1.TargetHostname != target1 {
+		t.Errorf("info1.TargetHostname = %q, want %q", info1.TargetHostname, target1)
+	}
+
+	// Test CreateOrUpdateTargetMacSecInfo for an existing target.
+	info1Again := cache.CreateOrUpdateTargetMacSecInfo(target1)
+	if info1Again != info1 {
+		t.Errorf("CreateOrUpdateTargetMacSecInfo(%q) returned a new instance, want the existing one", target1)
+	}
+
+	// Test RetrieveTargetMacSecInfo for an existing target.
+	retrievedInfo1, ok := cache.RetrieveTargetMacSecInfo(target1)
+	if !ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q): ok = false, want true", target1)
+	}
+	if retrievedInfo1 != info1 {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) returned wrong info", target1)
+	}
+
+	// Test RetrieveTargetMacSecInfo for a non-existent target.
+	_, ok = cache.RetrieveTargetMacSecInfo(target2)
+	if ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q): ok = true, want false", target2)
+	}
+
+	// Test SetTargetMacSecInfo.
+	info2 := NewTargetMacSecInfo(target2)
+	cache.SetTargetMacSecInfo(target2, info2)
+	retrievedInfo2, ok := cache.RetrieveTargetMacSecInfo(target2)
+	if !ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) after Set: ok = false, want true", target2)
+	}
+	if retrievedInfo2 != info2 {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) after Set returned wrong info", target2)
+	}
+
+	// Test DeleteTargetMacSecInfo.
+	cache.DeleteTargetMacSecInfo(target1)
+	_, ok = cache.RetrieveTargetMacSecInfo(target1)
+	if ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) after Delete: ok = true, want false", target1)
+	}
+
+	// Verify target2 is still there.
+	_, ok = cache.RetrieveTargetMacSecInfo(target2)
+	if !ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) was deleted unexpectedly", target2)
+	}
+
+	// Test ClearAllTargetMacSecInfo.
+	cache.CreateOrUpdateTargetMacSecInfo(target1) // Add target1 back.
+	cache.ClearAllTargetMacSecInfo()
+	if len(cache.data) != 0 {
+		t.Errorf("cache.data length after ClearAll = %d, want 0", len(cache.data))
+	}
+	_, ok = cache.RetrieveTargetMacSecInfo(target1)
+	if ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) after ClearAll: ok = true, want false", target1)
+	}
+	_, ok = cache.RetrieveTargetMacSecInfo(target2)
+	if ok {
+		t.Errorf("RetrieveTargetMacSecInfo(%q) after ClearAll: ok = true, want false", target2)
+	}
+}

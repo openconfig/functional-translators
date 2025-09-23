@@ -17,9 +17,11 @@ package ftutilities
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	log "github.com/golang/glog"
 	"google.golang.org/protobuf/encoding/prototext"
@@ -386,4 +388,226 @@ func LoadSubscribeResponse(path string) (*gnmipb.SubscribeResponse, error) {
 		return nil, fmt.Errorf("failed to unmarshal SubscribeResponse: %v", err)
 	}
 	return sr, nil
+}
+
+// InterfaceMacSecInfo holds MACsec status information for a specific interface.
+type InterfaceMacSecInfo struct {
+	mu            sync.Mutex
+	interfaceName string
+
+	cpStatus    bool
+	cpStatusSet bool
+
+	// Stores principal and success status per CKN.
+	cknStatuses map[string]*CKNInfo // map[CKN_string]*CKNInfo
+}
+
+// CKNInfo holds principal and success status for a specific CKN.
+type CKNInfo struct {
+	principal    bool
+	success      bool
+	principalSet bool
+	successSet   bool
+}
+
+// CreateOrGetCKN returns the CKNInfo for the given CKN, creating it if it doesn't exist.
+func (i *InterfaceMacSecInfo) CreateOrGetCKN(ckn string) *CKNInfo {
+	if i.cknStatuses == nil {
+		i.cknStatuses = make(map[string]*CKNInfo)
+	}
+	if _, ok := i.cknStatuses[ckn]; !ok {
+		i.cknStatuses[ckn] = new(CKNInfo)
+	}
+	return i.cknStatuses[ckn]
+}
+
+// SetIntfCPStatus sets the cpStatus and marks it as set.
+func (i *InterfaceMacSecInfo) SetIntfCPStatus(b bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.cpStatus = b
+	i.cpStatusSet = true
+}
+
+// IntfCPStatus returns the cpStatus and a boolean indicating if it has been set.
+func (i *InterfaceMacSecInfo) IntfCPStatus() (bool, bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return i.cpStatus, i.cpStatusSet
+}
+
+// ResetCPStatus marks the cpStatus as not set and resets its value.
+// This is used when the native source for cpStatus is deleted.
+func (i *InterfaceMacSecInfo) ResetCPStatus() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.cpStatus = false // Reset to a default value
+	i.cpStatusSet = false
+}
+
+// SetIntfPrincipal sets the principal status for a given CKN and marks it as set.
+func (i *InterfaceMacSecInfo) SetIntfPrincipal(ckn string, b bool) {
+	cknInfo := i.CreateOrGetCKN(ckn)
+	cknInfo.principal = b
+	cknInfo.principalSet = true
+}
+
+// IntfPrincipal returns the principal status for a given CKN and a boolean indicating if it has been set.
+func (i *InterfaceMacSecInfo) IntfPrincipal(ckn string) (bool, bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if cknInfo, ok := i.cknStatuses[ckn]; ok && cknInfo.principalSet {
+		return cknInfo.principal, true
+	}
+	return false, false
+}
+
+// SetIntfSuccess sets the success status for a given CKN and marks it as set.
+func (i *InterfaceMacSecInfo) SetIntfSuccess(ckn string, b bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	cknInfo := i.CreateOrGetCKN(ckn)
+	cknInfo.success = b
+	cknInfo.successSet = true
+}
+
+// IntfSuccess returns the success status for a given CKN and a boolean indicating if it has been set.
+func (i *InterfaceMacSecInfo) IntfSuccess(ckn string) (bool, bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if cknInfo, ok := i.cknStatuses[ckn]; ok && cknInfo.successSet {
+		return cknInfo.success, true
+	}
+	return false, false
+}
+
+// CloneStatuses returns a copy of the CKN statuses map.
+func (i *InterfaceMacSecInfo) CloneStatuses() map[string]*CKNInfo {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	return maps.Clone(i.cknStatuses)
+}
+
+// RemoveCkn removes MACsec information for a specific CKN.
+func (i *InterfaceMacSecInfo) RemoveCkn(ckn string) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if i.cknStatuses != nil {
+		delete(i.cknStatuses, ckn)
+	}
+}
+
+// IsComplete checks if all necessary MACsec CKN status values have been set.
+func (i *InterfaceMacSecInfo) IsComplete(ckn string) bool {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if cknInfo, ok := i.cknStatuses[ckn]; ok && cknInfo.principalSet && cknInfo.successSet {
+		return true
+	}
+	return false
+}
+
+// TargetMacSecInfo holds MACsec information for all interfaces on a target.
+type TargetMacSecInfo struct {
+	mu             sync.Mutex
+	TargetHostname string
+	Interfaces     map[string]*InterfaceMacSecInfo // map[InterfaceName]*InterfaceMacSecInfo
+}
+
+// NewTargetMacSecInfo creates a new TargetMacSecInfo for the given target hostname.
+func NewTargetMacSecInfo(targetHostname string) *TargetMacSecInfo {
+	return &TargetMacSecInfo{
+		TargetHostname: targetHostname,
+		Interfaces:     make(map[string]*InterfaceMacSecInfo),
+	}
+}
+
+// CreateOrGetInterface returns the InterfaceMacSecInfo for the given interface name, creating it if it doesn't exist.
+// It also initializes the CKN statuses map if it doesn't exist.
+func (t *TargetMacSecInfo) CreateOrGetInterface(interfaceName string) *InterfaceMacSecInfo {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if _, ok := t.Interfaces[interfaceName]; !ok {
+		t.Interfaces[interfaceName] = &InterfaceMacSecInfo{
+			interfaceName: interfaceName,
+			cknStatuses:   make(map[string]*CKNInfo),
+		}
+	}
+	return t.Interfaces[interfaceName]
+}
+
+// InterfaceInfo retrieves the MACsec info for a specific interface.
+func (t *TargetMacSecInfo) InterfaceInfo(intf string) (*InterfaceMacSecInfo, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	info, ok := t.Interfaces[intf]
+	return info, ok
+}
+
+// ClearInterfaceInfo removes MACsec information for a specific interface.
+func (t *TargetMacSecInfo) ClearInterfaceInfo(intf string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.Interfaces, intf)
+}
+
+// AristaMACSecMapCache is a thread-safe cache for AristaMACSecMap.
+// It stores cached boolean values from distinct native Arista MACsec paths per target/interface/CKN.
+// Although Functional Translators (FTs) are typically stateless, this map is required as an exception
+// to hold values from these multiple source paths, necessary for deriving the single OpenConfig MACsec status.
+// Declaring it here allows access by both the FT logic and the FT registration process,
+// where it is cleared to prevent using stale information between registrations or updates.
+type AristaMACSecMapCache struct {
+	mu   sync.Mutex
+	data map[string]*TargetMacSecInfo
+}
+
+// Global instance of the AristaMACSecMapCache.
+var (
+	AristaMACSecMap = &AristaMACSecMapCache{
+		data: make(map[string]*TargetMacSecInfo),
+	}
+)
+
+// SetTargetMacSecInfo adds or updates the TargetMacSecInfo for a given target hostname.
+func (c *AristaMACSecMapCache) SetTargetMacSecInfo(targetHostname string, info *TargetMacSecInfo) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data[targetHostname] = info
+}
+
+// RetrieveTargetMacSecInfo fetches the TargetMacSecInfo for a given target hostname.
+// It returns the info and a boolean indicating if the target was found.
+func (c *AristaMACSecMapCache) RetrieveTargetMacSecInfo(targetHostname string) (*TargetMacSecInfo, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	return info, ok
+}
+
+// DeleteTargetMacSecInfo removes the TargetMacSecInfo for a given target hostname.
+func (c *AristaMACSecMapCache) DeleteTargetMacSecInfo(targetHostname string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.data, targetHostname)
+}
+
+// ClearAllTargetMacSecInfo removes all entries from the cache.
+func (c *AristaMACSecMapCache) ClearAllTargetMacSecInfo() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data = make(map[string]*TargetMacSecInfo)
+}
+
+// CreateOrUpdateTargetMacSecInfo retrieves an existing TargetMacSecInfo for the given target
+// or creates a new one if it doesn't exist, then stores it in the cache.
+func (c *AristaMACSecMapCache) CreateOrUpdateTargetMacSecInfo(targetHostname string) *TargetMacSecInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	if !ok {
+		info = NewTargetMacSecInfo(targetHostname)
+		c.data[targetHostname] = info
+	}
+	return info
 }
