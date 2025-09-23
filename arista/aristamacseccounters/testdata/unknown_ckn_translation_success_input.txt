@@ -1,0 +1,34 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+    elem: {
+      name: "Smash"
+    }
+    elem: {
+      name: "macsec"
+    }
+    elem: {
+      name: "counters"
+    }
+    elem: {
+      name: "msgCounter"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "Ethernet23"
+      }
+      elem: {
+        name: "rxMsgCounter"
+      }
+      elem: {
+        name: "unrecognizedCkn"
+      }
+    }
+    val: {
+      string_val: "54321"
+    }
+  }
+}

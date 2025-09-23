@@ -1,0 +1,34 @@
+update: {
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Ethernet22"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "counters"
+      }
+      elem: {
+        name: "tx-pkts-dropped"
+      }
+    }
+    val: {
+      uint_val: 0
+    }
+  }
+}

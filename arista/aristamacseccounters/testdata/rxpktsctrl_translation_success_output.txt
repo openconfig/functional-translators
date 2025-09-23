@@ -1,0 +1,35 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Ethernet22"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "counters"
+      }
+      elem: {
+        name: "rx-pkts-ctrl"
+      }
+    }
+    val: {
+      string_val: "12345"
+    }
+  }
+}

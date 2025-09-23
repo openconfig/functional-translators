@@ -1,0 +1,37 @@
+update: {
+  prefix: {}
+  update: {
+    path: {
+      elem: {
+        name: "Smash"
+      }
+      elem: {
+        name: "counters"
+      }
+      elem: {
+        name: "ethIntf"
+      }
+      elem: {
+        name: "SandCounters"
+      }
+      elem: {
+        name: "current"
+      }
+      elem: {
+        name: "counter"
+      }
+      elem: {
+        name: "Ethernet22"
+      }
+      elem: {
+        name: "statistics"
+      }
+      elem: {
+        name: "outDiscards"
+      }
+    }
+    val: {
+      json_val: "{\"value\":0}"
+    }
+  }
+}

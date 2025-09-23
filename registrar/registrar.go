@@ -18,6 +18,8 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
+	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
+	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrcarrier"
@@ -45,6 +47,8 @@ var (
 		ftconsts.AristaCfmStateFunctionalTranslator:                       aristacfmstate.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator:           aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
+		ftconsts.AristaMacsecCountersTranslator:                           aristamacseccounters.New(),
+		ftconsts.AristaMacsecStateFunctionalTranslator:                    aristamacsecstate.New(),
 		ftconsts.CiscoXR8000IntegratedCircuitResourceFunctionalTranslator: ciscoxr8000icresource.New(),
 		ftconsts.CiscoXRArpTranslator:                                     ciscoxrarp.New(),
 		ftconsts.CiscoXRCarrierTranslator:                                 ciscoxrcarrier.New(),

@@ -1,0 +1,29 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+    target: "cx12.sql12"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "invalid"
+      }
+      elem: {
+        name: "path"
+      }
+      elem: {
+        name: "input"
+      }
+      elem: {
+        name: "with"
+      }
+      elem: {
+        name: "5"
+      }
+    }
+    val: {
+      string_val: "anyvalue"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "Smash"
+      }
+      elem: {
+        name: "hardware"
+      }
+      elem: {
+        name: "counter"
+      }
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "xx"
+      }
+      elem: {
+        name: "current"
+      }
+      elem: {
+        name: "Ethernet22"
+      }
+      elem: {
+        name: "macSecCounters"
+      }
+      elem: {
+        name: "outPktCtrl"
+      }
+    }
+    val: {
+      string_val: "12345"
+    }
+  }
+}

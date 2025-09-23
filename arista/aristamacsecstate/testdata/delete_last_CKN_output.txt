@@ -1,0 +1,49 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+    target: "cx12.sql12"
+  }
+  delete: {
+    elem: {
+      name: "macsec"
+    }
+    elem: {
+      name: "interfaces"
+    }
+    elem: {
+      name: "interface"
+      key: {
+        key: "name"
+        value: "Ethernet12"
+      }
+    }
+    elem: {
+      name: "state"
+    }
+    elem: {
+      name: "status"
+    }
+  }
+  delete: {
+    elem: {
+      name: "macsec"
+    }
+    elem: {
+      name: "interfaces"
+    }
+    elem: {
+      name: "interface"
+      key: {
+        key: "name"
+        value: "Ethernet12"
+      }
+    }
+    elem: {
+      name: "state"
+    }
+    elem: {
+      name: "ckn"
+    }
+  }
+}

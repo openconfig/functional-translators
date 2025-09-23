@@ -1,0 +1,63 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+    target: "cx16.sql12"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "Sysdb"
+      }
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "status"
+      }
+      elem: {
+        name: "cpStatus"
+      }
+      elem: {
+        name: "Ethernet22"
+      }
+      elem: {
+        name: "controlledPortEnabled"
+      }
+    }
+    val: {
+      bool_val: true
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "Sysdb"
+      }
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "mkaStatus"
+      }
+      elem: {
+        name: "portStatus"
+      }
+      elem: {
+        name: "Ethernet22"
+      }
+      elem: {
+        name: "actorStatus"
+      }
+      elem: {
+        name: "CKN1"
+      }
+      elem: {
+        name: "success"
+      }
+    }
+    val: {
+      bool_val: true
+    }
+  }
+}

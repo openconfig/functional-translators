@@ -1,0 +1,24 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+    target: "cx12.sql12"
+  }
+  delete: {
+    elem: {
+      name: "invalid"
+    }
+    elem: {
+      name: "delete"
+    }
+    elem: {
+      name: "path"
+    }
+    elem: {
+      name: "input"
+    }
+    elem: {
+      name: "5"
+    }
+  }
+}

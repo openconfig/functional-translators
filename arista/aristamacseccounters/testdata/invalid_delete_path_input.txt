@@ -1,0 +1,17 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  delete: {
+    elem: {
+      name: "invalid"
+    }
+    elem: {
+      name: "delete"
+    }
+    elem: {
+      name: "path"
+    }
+  }
+}

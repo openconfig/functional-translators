@@ -1,0 +1,73 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+    target: "cx12.sql12"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Ethernet10"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "status"
+      }
+    }
+    val: {
+      leaflist_val: {
+        element: {
+          string_val: "Secured"
+        }
+        element: {
+          string_val: "Unknown"
+        }
+      }
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "macsec"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "name"
+          value: "Ethernet10"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "ckn"
+      }
+    }
+    val: {
+      leaflist_val: {
+        element: {
+          string_val: "CKN1"
+        }
+        element: {
+          string_val: "CKN2"
+        }
+      }
+    }
+  }
+}
