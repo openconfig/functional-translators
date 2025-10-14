@@ -137,10 +137,10 @@ type FunctionalTranslatorOptions struct {
 // logic of converting openconfig output path -> []input_paths, as well as any translation
 // from []input_path -> output_path(s).
 type FunctionalTranslator struct {
-	ID               string
+	id               string
 	translate        func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error)
-	OutputToInputMap map[string][]*gnmipb.Path
-	Metadata         []*FTMetadata
+	outputToInputMap map[string][]*gnmipb.Path
+	metadata         []*FTMetadata
 	matchPaths       func(map[string]*gnmipb.Path, *DeviceMetadata) (*MatchedPaths, error)
 }
 
@@ -154,11 +154,33 @@ func NewFunctionalTranslator(opts FunctionalTranslatorOptions) (*FunctionalTrans
 		return nil, fmt.Errorf("%s has a nil Translate() function", opts.ID)
 	}
 
+	for out, inputs := range opts.OutputToInputMap {
+		if out[0] != '/' {
+			return nil, fmt.Errorf("output: %q in opts.OutputToInputMap should start with a '/'", out)
+		}
+		o := out[1:] // Get the string after the first '/'.
+		idx := strings.Index(o, "/")
+		var origin string
+		if idx != -1 {
+			origin = o[:idx]
+		} else {
+			origin = o
+		}
+		if _, ok := ftutilities.ValidOrigins[origin]; !ok {
+			return nil, fmt.Errorf("output: %q in opts.OutputToInputMap has an unsupported origin: %q", out, origin)
+		}
+		for _, i := range inputs {
+			if _, ok := ftutilities.ValidOrigins[i.Origin]; !ok {
+				return nil, fmt.Errorf("input: %q in opts.OutputToInputMap for output: %q has an unsupported origin: %q", i, out, i.Origin)
+			}
+		}
+	}
+
 	ft := &FunctionalTranslator{
-		ID:               opts.ID,
+		id:               opts.ID,
 		translate:        opts.Translate,
-		OutputToInputMap: opts.OutputToInputMap,
-		Metadata:         opts.Metadata,
+		outputToInputMap: opts.OutputToInputMap,
+		metadata:         opts.Metadata,
 		matchPaths:       opts.MatchPaths,
 	}
 
@@ -170,11 +192,25 @@ func NewFunctionalTranslator(opts FunctionalTranslatorOptions) (*FunctionalTrans
 	return ft, nil
 }
 
+// ID returns the unique identifier for the functional translator.
+func (ft *FunctionalTranslator) ID() string {
+	return ft.id
+}
+
+// Metadata returns the metadata associated with the FunctionalTranslator, which includes
+// information such as vendor, hardware model, and software version.
+func (ft *FunctionalTranslator) Metadata() []*FTMetadata {
+	return ft.metadata
+}
+
+// OutputToInputMap returns the map between output OpenConfig paths and the corresponding
+// gNMI input path(s) used by the FunctionalTranslator.
+func (ft *FunctionalTranslator) OutputToInputMap() map[string][]*gnmipb.Path {
+	return ft.outputToInputMap
+}
+
 // Translate translates vendor notifications to notifications OpenConfig-compliant notifications.
 func (ft *FunctionalTranslator) Translate(input *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
-	if ft.translate == nil {
-		return nil, fmt.Errorf("Functional Translator %s has a nil Translate() function", ft.ID)
-	}
 	return ft.translate(input)
 }
 
@@ -182,20 +218,17 @@ func (ft *FunctionalTranslator) Translate(input *gnmipb.SubscribeResponse) (*gnm
 // a MatchedPaths which contains the subset of output paths supported by the FT (OutputPaths)
 // and a set of paths (InputPaths) needed to provide those paths as output.
 func (ft *FunctionalTranslator) MatchPaths(outputSuperset map[string]*gnmipb.Path, deviceMetadata *DeviceMetadata) (*MatchedPaths, error) {
-	if ft.matchPaths == nil {
-		return nil, fmt.Errorf("Functional Translator %s has a nil MatchPaths() function", ft.ID)
-	}
 	return ft.matchPaths(outputSuperset, deviceMetadata)
 }
 
 // OutputToInput returns a bool indicating if the given output path is supported by the FT, and
 // if so, returns the input paths that are needed to provide the output path.
 func (ft *FunctionalTranslator) OutputToInput(output *gnmipb.Path) (bool, []*gnmipb.Path, error) {
-	if len(ft.OutputToInputMap) == 0 {
-		return false, nil, fmt.Errorf("Functional Translator %s has a nil OutputToInputMap", ft.ID)
+	if len(ft.OutputToInputMap()) == 0 {
+		return false, nil, fmt.Errorf("Functional Translator %s has a nil OutputToInputMap", ft.ID())
 	}
 	outputKey := ftutilities.GNMIPathToSchemaString(output, false)
-	inputs, ok := ft.OutputToInputMap[outputKey]
+	inputs, ok := ft.OutputToInputMap()[outputKey]
 	return ok, inputs, nil
 }
 
@@ -222,10 +255,10 @@ func (m *FTMetadata) swVersionMatch(got *DeviceMetadata) bool {
 }
 
 func (ft *FunctionalTranslator) metadataMatch(got *DeviceMetadata) bool {
-	if len(ft.Metadata) == 0 {
+	if len(ft.metadata) == 0 {
 		return true
 	}
-	for _, m := range ft.Metadata {
+	for _, m := range ft.metadata {
 		if m.Vendor != "" && !strings.EqualFold(m.Vendor, got.Vendor) {
 			continue
 		}
@@ -255,7 +288,7 @@ func (ft *FunctionalTranslator) defaultPathMatcher(outputSuperset map[string]*gn
 	returnOutputToInput := map[string][]string{}
 	// Most often, we expect len(desiredOutputPaths) > len(ft.outputToInput); so, we iterate through
 	// the shorter list.
-	for key, inputs := range ft.OutputToInputMap {
+	for key, inputs := range ft.OutputToInputMap() {
 		if outputPath, ok := outputSuperset[key]; ok {
 			// Check that the key matches the path.
 			outputKey := ftutilities.GNMIPathToSchemaString(outputPath, false)
