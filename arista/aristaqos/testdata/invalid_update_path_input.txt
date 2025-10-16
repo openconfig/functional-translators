@@ -1,0 +1,16 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "dut1"
+  }
+  update: {
+    path: {
+      elem: { name: "invalid" }
+      elem: { name: "update" }
+      elem: { name: "path" }
+    }
+    val: {
+      string_val: "some-value"
+    }
+  }
+}

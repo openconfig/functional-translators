@@ -1,0 +1,21 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "dut1"
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet1-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-octets" }
+    }
+    val: {
+      uint_val: 999
+    }
+  }
+}

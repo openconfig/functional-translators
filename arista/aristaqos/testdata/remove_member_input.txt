@@ -1,0 +1,13 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "cx12.sql12"
+  }
+  delete: {
+    elem: { name: "interfaces" }
+    elem: { name: "interface" key: { key: "name" value: "Ethernet19/1" } }
+    elem: { name: "ethernet" }
+    elem: { name: "state" }
+    elem: { name: "aggregate-id" }
+  }
+}

@@ -1,0 +1,78 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "cx12.sql12"
+  }
+  update: {
+    path: {
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "name" value: "Ethernet19/1" } }
+      elem: { name: "ethernet" }
+      elem: { name: "state" }
+      elem: { name: "aggregate-id" }
+    }
+    val: {
+      string_val: "Port-Channel10"
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet19/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet19/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-octets" }
+    }
+    val: {
+      uint_val: 1000
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet19/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet19/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-pkts" }
+    }
+    val: {
+      uint_val: 100
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet19/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet19/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-octets" }
+    }
+    val: {
+      uint_val: 20
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet19/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet19/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-pkts" }
+    }
+    val: {
+      uint_val: 2
+    }
+  }
+}

@@ -1,0 +1,10 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "dut1"
+  }
+  delete: {
+    elem: { name: "interfaces" }
+    elem: { name: "interface" key: { key: "name" value: "Ethernet1" } }
+  }
+}

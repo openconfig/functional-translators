@@ -52,6 +52,9 @@ const (
 	// AristaMacsecCountersTranslator is the name of the Arista macsec counters functional translator.
 	AristaMacsecCountersTranslator = "arista-macsec-counters-ft"
 
+	// AristaQoSAggregateCountersTranslator is the name of the Arista QoS aggregate counters functional translator.
+	AristaQoSAggregateCountersTranslator = "arista-qos-aggregate-counters-ft"
+
 	// AristaTransceiverPowerFunctionalTranslator is the name of the Arista transceiver input power functional translator.
 	AristaTransceiverPowerFunctionalTranslator = "arista-transceiver-input-power-ft"
 

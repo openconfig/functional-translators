@@ -1,0 +1,67 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+    target: "cx12.sql12"
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel10-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-octets" }
+    }
+    val: {
+      uint_val: 500
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel10-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-pkts" }
+    }
+    val: {
+      uint_val: 50
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel10-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-octets" }
+    }
+    val: {
+      uint_val: 10
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel10-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-pkts" }
+    }
+    val: {
+      uint_val: 1
+    }
+  }
+}

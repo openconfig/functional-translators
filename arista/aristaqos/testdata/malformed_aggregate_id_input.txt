@@ -1,0 +1,15 @@
+update: {
+  timestamp: 123
+  prefix: { target: "cx12.sql12" }
+  update: {
+    path: {
+      elem: { name: "interfaces" }
+      # MALFORMED: 'interface' element is missing its 'name' key.
+      elem: { name: "interface" }
+      elem: { name: "ethernet" }
+      elem: { name: "state" }
+      elem: { name: "aggregate-id" }
+    }
+    val: { string_val: "Port-Channel10" }
+  }
+}

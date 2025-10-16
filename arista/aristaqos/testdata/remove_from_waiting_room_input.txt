@@ -1,0 +1,23 @@
+update: {
+  timestamp: 123
+  prefix: {
+    target: "cx12.sql12"
+  }
+  update: {
+    path: {
+      elem: { name: "qos" } elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet5/7" } }
+      elem: { name: "output" } elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet5/7-0" } }
+      elem: { name: "state" } elem: { name: "transmit-octets" }
+    }
+    val: { uint_val: 999 }
+  }
+  delete: {
+    elem: { name: "interfaces" }
+    elem: { name: "interface" key: { key: "name" value: "Ethernet5/7" } }
+    elem: { name: "ethernet" }
+    elem: { name: "state" }
+    elem: { name: "aggregate-id" }
+  }
+}

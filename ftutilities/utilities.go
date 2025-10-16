@@ -611,3 +611,282 @@ func (c *AristaMACSecMapCache) CreateOrUpdateTargetMacSecInfo(targetHostname str
 	}
 	return info
 }
+
+// TargetQoSInfo holds QoS information for all port-channels on a target.
+type TargetQoSInfo struct {
+	mu                  sync.Mutex
+	TargetHostname      string
+	PortChannels        map[string]*PortChannelInfo     // map[PortChannelName]*PortChannelInfo
+	MemberToPCMap       map[string]string               // map[InterfaceName]PortChannelName
+	UnassociatedMembers map[string]*MemberInterfaceInfo // "Waiting room"
+}
+
+// PortChannelInfo holds QoS information for a specific port-channel,
+// including all its member interfaces.
+type PortChannelInfo struct {
+	mu              sync.Mutex
+	portChannelName string
+	Members         map[string]*MemberInterfaceInfo // map[InterfaceName]*MemberInterfaceInfo
+}
+
+// MemberInterfaceInfo holds QoS queue information for a specific member interface.
+type MemberInterfaceInfo struct {
+	mu            sync.Mutex
+	interfaceName string
+	Queues        map[string]*QueueCounters // map[QueueID]*QueueCounters
+}
+
+// NewMemberInterfaceInfo creates a new MemberInterfaceInfo instance.
+func NewMemberInterfaceInfo(interfaceName string) *MemberInterfaceInfo {
+	return &MemberInterfaceInfo{
+		interfaceName: interfaceName,
+		Queues:        make(map[string]*QueueCounters),
+	}
+}
+
+// QueueCounters holds the 4 counters for a specific QoS queue.
+// It also tracks whether each counter has been explicitly set.
+type QueueCounters struct {
+	TxPackets      uint64
+	TxBytes        uint64
+	DroppedPackets uint64
+	DroppedBytes   uint64
+
+	TxPacketsSet      bool
+	TxBytesSet        bool
+	DroppedPacketsSet bool
+	DroppedBytesSet   bool
+}
+
+// QoSAggregationMapCache is a thread-safe cache for TargetQoSInfo.
+// It stores cached QoS counter values from distinct OC paths
+// per target/port-channel/interface/queue.
+type QoSAggregationMapCache struct {
+	mu   sync.Mutex
+	data map[string]*TargetQoSInfo // map[TargetHostname]*TargetQoSInfo
+}
+
+// QoSAggMap is the global instance of the QoSAggregationMapCache.
+var (
+	QoSAggMap = &QoSAggregationMapCache{
+		data: make(map[string]*TargetQoSInfo),
+	}
+)
+
+// createOrGetQueue is an internal helper that assumes the lock is held.
+func (m *MemberInterfaceInfo) createOrGetQueue(queueID string) *QueueCounters {
+	if m.Queues == nil {
+		m.Queues = make(map[string]*QueueCounters)
+	}
+	if _, ok := m.Queues[queueID]; !ok {
+		m.Queues[queueID] = new(QueueCounters)
+	}
+	return m.Queues[queueID]
+}
+
+// SetTxPackets sets the TxPackets counter for a given queue and marks it as set.
+func (m *MemberInterfaceInfo) SetTxPackets(queueID string, val uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	q := m.createOrGetQueue(queueID)
+	q.TxPackets = val
+	q.TxPacketsSet = true
+}
+
+// SetTxBytes sets the TxBytes counter for a given queue and marks it as set.
+func (m *MemberInterfaceInfo) SetTxBytes(queueID string, val uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	q := m.createOrGetQueue(queueID)
+	q.TxBytes = val
+	q.TxBytesSet = true
+}
+
+// SetDroppedPackets sets the DroppedPackets counter for a given queue and marks it as set.
+func (m *MemberInterfaceInfo) SetDroppedPackets(queueID string, val uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	q := m.createOrGetQueue(queueID)
+	q.DroppedPackets = val
+	q.DroppedPacketsSet = true
+}
+
+// SetDroppedBytes sets the DroppedBytes counter for a given queue and marks it as set.
+func (m *MemberInterfaceInfo) SetDroppedBytes(queueID string, val uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	q := m.createOrGetQueue(queueID)
+	q.DroppedBytes = val
+	q.DroppedBytesSet = true
+}
+
+// CloneQueues returns a copy of the Queues map.
+func (m *MemberInterfaceInfo) CloneQueues() map[string]*QueueCounters {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Clone the map to avoid concurrent access issues during iteration
+	clonedMap := make(map[string]*QueueCounters, len(m.Queues))
+	for k, v := range m.Queues {
+		// Clone the counter struct itself
+		if v != nil {
+			c := *v
+			clonedMap[k] = &c
+		}
+	}
+	return clonedMap
+}
+
+// --- PortChannelInfo Methods ---
+
+// CreateOrRetrieveMember returns the MemberInterfaceInfo for the given interface name,
+// creating it if it doesn't exist.
+func (p *PortChannelInfo) CreateOrRetrieveMember(interfaceName string) *MemberInterfaceInfo {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Members == nil {
+		p.Members = make(map[string]*MemberInterfaceInfo)
+	}
+	if _, ok := p.Members[interfaceName]; !ok {
+		p.Members[interfaceName] = &MemberInterfaceInfo{
+			interfaceName: interfaceName,
+			Queues:        make(map[string]*QueueCounters),
+		}
+	}
+	return p.Members[interfaceName]
+}
+
+// AddMemberInfo adds a pre-existing MemberInterfaceInfo object to the PortChannel.
+// This is used to move a member from the "waiting room" into the PortChannel.
+func (p *PortChannelInfo) AddMemberInfo(memberInfo *MemberInterfaceInfo) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Members == nil {
+		p.Members = make(map[string]*MemberInterfaceInfo)
+	}
+	p.Members[memberInfo.interfaceName] = memberInfo
+}
+
+// ClearMemberInfo removes QoS information for a specific member interface.
+func (p *PortChannelInfo) ClearMemberInfo(intf string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.Members, intf)
+}
+
+// CloneMembers returns a thread-safe copy of the Members map.
+func (p *PortChannelInfo) CloneMembers() map[string]*MemberInterfaceInfo {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	// Clone the map to avoid race conditions during iteration.
+	clonedMap := make(map[string]*MemberInterfaceInfo, len(p.Members))
+	for k, v := range p.Members {
+		clonedMap[k] = v
+	}
+	return clonedMap
+}
+
+// --- TargetQoSInfo Methods ---
+
+// newTargetQoSInfo creates a new TargetQoSInfo for the given target hostname.
+func newTargetQoSInfo(targetHostname string) *TargetQoSInfo {
+	return &TargetQoSInfo{
+		TargetHostname:      targetHostname,
+		PortChannels:        make(map[string]*PortChannelInfo),
+		MemberToPCMap:       make(map[string]string),
+		UnassociatedMembers: make(map[string]*MemberInterfaceInfo),
+	}
+}
+
+// CreateOrRetrievePortChannel returns the PortChannelInfo for the given port-channel name,
+// creating it if it doesn't exist.
+func (t *TargetQoSInfo) CreateOrRetrievePortChannel(pcName string) *PortChannelInfo {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.PortChannels == nil {
+		t.PortChannels = make(map[string]*PortChannelInfo)
+	}
+	if _, ok := t.PortChannels[pcName]; !ok {
+		t.PortChannels[pcName] = &PortChannelInfo{
+			portChannelName: pcName,
+			Members:         make(map[string]*MemberInterfaceInfo),
+		}
+	}
+	return t.PortChannels[pcName]
+}
+
+// PortChannelInfo retrieves the QoS info for a specific port-channel.
+func (t *TargetQoSInfo) PortChannelInfo(pcName string) (*PortChannelInfo, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	info, ok := t.PortChannels[pcName]
+	return info, ok
+}
+
+// --- NEW Reverse Map Methods for TargetQoSInfo ---
+
+// RetrievePortChannelForMember returns the parent Port-Channel name for a member.
+func (t *TargetQoSInfo) RetrievePortChannelForMember(memberName string) (string, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	pcName, ok := t.MemberToPCMap[memberName]
+	return pcName, ok
+}
+
+// SetPortChannelForMember sets the parent Port-Channel for a member.
+func (t *TargetQoSInfo) SetPortChannelForMember(memberName, pcName string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.MemberToPCMap[memberName] = pcName
+}
+
+// FindAndRemoveMember finds a member, removes it from its old PortChannel's
+// member list, and removes it from the reverse map.
+// It returns the old Port-Channel name and true if found.
+func (t *TargetQoSInfo) FindAndRemoveMember(memberName string) (string, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	oldPCName, ok := t.MemberToPCMap[memberName]
+	if !ok {
+		return "", false
+	}
+
+	// Remove from reverse map
+	delete(t.MemberToPCMap, memberName)
+
+	// Remove from the PortChannel's member list
+	if pcInfo, pcOK := t.PortChannels[oldPCName]; pcOK {
+		pcInfo.ClearMemberInfo(memberName) // This locks pcInfo.mu
+	}
+	return oldPCName, true
+}
+
+// --- QoSAggregationMapCache Methods ---
+
+// RetrieveTargetQoSInfo fetches the TargetQoSInfo for a given target hostname.
+// It returns the info and a boolean indicating if the target was found.
+func (c *QoSAggregationMapCache) RetrieveTargetQoSInfo(targetHostname string) (*TargetQoSInfo, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	return info, ok
+}
+
+// ClearAllTargetQoSInfo removes all entries from the cache.
+func (c *QoSAggregationMapCache) ClearAllTargetQoSInfo() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data = make(map[string]*TargetQoSInfo)
+}
+
+// CreateOrUpdateTargetQoSInfo retrieves an existing TargetQoSInfo for the given target
+// or creates a new one if it doesn't exist, then stores it in the cache.
+func (c *QoSAggregationMapCache) CreateOrUpdateTargetQoSInfo(targetHostname string) *TargetQoSInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	if !ok {
+		info = newTargetQoSInfo(targetHostname)
+		c.data[targetHostname] = info
+	}
+	return info
+}

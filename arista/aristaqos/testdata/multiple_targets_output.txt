@@ -1,0 +1,127 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+    target: "pr10.sql12"
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet36/3/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-octets" }
+    }
+    val: {
+      uint_val: 7000
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet36/3/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-pkts" }
+    }
+    val: {
+      uint_val: 700
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet36/3/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-octets" }
+    }
+    val: {
+      uint_val: 70
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Ethernet36/3/1-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-pkts" }
+    }
+    val: {
+      uint_val: 7
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel20-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-octets" }
+    }
+    val: {
+      uint_val: 7000
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel20-0" } }
+      elem: { name: "state" }
+      elem: { name: "transmit-pkts" }
+    }
+    val: {
+      uint_val: 700
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel20-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-octets" }
+    }
+    val: {
+      uint_val: 70
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "qos" }
+      elem: { name: "interfaces" }
+      elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
+      elem: { name: "output" }
+      elem: { name: "queues" }
+      elem: { name: "queue" key: { key: "name" value: "Port-Channel20-0" } }
+      elem: { name: "state" }
+      elem: { name: "dropped-pkts" }
+    }
+    val: {
+      uint_val: 7
+    }
+  }
+}
