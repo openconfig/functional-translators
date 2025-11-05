@@ -51,7 +51,7 @@ var (
 			"/Cisco-IOS-XR-shellutil-filesystem-oper/file-system/node/file-system",
 		},
 	}
-	paths      = mustStringMapPaths(translateMap)
+	paths      = ftutilities.MustStringMapPaths(translateMap)
 	nativePath = &gnmipb.Path{
 		Origin: "Cisco-IOS-XR-shellutil-filesystem-oper",
 		Elem: []*gnmipb.PathElem{
@@ -60,14 +60,6 @@ var (
 		},
 	}
 )
-
-func mustStringMapPaths(m map[string][]string) map[string][]*gnmipb.Path {
-	p, err := ftutilities.StringMapPaths(m)
-	if err != nil {
-		log.Fatalf("map %#v cannot parse output paths into gNMI Paths", m)
-	}
-	return p
-}
 
 // validates the leaves and build trap structs
 func buildFileSystems(prefix *gnmipb.Path, leaves []*gnmipb.Update) (map[string]*fileSystems, error) {

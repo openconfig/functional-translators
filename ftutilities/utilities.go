@@ -221,9 +221,9 @@ func StringToPath(s string) (*gnmipb.Path, error) {
 	}, nil
 }
 
-// StringMapPaths converts each string in the slices, into a list of gnmi Paths.
+// stringMapPaths converts each string in the slices, into a list of gnmi Paths.
 // The lists are returned with the same keys as the input.
-func StringMapPaths(stringPathMap map[string][]string) (map[string][]*gnmipb.Path, error) {
+func stringMapPaths(stringPathMap map[string][]string) (map[string][]*gnmipb.Path, error) {
 	m := make(map[string][]*gnmipb.Path)
 	for k, paths := range stringPathMap {
 		for _, s := range paths {
@@ -240,7 +240,7 @@ func StringMapPaths(stringPathMap map[string][]string) (map[string][]*gnmipb.Pat
 // MustStringMapPaths converts each string in the slices, into a list of gnmi Paths.
 // it fails if there is an error.
 func MustStringMapPaths(m map[string][]string) map[string][]*gnmipb.Path {
-	p, err := StringMapPaths(m)
+	p, err := stringMapPaths(m)
 	if err != nil {
 		log.Fatalf("map %#v cannot parse output paths into gNMI Paths", m)
 	}

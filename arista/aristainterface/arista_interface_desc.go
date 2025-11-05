@@ -57,10 +57,8 @@ func NewDescFT() *translator.FunctionalTranslator {
 		log.Fatalf("Failed to create mapper: %v", err)
 	}
 
-	p, err := ftutilities.StringMapPaths(m.OutputToInputSchemaStrings())
-	if err != nil {
-		log.Fatalf("map %#v cannot parse output paths into gNMI Paths", m.OutputToInputSchemaStrings())
-	}
+	p := ftutilities.MustStringMapPaths(m.OutputToInputSchemaStrings())
+
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			Translate:        m.Handler,

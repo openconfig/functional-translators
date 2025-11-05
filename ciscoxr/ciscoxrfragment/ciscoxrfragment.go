@@ -48,7 +48,7 @@ var (
 			"/Cisco-IOS-XR-platforms-ofa-oper/ofa/stats/nodes/node/Cisco-IOS-XR-ofa-npu-stats-oper:npu-numbers/npu-number/display/trap-ids/trap-id",
 		},
 	}
-	paths      = mustStringMapPaths(translateMap)
+	paths      = ftutilities.MustStringMapPaths(translateMap)
 	nativePath = &gnmipb.Path{
 		Origin: "Cisco-IOS-XR-platforms-ofa-oper",
 		Elem: []*gnmipb.PathElem{
@@ -59,14 +59,6 @@ var (
 		},
 	}
 )
-
-func mustStringMapPaths(m map[string][]string) map[string][]*gnmipb.Path {
-	p, err := ftutilities.StringMapPaths(m)
-	if err != nil {
-		log.Fatalf("map %#v cannot parse output paths into gNMI Paths", m)
-	}
-	return p
-}
 
 // validates the leaves and build trap structs
 func buildTraps(prefix *gnmipb.Path, leafs []*gnmipb.Update) (map[string]*trap, error) {

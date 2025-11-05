@@ -917,9 +917,9 @@ func TestStringMapPaths(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := StringMapPaths(tc.stringPathMap)
+			got, err := stringMapPaths(tc.stringPathMap)
 			if tc.wantErr != (err != nil) {
-				t.Fatalf("StringMapPaths(%v) returned an unexpected error: %v", tc.stringPathMap, err)
+				t.Fatalf("stringMapPaths(%v) returned an unexpected error: %v", tc.stringPathMap, err)
 			}
 			if tc.wantErr {
 				return
@@ -928,7 +928,7 @@ func TestStringMapPaths(t *testing.T) {
 				// Sort returned paths by ygot string.
 				sort.SliceStable(gotPath, SortByYgotString(gotPath))
 				if diff := cmp.Diff(tc.want[k], gotPath, protocmp.Transform()); diff != "" {
-					t.Errorf("StringMapPaths(%v) returned an unexpected diff (-want +got): %v", tc.stringPathMap, diff)
+					t.Errorf("stringMapPaths(%v) returned an unexpected diff (-want +got): %v", tc.stringPathMap, diff)
 				}
 			}
 		})
