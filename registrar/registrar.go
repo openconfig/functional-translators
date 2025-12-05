@@ -31,6 +31,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlagmac"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrlaser"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrmount"
+	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrpower"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrqos"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrsubcounters"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrtransceiver"
@@ -61,6 +62,7 @@ var (
 		ftconsts.CiscoXRLagMacFunctionalTranslator:                        ciscoxrlagmac.New(),
 		ftconsts.CiscoXRLaserTranslator:                                   ciscoxrlaser.New(),
 		ftconsts.CiscoXRMountTranslator:                                   ciscoxrmount.New(),
+		ftconsts.CiscoXRPowerTranslator:                                   ciscoxrpower.New(),
 		ftconsts.CiscoXRQosTranslator:                                     ciscoxrqos.New(),
 		ftconsts.CiscoXRSubinterfaceCounterTranslator:                     ciscoxrsubcounters.New(),
 		ftconsts.CiscoXRTransceiverTranslator:                             ciscoxrtransceiver.New(),

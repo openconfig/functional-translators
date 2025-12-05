@@ -88,6 +88,9 @@ const (
 	// CiscoXRMountTranslator is the name of a translator that provides mount information.
 	CiscoXRMountTranslator = "ciscoxr-mount-ft"
 
+	// CiscoXRPowerTranslator is the name of a translator that provides power supply state information.
+	CiscoXRPowerTranslator = "ciscoxr-power-ft"
+
 	// CiscoXRQosTranslator is the name of a translator that provides QOS information.
 	CiscoXRQosTranslator = "ciscoxr-qos-ft"
 

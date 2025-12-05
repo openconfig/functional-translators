@@ -1,0 +1,30 @@
+update:  {
+  timestamp:  1764097996522000000
+  prefix:  {
+    origin:  "openconfig"
+    elem:  {
+      name:  "components"
+    }
+    elem:  {
+      name:  "component"
+      key:  {
+        key:  "name"
+        value:  "0/PT0-PM2"
+      }
+    }
+    elem:  {
+      name:  "state"
+    }
+    target:  "dx05.sql85"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "oper-status"
+      }
+    }
+    val:  {
+      string_val:  "openconfig-platform-types:ACTIVE"
+    }
+  }
+}

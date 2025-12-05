@@ -1,0 +1,108 @@
+update:  {
+  timestamp:  1764091082649000000
+  prefix:  {
+    origin:  "Cisco-IOS-XR-envmon-oper"
+    elem:  {
+      name:  "power-management"
+    }
+    elem:  {
+      name:  "rack"
+      key:  {
+        key:  "name"
+        value:  "0"
+      }
+    }
+    elem:  {
+      name:  "producers"
+    }
+    elem:  {
+      name:  "producer-nodes"
+    }
+    elem:  {
+      name:  "producer-node"
+      key:  {
+        key:  "node"
+        value:  "0/PT0"
+      }
+    }
+    target:  "dx05.sql85"
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-name"
+      }
+    }
+    val:  {
+      string_val:  "PM1"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-type"
+      }
+    }
+    val:  {
+      string_val:  "PSU6.3KW-20A-HV"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-status"
+      }
+    }
+    val:  {
+      string_val:  "OK"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-name"
+      }
+    }
+    val:  {
+      string_val:  "PM2"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-type"
+      }
+    }
+    val:  {
+      string_val:  "PSU6.3KW-20A-HV"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-status"
+      }
+    }
+    val:  {
+      string_val:  "OFFLINE"
+    }
+  }
+}

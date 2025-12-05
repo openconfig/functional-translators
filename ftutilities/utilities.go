@@ -191,6 +191,9 @@ var ValidOrigins = map[string]struct{}{
 
 	// Cisco XR-qos-ma-oper
 	"Cisco-IOS-XR-qos-ma-oper": {},
+
+	// Cisco XR-envmon-oper
+	"Cisco-IOS-XR-envmon-oper": {},
 }
 
 // StringToPath converts a string to a gNMI path, potentially including an origin.
