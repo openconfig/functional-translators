@@ -62,6 +62,10 @@ var (
 		},
 	}
 	paths = ftutilities.MustStringMapPaths(translateMap)
+	// schema is a package-level variable to optimize CiscoXR YANG schema
+	// initialization.
+	schema    *ytypes.Schema
+	schemaErr error
 )
 
 // New creates a functional translator.
@@ -81,6 +85,10 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco subinterface functional translator: %v", err)
 	}
+	schema, schemaErr = xr.Schema()
+	if schemaErr != nil {
+		log.Fatalf("Failed to get schema: %v", schemaErr)
+	}
 	return ft
 }
 
@@ -88,22 +96,22 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	if sr.GetUpdate() == nil {
 		return nil, nil
 	}
-	schema, err := xr.Schema()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get schema: %v", err)
-	}
+	// Make a shallow copy of the schema and replace the root. This prevents state from one
+	// unmarshal operation from leaking into subsequent operations.
+	schemaCopy := *schema
+	schemaCopy.Root = &xr.CiscoDevice{}
 	n := sr.GetUpdate()
 
-	if err := ytypes.UnmarshalNotifications(schema, []*gnmipb.Notification{n}, nil); err != nil {
+	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
-	if schema.Root == nil || schema.Root.(*xr.CiscoDevice) == nil {
+	if schemaCopy.Root == nil || schemaCopy.Root.(*xr.CiscoDevice) == nil {
 		return nil, nil
 	}
 
 	root := &oc.Device{}
-	handleIPv4(schema, root)
-	handleCounters(schema, root)
+	handleIPv4(&schemaCopy, root)
+	handleCounters(&schemaCopy, root)
 
 	return ftutilities.FilterStructToState(root, n.GetTimestamp(), "openconfig", n.GetPrefix().GetTarget())
 }
