@@ -67,6 +67,10 @@ var (
 		},
 	}
 	paths = ftutilities.MustStringMapPaths(translateMap)
+	// schema is a package-level variable to optimize CiscoXR YANG schema
+	// initialization.
+	schema    *ytypes.Schema
+	schemaErr error
 )
 
 // New creates a functional translator.
@@ -86,6 +90,10 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco laser functional translator: %v", err)
 	}
+	schema, schemaErr = xr2431.Schema()
+	if schemaErr != nil {
+		log.Fatalf("Failed to get schema: %v", schemaErr)
+	}
 	return ft
 }
 
@@ -93,17 +101,21 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	if sr.GetUpdate() == nil {
 		return nil, nil
 	}
-	schema, err := xr2431.Schema()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get schema: %v", err)
-	}
+	// Make a shallow copy of the schema and replace the root. This prevents state from one
+	// unmarshal operation from leaking into subsequent operations.
+	schemaCopy := *schema
+	schemaCopy.Root = &xr2431.CiscoDevice{}
 	n := sr.GetUpdate()
 
-	if err := ytypes.UnmarshalNotifications(schema, []*gnmipb.Notification{n}, nil); err != nil {
+	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
+	d, ok := schemaCopy.Root.(*xr2431.CiscoDevice)
+	if !ok || d == nil {
+		return nil, nil
+	}
 
-	portMap := schema.Root.(*xr2431.CiscoDevice).GetOpticsOper().GetOpticsPorts().GetOrCreateOpticsPortMap()
+	portMap := schemaCopy.Root.(*xr2431.CiscoDevice).GetOpticsOper().GetOpticsPorts().GetOrCreateOpticsPortMap()
 	if portMap == nil {
 		return nil, fmt.Errorf("failed to get optics port map")
 	}
