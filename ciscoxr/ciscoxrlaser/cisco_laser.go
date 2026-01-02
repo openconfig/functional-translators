@@ -104,18 +104,15 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	// Make a shallow copy of the schema and replace the root. This prevents state from one
 	// unmarshal operation from leaking into subsequent operations.
 	schemaCopy := *schema
-	schemaCopy.Root = &xr2431.CiscoDevice{}
+	d := &xr2431.CiscoDevice{}
+	schemaCopy.Root = d
 	n := sr.GetUpdate()
 
 	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
-	d, ok := schemaCopy.Root.(*xr2431.CiscoDevice)
-	if !ok || d == nil {
-		return nil, nil
-	}
 
-	portMap := schemaCopy.Root.(*xr2431.CiscoDevice).GetOpticsOper().GetOpticsPorts().GetOrCreateOpticsPortMap()
+	portMap := d.GetOpticsOper().GetOpticsPorts().GetOrCreateOpticsPortMap()
 	if portMap == nil {
 		return nil, fmt.Errorf("failed to get optics port map")
 	}

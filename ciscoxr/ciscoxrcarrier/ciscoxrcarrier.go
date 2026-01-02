@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	log "github.com/golang/glog"
-	xr2431 "github.com/openconfig/functional-translators/ciscoxr/ciscoxrcarrier/yang/native"
 	"github.com/openconfig/ygot/ytypes"
+	xr2431 "github.com/openconfig/functional-translators/ciscoxr/ciscoxrcarrier/yang/native"
 	"github.com/openconfig/functional-translators/ftconsts"
 	"github.com/openconfig/functional-translators/ftutilities"
 	"github.com/openconfig/functional-translators/translator"
@@ -35,6 +35,10 @@ var (
 		},
 	}
 	paths = ftutilities.MustStringMapPaths(translateMap)
+	// schema is a package-level variable to optimize CiscoXR YANG schema
+	// initialization.
+	schema    *ytypes.Schema
+	schemaErr error
 )
 
 // New creates a functional translator.
@@ -54,6 +58,10 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco carrier functional translator: %v", err)
 	}
+	schema, schemaErr = xr2431.Schema()
+	if schemaErr != nil {
+		log.Fatalf("Failed to get schema: %v", schemaErr)
+	}
 	return ft
 }
 
@@ -64,14 +72,15 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	n := sr.GetUpdate()
 	ts := n.GetTimestamp()
 	target := sr.GetUpdate().GetPrefix().GetTarget()
-	schema, err := xr2431.Schema()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get schema: %v", err)
-	}
-	if err := ytypes.UnmarshalNotifications(schema, []*gnmipb.Notification{n}, nil); err != nil {
+	// Make a shallow copy of the schema and replace the root. This prevents state from one
+	// unmarshal operation from leaking into subsequent operations.
+	schemaCopy := *schema
+	d := &xr2431.CiscoDevice{}
+	schemaCopy.Root = d
+	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
-	carrierIntfMap := schema.Root.(*xr2431.CiscoDevice).GetInfraStatistics().GetInterfaces().GetOrCreateInterfaceMap()
+	carrierIntfMap := d.GetInfraStatistics().GetInterfaces().GetOrCreateInterfaceMap()
 	updates := make([]*gnmipb.Update, 0)
 	for name, intf := range carrierIntfMap {
 		phyCarrierCounter := *intf.GetGenericCounters().CarrierTransitions
