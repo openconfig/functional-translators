@@ -45,6 +45,10 @@ var (
 		},
 	}
 	paths = ftutilities.MustStringMapPaths(translateMap)
+	// schema is a package-level variable to optimize CiscoXR YANG schema
+	// initialization.
+	schema    *ytypes.Schema
+	schemaErr error
 )
 
 // New creates a functional translator.
@@ -64,6 +68,10 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco ARP functional translator: %v", err)
 	}
+	schema, schemaErr = xr2431.Schema()
+	if schemaErr != nil {
+		log.Fatalf("Failed to get schema: %v", schemaErr)
+	}
 	return ft
 }
 
@@ -71,18 +79,19 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	if sr.GetUpdate() == nil {
 		return nil, nil
 	}
-	schema, err := xr2431.Schema()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get schema: %v", err)
-	}
+	// Make a shallow copy of the schema and replace the root. This prevents state from one
+	// unmarshal operation from leaking into subsequent operations.
+	schemaCopy := *schema
+	d := &xr2431.CiscoDevice{}
+	schemaCopy.Root = d
 	n := sr.GetUpdate()
 
-	if err := ytypes.UnmarshalNotifications(schema, []*gnmipb.Notification{n}, nil); err != nil {
+	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
 	lcRoot := &lc.Device{}
-	if schema.Root.(*xr2431.CiscoDevice).GetArp() != nil {
-		nodeMap := schema.Root.(*xr2431.CiscoDevice).GetArp().GetNodes().GetOrCreateNodeMap()
+	if d.GetArp() != nil {
+		nodeMap := d.GetArp().GetNodes().GetOrCreateNodeMap()
 		for _, node := range nodeMap {
 			entryMap := node.GetOrCreateEntries().GetOrCreateEntryMap()
 			for _, entry := range entryMap {
@@ -97,8 +106,8 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			}
 		}
 	}
-	if schema.Root.(*xr2431.CiscoDevice).GetIpv6NodeDiscovery() != nil {
-		ndNodeMap := schema.Root.(*xr2431.CiscoDevice).GetIpv6NodeDiscovery().GetNodes().GetOrCreateNodeMap()
+	if d.GetIpv6NodeDiscovery() != nil {
+		ndNodeMap := d.GetIpv6NodeDiscovery().GetNodes().GetOrCreateNodeMap()
 		for _, node := range ndNodeMap {
 			neighborMap := node.GetNeighborInterfaces().GetOrCreateNeighborInterfaceMap()
 			for _, neighbor := range neighborMap {

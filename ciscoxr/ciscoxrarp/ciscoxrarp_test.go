@@ -49,7 +49,7 @@ func TestTranslate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
 			}
-			gotSR, err := translate(inputSR)
+			gotSR, err := New().Translate(inputSR)
 			errorMatchesExpectation := (err != nil) == test.expectError
 			if !errorMatchesExpectation {
 				t.Fatalf("Unexpected error result returned from translate() = %v, want error %t", err, test.expectError)
