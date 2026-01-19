@@ -156,10 +156,14 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		}
 		for pmName, status := range powerStatusMap {
 			switch status {
-			case "OK":
+			case "OK", "FPD UPGD IN PROG":
 				ocRoot.GetOrCreateComponents().GetOrCreateComponent(pmName).GetOrCreateState().OperStatus = oc.OpenconfigPlatformTypes_COMPONENT_OPER_STATUS_ACTIVE
-			default:
+			case "FAILED", "NO PWR", "OFFLINE":
 				ocRoot.GetOrCreateComponents().GetOrCreateComponent(pmName).GetOrCreateState().OperStatus = oc.OpenconfigPlatformTypes_COMPONENT_OPER_STATUS_INACTIVE
+			default:
+				// handel unknown PM status
+				ocRoot.GetOrCreateComponents().GetOrCreateComponent(pmName).GetOrCreateState().OperStatus = oc.OpenconfigPlatformTypes_COMPONENT_OPER_STATUS_UNSET
+				log.Warningf("Unknown power module status: %v for power module: %v", status, pmName)
 			}
 		}
 		return ftutilities.FilterStructToState(ocRoot, n.GetTimestamp(), "openconfig", n.GetPrefix().GetTarget())

@@ -13,6 +13,29 @@ update: {
         name: "component"
         key: {
           key: "name"
+          value: "0/PT0-PM0"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "oper-status"
+      }
+    }
+    val: {
+      string_val:  "ACTIVE"
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "components"
+      }
+      elem: {
+        name: "component"
+        key: {
+          key: "name"
           value: "0/PT0-PM1"
         }
       }

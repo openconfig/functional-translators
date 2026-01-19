@@ -37,6 +37,45 @@ update:  {
       }
     }
     val:  {
+      string_val:  "0/PT0-PM0"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-type"
+      }
+    }
+    val:  {
+      string_val:  "PSU6.3KW-20A-HV"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-status"
+      }
+    }
+    val:  {
+      string_val:  "FPD UPGD IN PROG"
+    }
+  }
+  update:  {
+    path:  {
+      elem:  {
+        name:  "pem-info-array"
+      }
+      elem:  {
+        name:  "node-name"
+      }
+    }
+    val:  {
       string_val:  "0/PT0-PM1"
     }
   }
