@@ -17,6 +17,7 @@ package ciscoxrtransceiver
 
 import (
 	"fmt"
+	"path"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/functional-translators/ftconsts"
@@ -26,35 +27,62 @@ import (
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
+const (
+	// CiscoXR native path prefix.
+	ciscoOpticsPrefix = "/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info"
+
+	// CiscoXR native path suffixes.
+	derivedOpticsTypeSuffix = "derived-optics-type"
+	laneIndexSuffix         = "lane-data/lane-index"
+	receivePowerSuffix      = "lane-data/receive-power"
+	laserBiasSuffix         = "lane-data/laser-bias-current-milli-amps"
+	transmitPowerSuffix     = "lane-data/transmit-power"
+	formFactorSuffix        = "form-factor"
+	vendorNameSuffix        = "transceiver-info/vendor-name"
+	vendorPartSuffix        = "transceiver-info/optics-vendor-part"
+	vendorRevSuffix         = "transceiver-info/optics-vendor-rev"
+)
+
 var (
+	// CiscoXR native paths.
+	ciscoDerivedOpticsType = path.Join(ciscoOpticsPrefix, derivedOpticsTypeSuffix)
+	ciscoLaneIndex         = path.Join(ciscoOpticsPrefix, laneIndexSuffix)
+
 	translateMap = map[string][]string{
 		"/openconfig/components/component/transceiver/physical-channels/channel/state/index": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/lane-index",
+			ciscoDerivedOpticsType,
+			ciscoLaneIndex,
 		},
 		"/openconfig/components/component/transceiver/physical-channels/channel/state/input-power/instant": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/derived-optics-type",
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/lane-index",
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/receive-power",
+			ciscoDerivedOpticsType,
+			ciscoLaneIndex,
+			path.Join(ciscoOpticsPrefix, receivePowerSuffix),
 		},
 		"/openconfig/components/component/transceiver/physical-channels/channel/state/laser-bias-current/instant": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/laser-bias-current-milli-amps",
+			ciscoDerivedOpticsType,
+			ciscoLaneIndex,
+			path.Join(ciscoOpticsPrefix, laserBiasSuffix),
 		},
 		"/openconfig/components/component/transceiver/physical-channels/channel/state/output-power/instant": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/derived-optics-type",
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/lane-index",
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/lane-data/transmit-power",
+			ciscoDerivedOpticsType,
+			ciscoLaneIndex,
+			path.Join(ciscoOpticsPrefix, transmitPowerSuffix),
 		},
 		"/openconfig/components/component/transceiver/state/form-factor": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/form-factor",
+			ciscoDerivedOpticsType,
+			path.Join(ciscoOpticsPrefix, formFactorSuffix),
 		},
 		"/openconfig/components/component/transceiver/state/vendor": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/transceiver-info/vendor-name",
+			ciscoDerivedOpticsType,
+			path.Join(ciscoOpticsPrefix, vendorNameSuffix),
 		},
 		"/openconfig/components/component/transceiver/state/vendor-part": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/transceiver-info/optics-vendor-part",
+			ciscoDerivedOpticsType,
+			path.Join(ciscoOpticsPrefix, vendorPartSuffix),
 		},
 		"/openconfig/components/component/transceiver/state/vendor-rev": {
-			"/Cisco-IOS-XR-controller-optics-oper/optics-oper/optics-ports/optics-port/optics-info/transceiver-info/optics-vendor-rev",
+			ciscoDerivedOpticsType,
+			path.Join(ciscoOpticsPrefix, vendorRevSuffix),
 		},
 	}
 	expectedOpticsPrefix = &gnmipb.Path{
@@ -262,14 +290,26 @@ func (u *update) toOpenConfig() *gnmipb.Update {
 	}
 }
 
-func dbmValue(u *gnmipb.Update) (*gnmipb.TypedValue, error) {
-	dbmFactor := 100.0
+func scaleToDouble(u *gnmipb.Update, factor float64) (*gnmipb.TypedValue, error) {
 	switch t := u.GetVal().GetValue().(type) {
 	case *gnmipb.TypedValue_IntVal:
-		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: float64(t.IntVal) / dbmFactor}}, nil
+		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: float64(t.IntVal) / factor}}, nil
+	case *gnmipb.TypedValue_UintVal:
+		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: float64(t.UintVal) / factor}}, nil
 	default:
 		return nil, fmt.Errorf("unexpected value type %T received in update %v", t, u)
 	}
+}
+
+func dbmValue(u *gnmipb.Update) (*gnmipb.TypedValue, error) {
+	dbmFactor := 100.0
+	return scaleToDouble(u, dbmFactor)
+}
+
+func milliAmpsValue(u *gnmipb.Update) (*gnmipb.TypedValue, error) {
+	// Native path returns value in units of 0.01mA while OC path expects mA.
+	milliAmpsFactor := 100.0
+	return scaleToDouble(u, milliAmpsFactor)
 }
 
 func isLaneIndex(u *gnmipb.Update) bool {
@@ -303,15 +343,20 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 				v   *gnmipb.TypedValue
 				err error
 			)
+			v = u.GetVal()
+			var converter func(*gnmipb.Update) (*gnmipb.TypedValue, error)
 			switch u.GetPath().GetElem()[len(u.GetPath().GetElem())-1].GetName() {
 			case receivePower, transmitPower:
-				v, err = dbmValue(u)
+				converter = dbmValue
+			case laserBiasCurrentMilliAmps:
+				converter = milliAmpsValue
+			}
+			if converter != nil {
+				v, err = converter(u)
 				if err != nil {
 					log.Errorf("Failed to translate update %v: %v", u, err)
 					continue
 				}
-			default:
-				v = u.GetVal()
 			}
 			up := &update{
 				fullPath:   fullPath,

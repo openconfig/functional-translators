@@ -31,7 +31,7 @@ func TestTranslate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "success, no optics info length != 4, don't report",
+			name: "NoOpticsInfo_LengthNot4",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -81,7 +81,7 @@ func TestTranslate(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "success, no optics info length 4",
+			name: "NoOpticsInfo_Length4",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -187,7 +187,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name",
+			name: "ModifiedPortName_400G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -301,7 +301,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name HundredGigE",
+			name: "ModifiedPortName_100G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -415,7 +415,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name FourHundredGigE (4x100G)",
+			name: "ModifiedPortName_4x100G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -529,7 +529,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name FortyGigE (4x10G)",
+			name: "ModifiedPortName_4x10G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -643,7 +643,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name TenGigE",
+			name: "ModifiedPortName_10G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -757,7 +757,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name TwoHundredGigE (2x100G)",
+			name: "ModifiedPortName_2x100G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -871,7 +871,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, modified port name FortyGigE (40G)",
+			name: "ModifiedPortName_40G",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -985,7 +985,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "no updates",
+			name: "NoUpdates",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1007,7 +1007,7 @@ func TestTranslate(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "unexpected path",
+			name: "UnexpectedPath",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1034,7 +1034,7 @@ func TestTranslate(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "unexpected value type",
+			name: "UnexpectedValueType",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1084,7 +1084,7 @@ func TestTranslate(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "success, laser bias current",
+			name: "LaserBiasCurrent_Success",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1100,6 +1100,14 @@ func TestTranslate(t *testing.T) {
 							Target: "dx05.sql85-laarz",
 						},
 						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "derived-optics-type"},
+									},
+								},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "400G"}},
+							},
 							{
 								Path: &gnmipb.Path{
 									Elem: []*gnmipb.PathElem{
@@ -1135,7 +1143,7 @@ func TestTranslate(t *testing.T) {
 								Path: &gnmipb.Path{
 									Elem: []*gnmipb.PathElem{
 										{Name: "components"},
-										{Name: "component", Key: map[string]string{"name": "Optics0/0/0/0"}},
+										{Name: "component", Key: map[string]string{"name": "FourHundredGigE0/0/0/0"}},
 										{Name: "transceiver"},
 										{Name: "physical-channels"},
 										{Name: "channel", Key: map[string]string{"index": "0"}},
@@ -1149,7 +1157,7 @@ func TestTranslate(t *testing.T) {
 								Path: &gnmipb.Path{
 									Elem: []*gnmipb.PathElem{
 										{Name: "components"},
-										{Name: "component", Key: map[string]string{"name": "Optics0/0/0/0"}},
+										{Name: "component", Key: map[string]string{"name": "FourHundredGigE0/0/0/0"}},
 										{Name: "transceiver"},
 										{Name: "physical-channels"},
 										{Name: "channel", Key: map[string]string{"index": "0"}},
@@ -1158,7 +1166,7 @@ func TestTranslate(t *testing.T) {
 										{Name: "instant"},
 									},
 								},
-								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 12345}},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: 123.45}},
 							},
 						},
 					},
@@ -1166,7 +1174,82 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, form factor",
+			name: "LaserBiasCurrent_InvalidValueType",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1749043183927000000,
+						Prefix: &gnmipb.Path{
+							Origin: "Cisco-IOS-XR-controller-optics-oper",
+							Elem: []*gnmipb.PathElem{
+								{Name: "optics-oper"},
+								{Name: "optics-ports"},
+								{Name: "optics-port", Key: map[string]string{"name": "Optics0/0/0/0"}},
+								{Name: "optics-info"},
+							},
+							Target: "dx05.sql85-laarz",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "derived-optics-type"},
+									},
+								},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "400G"}},
+							},
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "lane-data"},
+										{Name: "lane-index"},
+									},
+								},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+							},
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "lane-data"},
+										{Name: "laser-bias-current-milli-amps"},
+									},
+								},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "12345"}},
+							},
+						},
+					},
+				},
+			},
+			want: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1749043183927000000,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "dx05.sql85-laarz",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "components"},
+										{Name: "component", Key: map[string]string{"name": "FourHundredGigE0/0/0/0"}},
+										{Name: "transceiver"},
+										{Name: "physical-channels"},
+										{Name: "channel", Key: map[string]string{"index": "0"}},
+										{Name: "state"},
+										{Name: "index"},
+									},
+								},
+								Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "FormFactor_Success",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1221,7 +1304,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, vendor name",
+			name: "VendorName_Success",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1277,7 +1360,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, vendor part",
+			name: "VendorPart_Success",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
@@ -1333,7 +1416,7 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 		{
-			name: "success, vendor rev",
+			name: "VendorRev_Success",
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: &gnmipb.Notification{
