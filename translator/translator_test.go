@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmpopts/cmpopts"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/testing/protocmp"
 	"github.com/openconfig/functional-translators/ftutilities"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"

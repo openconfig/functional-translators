@@ -20,7 +20,7 @@ import (
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
 	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
-	"google3/third_party/openconfig/functional_translators/arista/aristaqos/aristaqosaggregatecounters"
+	"github.com/openconfig/functional-translators/arista/aristaqosaggregatecounters"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrcarrier"

@@ -29,6 +29,7 @@ bash ciscoxr/ciscoxrfragment/generate.sh
 bash ciscoxr/ciscoxrlagmac/generate.sh
 bash ciscoxr/ciscoxrlaser/generate.sh
 bash ciscoxr/ciscoxrmount/generate.sh
+bash ciscoxr/ciscoxrpower/generate.sh
 bash ciscoxr/ciscoxrqos/generate.sh
 bash ciscoxr/ciscoxrsubcounters/generate.sh
 # go/keep-sorted end
