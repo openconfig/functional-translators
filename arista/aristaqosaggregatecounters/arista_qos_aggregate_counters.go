@@ -182,36 +182,30 @@ func parsePath(path *gnmipb.Path) (interfaceName, simpleQueueName, leafName stri
 	}
 }
 
-// returnPathForQOSAggregatedCounter creates a gNMI path for an aggregated QoS counter on a given port-channel.
-func returnPathForQOSAggregatedCounter(interfaceName, queueID, leafName string) *gnmipb.Path {
-	return &gnmipb.Path{
-		Elem: []*gnmipb.PathElem{
-			{Name: "qos"}, {Name: "interfaces"},
-			{
-				Name: "interface",
-				Key: map[string]string{
-					"interface-id": interfaceName,
-				},
-			},
-			{Name: "output"}, {Name: "queues"},
-			{
-				Name: "queue",
-				Key: map[string]string{
-					"name": queueID,
-				},
-			},
-			{Name: "state"},
-			{Name: leafName},
-		},
-	}
-}
-
 // newCounterUpdate creates a gNMI update for a given port-channel, queueID, and counter leaf.
-func newCounterUpdate(pcName, newCompositeQueueID, leafName string, value uint64) *gnmipb.Update {
-	path := returnPathForQOSAggregatedCounter(pcName, newCompositeQueueID, leafName)
+func newCounterUpdate(interfaceID, queueName, leafName string, value uint64) *gnmipb.Update {
 	return &gnmipb.Update{
-		Path: path,
-		Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: value}},
+		Path: &gnmipb.Path{
+			Elem: []*gnmipb.PathElem{
+				{Name: "qos"}, {Name: "interfaces"},
+				{
+					Name: "interface",
+					Key: map[string]string{
+						"interface-id": interfaceID,
+					},
+				},
+				{Name: "output"}, {Name: "queues"},
+				{
+					Name: "queue",
+					Key: map[string]string{
+						"name": queueName,
+					},
+				},
+				{Name: "state"},
+				{Name: leafName},
+			},
+		},
+		Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: value}},
 	}
 }
 
@@ -227,30 +221,13 @@ func aggregateAndBuildUpdates(target, pcName string) []*gnmipb.Update {
 	}
 
 	// aggregatedCounters maps a simple queue name to its summed counters.
-	aggregatedCounters := make(map[string]*ftutilities.QueueCounters)
-
-	// Sum counters from all members for each queue.
-	for _, memberInfo := range pcInfo.CloneMembers() {
-		// CloneQueues provides a thread-safe copy of the member's counters.
-		for queueID, counters := range memberInfo.CloneQueues() {
-			agg, ok := aggregatedCounters[queueID]
-			if !ok {
-				agg = new(ftutilities.QueueCounters)
-				aggregatedCounters[queueID] = agg
-			}
-
-			agg.TxBytes += counters.TxBytes
-			agg.TxPackets += counters.TxPackets
-			agg.DroppedBytes += counters.DroppedBytes
-			agg.DroppedPackets += counters.DroppedPackets
-		}
-	}
-	var outgoingUpdates []*gnmipb.Update
+	aggregatedCounters := pcInfo.AggregateCounters()
+	outgoingUpdates := make([]*gnmipb.Update, 0, len(aggregatedCounters)*4)
 	// Build gNMI Updates from the aggregated results.
 	for simpleQueueName, counters := range aggregatedCounters {
 		// Create the new composite queue ID for the aggregated path.
 		// e.g., if pcName is "Port-Channel10" and simpleQueueName is "0", this becomes "Port-Channel10-0".
-		newCompositeQueueID := fmt.Sprintf("%s-%s", pcName, simpleQueueName)
+		newCompositeQueueID := pcName + "-" + simpleQueueName
 
 		outgoingUpdates = append(outgoingUpdates,
 			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitOctets, counters.TxBytes),

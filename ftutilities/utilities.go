@@ -723,22 +723,6 @@ func (m *MemberInterfaceInfo) SetDroppedBytes(queueID string, val uint64) {
 	q.DroppedBytesSet = true
 }
 
-// CloneQueues returns a copy of the Queues map.
-func (m *MemberInterfaceInfo) CloneQueues() map[string]*QueueCounters {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	// Clone the map to avoid concurrent access issues during iteration
-	clonedMap := make(map[string]*QueueCounters, len(m.Queues))
-	for k, v := range m.Queues {
-		// Clone the counter struct itself
-		if v != nil {
-			c := *v
-			clonedMap[k] = &c
-		}
-	}
-	return clonedMap
-}
-
 // --- PortChannelInfo Methods ---
 
 // CreateOrRetrieveMember returns the MemberInterfaceInfo for the given interface name,
@@ -776,16 +760,29 @@ func (p *PortChannelInfo) ClearMemberInfo(intf string) {
 	delete(p.Members, intf)
 }
 
-// CloneMembers returns a thread-safe copy of the Members map.
-func (p *PortChannelInfo) CloneMembers() map[string]*MemberInterfaceInfo {
+// AggregateCounters calculates the sum of counters for all members of a port-channel.
+// It returns a map of queueID to aggregated QueueCounters.
+func (p *PortChannelInfo) AggregateCounters() map[string]*QueueCounters {
+	aggregatedCounters := make(map[string]*QueueCounters)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	// Clone the map to avoid race conditions during iteration.
-	clonedMap := make(map[string]*MemberInterfaceInfo, len(p.Members))
-	for k, v := range p.Members {
-		clonedMap[k] = v
+
+	for _, memberInfo := range p.Members {
+		memberInfo.mu.Lock()
+		for queueID, counters := range memberInfo.Queues {
+			agg, ok := aggregatedCounters[queueID]
+			if !ok {
+				agg = new(QueueCounters)
+				aggregatedCounters[queueID] = agg
+			}
+			agg.TxBytes += counters.TxBytes
+			agg.TxPackets += counters.TxPackets
+			agg.DroppedBytes += counters.DroppedBytes
+			agg.DroppedPackets += counters.DroppedPackets
+		}
+		memberInfo.mu.Unlock()
 	}
-	return clonedMap
+	return aggregatedCounters
 }
 
 // --- TargetQoSInfo Methods ---
