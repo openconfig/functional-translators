@@ -82,10 +82,15 @@ func Join(p1, p2 *gnmipb.Path) *gnmipb.Path {
 	if target == "" {
 		target = p2.GetTarget()
 	}
+
+	elems := make([]*gnmipb.PathElem, 0, len(p1.GetElem())+len(p2.GetElem()))
+	elems = append(elems, p1.GetElem()...)
+	elems = append(elems, p2.GetElem()...)
+
 	return &gnmipb.Path{
 		Origin: origin,
 		Target: target,
-		Elem:   append(p1.GetElem(), p2.GetElem()...),
+		Elem:   elems,
 	}
 }
 

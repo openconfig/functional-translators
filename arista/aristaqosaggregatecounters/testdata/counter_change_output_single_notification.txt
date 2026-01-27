@@ -36,7 +36,7 @@ update: {
         name: "state"
       }
       elem: {
-        name: "transmit-pkts"
+        name: "dropped-octets"
       }
       target: "cx02.mtv95"
     }
@@ -76,7 +76,7 @@ update: {
         name: "state"
       }
       elem: {
-        name: "transmit-pkts"
+        name: "dropped-pkts"
       }
       target: "cx02.mtv95"
     }
@@ -116,7 +116,7 @@ update: {
         name: "state"
       }
       elem: {
-        name: "transmit-pkts"
+        name: "transmit-octets"
       }
       target: "cx02.mtv95"
     }
