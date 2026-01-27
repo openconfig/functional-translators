@@ -403,7 +403,10 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		}
 
 		// This ensures the singleton port QOS counters are preserved.
-		passthroughUpdates = append(passthroughUpdates, update)
+		passthroughUpdates = append(passthroughUpdates, &gnmipb.Update{
+			Path: fullPath,
+			Val:  update.GetVal(),
+		})
 		val := update.GetVal().GetUintVal()
 		handleQoSUpdate(targetInfo, interfaceName, queueIDStr, leafName, val, impactedPortChannels)
 	}

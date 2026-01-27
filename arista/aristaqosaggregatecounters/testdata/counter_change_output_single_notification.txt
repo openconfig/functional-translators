@@ -1,0 +1,167 @@
+update: {
+  timestamp: 1759872098891949974
+  prefix: {
+    origin: "openconfig"
+    target: "cx02.mtv95"
+  }
+  update: {
+    path: {
+      elem: {
+        name: "qos"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-id"
+          value: "Ethernet3/36/2"
+        }
+      }
+      elem: {
+        name: "output"
+      }
+      elem: {
+        name: "queues"
+      }
+      elem: {
+        name: "queue"
+        key: {
+          key: "name"
+          value: "Ethernet3/36/2-0"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "transmit-pkts"
+      }
+      target: "cx02.mtv95"
+    }
+    val: {
+      uint_val: 0
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "qos"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-id"
+          value: "Ethernet3/36/2"
+        }
+      }
+      elem: {
+        name: "output"
+      }
+      elem: {
+        name: "queues"
+      }
+      elem: {
+        name: "queue"
+        key: {
+          key: "name"
+          value: "Ethernet3/36/2-0"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "transmit-pkts"
+      }
+      target: "cx02.mtv95"
+    }
+    val: {
+      uint_val: 0
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "qos"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-id"
+          value: "Ethernet3/36/2"
+        }
+      }
+      elem: {
+        name: "output"
+      }
+      elem: {
+        name: "queues"
+      }
+      elem: {
+        name: "queue"
+        key: {
+          key: "name"
+          value: "Ethernet3/36/2-0"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "transmit-pkts"
+      }
+      target: "cx02.mtv95"
+    }
+    val: {
+      uint_val: 0
+    }
+  }
+  update: {
+    path: {
+      elem: {
+        name: "qos"
+      }
+      elem: {
+        name: "interfaces"
+      }
+      elem: {
+        name: "interface"
+        key: {
+          key: "interface-id"
+          value: "Ethernet3/36/2"
+        }
+      }
+      elem: {
+        name: "output"
+      }
+      elem: {
+        name: "queues"
+      }
+      elem: {
+        name: "queue"
+        key: {
+          key: "name"
+          value: "Ethernet3/36/2-0"
+        }
+      }
+      elem: {
+        name: "state"
+      }
+      elem: {
+        name: "transmit-pkts"
+      }
+      target: "cx02.mtv95"
+    }
+    val: {
+      uint_val: 0
+    }
+  }
+}

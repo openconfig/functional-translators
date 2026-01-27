@@ -118,6 +118,12 @@ func TestTranslate(t *testing.T) {
 			wantOutputPath: "testdata/join_pc_and_counter_update_output.txt",
 		},
 		{
+			name:           "multiple_updates_in_a_single_notification",
+			setup:          ResetGlobalCache,
+			inputPath:      "testdata/counter_change_input_single_notification.txt",
+			wantOutputPath: "testdata/counter_change_output_single_notification.txt",
+		},
+		{
 			name:           "Second member joins, triggering re-aggregation",
 			setup:          setupStateForTwoMembers, // Pre-populates cache with the first member for cx12.sql12
 			inputPath:      "testdata/two_members_aggregation_input.txt",
