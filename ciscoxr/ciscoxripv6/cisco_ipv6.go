@@ -24,25 +24,8 @@ import (
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
-var (
-	translateMap = map[string][]string{
-		"/openconfig/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/ip": {
-			"/Cisco-IOS-XR-ipv6-ma-oper/ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/address",
-		},
-		"/openconfig/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/prefix-length": {
-			"/Cisco-IOS-XR-ipv6-ma-oper/ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/address",
-			"/Cisco-IOS-XR-ipv6-ma-oper/ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/prefix-length",
-		},
-	}
-	paths = ftutilities.MustStringMapPaths(translateMap)
-)
-
 const (
-	subinterfaceZero = "0"
-
-	// These paths are stripped of their origin and both have length 10.
-	// addressPath : "ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/address/address"
-	// prefixLengthPath : "ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/address/prefix-length"
+	subinterfaceZero   = "0"
 	validPathElemCount = 10
 
 	addressPath      = "/Cisco-IOS-XR-ipv6-ma-oper/ipv6-network/nodes/node/interface-data/vrfs/vrf/briefs/brief/address/address"
@@ -51,6 +34,19 @@ const (
 	// Interface index is given under the `brief` element
 	interfaceNameIndex = 7
 	interfaceNameKey   = "interface-name"
+)
+
+var (
+	translateMap = map[string][]string{
+		"/openconfig/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/ip": {
+			addressPath,
+		},
+		"/openconfig/interfaces/interface/subinterfaces/subinterface/ipv6/addresses/address/state/prefix-length": {
+			addressPath,
+			prefixLengthPath,
+		},
+	}
+	paths = ftutilities.MustStringMapPaths(translateMap)
 )
 
 type interfaceData struct {
