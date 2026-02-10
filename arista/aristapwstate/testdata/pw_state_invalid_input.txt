@@ -1,0 +1,20 @@
+update: {
+  timestamp: 123456789
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: {name: "Sysdb"}
+      elem: {name: "pseudowire"}
+      elem: {name: "agent"}
+      elem: {name: "pseudowirePatchInfoColl"}
+      elem: {name: "patchInfo"}
+      elem: {name: "patch-1001"}
+      elem: {name: "patchState"}
+    }
+    val: {
+      string_val: "invalidValue"
+    }
+  }
+}

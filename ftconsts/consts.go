@@ -52,6 +52,9 @@ const (
 	// AristaMacsecCountersTranslator is the name of the Arista macsec counters functional translator.
 	AristaMacsecCountersTranslator = "arista-macsec-counters-ft"
 
+	// AristaPWStateFunctionalTranslator is the name of the Arista pseudowire state functional translator.
+	AristaPWStateFunctionalTranslator = "arista-pw-state-ft"
+
 	// AristaQoSAggregateCountersTranslator is the name of the Arista QoS aggregate counters functional translator.
 	AristaQoSAggregateCountersTranslator = "arista-qos-aggregate-counters-ft"
 

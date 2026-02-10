@@ -1,0 +1,14 @@
+update: {
+  prefix: {
+    origin: "eos_native"
+  }
+  delete: {
+    elem: {name: "Sysdb"}
+    elem: {name: "pseudowire"}
+    elem: {name: "agent"}
+    elem: {name: "pseudowirePatchInfoColl"}
+    elem: {name: "patchInfo"}
+    elem: {name: "patch-1001"}
+  }
+  timestamp: 123456789
+}

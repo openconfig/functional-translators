@@ -1,0 +1,26 @@
+update: {
+  prefix: {
+    origin: "openconfig"
+  }
+  delete: {
+    elem: {name: "network-instances"}
+    elem: {
+      name: "network-instance"
+      key: {
+        key: "name"
+        value: "default"
+      }
+    }
+    elem: {name: "connection-points"}
+    elem: {
+      name: "connection-point"
+      key: {
+        key: "connection-point-id"
+        value: "patch-1001"
+      }
+    }
+    elem: {name: "state"}
+    elem: {name: "status"}
+  }
+  timestamp: 123456789
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
 	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
+	"github.com/openconfig/functional-translators/arista/aristapwstate"
 	"github.com/openconfig/functional-translators/arista/aristaqosaggregatecounters"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxr8000icresource"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrarp"
@@ -51,6 +52,7 @@ var (
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
 		ftconsts.AristaMacsecCountersTranslator:                           aristamacseccounters.New(),
 		ftconsts.AristaMacsecStateFunctionalTranslator:                    aristamacsecstate.New(),
+		ftconsts.AristaPWStateFunctionalTranslator:                        aristapwstate.New(),
 		ftconsts.AristaQoSAggregateCountersTranslator:                     aristaqosaggregatecounters.New(),
 		ftconsts.CiscoXR8000IntegratedCircuitResourceFunctionalTranslator: ciscoxr8000icresource.New(),
 		ftconsts.CiscoXRArpTranslator:                                     ciscoxrarp.New(),
