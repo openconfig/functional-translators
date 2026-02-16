@@ -31,12 +31,12 @@ func TestMetadataMatch(t *testing.T) {
 		wantMatch  bool
 	}{
 		{
-			name:       "empty requirement catching all",
+			name:       "empty_requirement_catching_all",
 			ftMetaData: nil,
 			wantMatch:  true,
 		},
 		{
-			name: "partial requirement",
+			name: "partial_requirement",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor: "vendor",
@@ -45,7 +45,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "requirement exact match",
+			name: "requirement_exact_match",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor:          "vendor",
@@ -56,7 +56,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "requirement case insensitive match",
+			name: "requirement_case_insensitive_match",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor:          "Vendor",
@@ -67,7 +67,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "match one",
+			name: "match_one",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor: "non-vendor",
@@ -79,7 +79,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "match all",
+			name: "match_all",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor: "vendor",
@@ -91,7 +91,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name: "match none",
+			name: "match_none",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor: "non-vendor",
@@ -106,7 +106,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name: "vendor mismatch",
+			name: "vendor_mismatch",
 			ftMetaData: []*FTMetadata{
 				{
 					Vendor: "non-vendor",
@@ -115,7 +115,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name: "sw mismatch",
+			name: "sw_mismatch",
 			ftMetaData: []*FTMetadata{
 				{
 					SoftwareVersion: "non-sw",
@@ -124,7 +124,7 @@ func TestMetadataMatch(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name: "hw mismatch",
+			name: "hw_mismatch",
 			ftMetaData: []*FTMetadata{
 				{
 					HardwareModel: "non-hw",
@@ -160,6 +160,151 @@ func TestMetadataMatch(t *testing.T) {
 	}
 }
 
+func TestCompareVersions(t *testing.T) {
+	tests := []struct {
+		name string
+		v1   string
+		v2   string
+		want CompareResult
+	}{
+		{
+			name: "equal",
+			v1:   "1.0",
+			v2:   "1.0",
+			want: Equal,
+		},
+		{
+			name: "equal_with_zero_padding",
+			v1:   "1.0",
+			v2:   "1.0.0",
+			want: Equal,
+		},
+		{
+			name: "less",
+			v1:   "1.0",
+			v2:   "2.0",
+			want: LessThan,
+		},
+		{
+			name: "greater",
+			v1:   "2.0",
+			v2:   "1.0",
+			want: GreaterThan,
+		},
+		{
+			name: "less_with_more_components",
+			v1:   "1.0",
+			v2:   "1.0.1",
+			want: LessThan,
+		},
+		{
+			name: "greater_with_more_components",
+			v1:   "1.0.1",
+			v2:   "1.0",
+			want: GreaterThan,
+		},
+		{
+			name: "letter_components_equal",
+			v1:   "1.A",
+			v2:   "1.A",
+			want: Equal,
+		},
+		{
+			name: "letter_components_less",
+			v1:   "1.A",
+			v2:   "1.B",
+			want: LessThan,
+		},
+		{
+			name: "letter_components_greater",
+			v1:   "1.B",
+			v2:   "1.A",
+			want: GreaterThan,
+		},
+		{
+			name: "letter_vs_number_less",
+			v1:   "1.9",
+			v2:   "1.A",
+			want: LessThan,
+		},
+		{
+			name: "letter_vs_number_greater",
+			v1:   "1.A",
+			v2:   "1.9",
+			want: GreaterThan,
+		},
+		{
+			name: "case_insensitive",
+			v1:   "1.a",
+			v2:   "1.A",
+			want: Equal,
+		},
+		{
+			name: "prefix_is_less",
+			v1:   "1.2",
+			v2:   "1.2.3",
+			want: LessThan,
+		},
+		{
+			name: "longer_is_greater",
+			v1:   "1.2.3",
+			v2:   "1.2",
+			want: GreaterThan,
+		},
+		{
+			name: "complex_less",
+			v1:   "12.1X1.2",
+			v2:   "12.1Y1.2",
+			want: LessThan,
+		},
+		{
+			name: "complex_greater",
+			v1:   "12.1Y1.2",
+			v2:   "12.1X1.2",
+			want: GreaterThan,
+		},
+		{
+			name: "suffix_greater",
+			v1:   "4.34.2F-1",
+			v2:   "4.34.2F",
+			want: GreaterThan,
+		},
+		{
+			name: "suffix_with_letters",
+			v1:   "4.34.2F-ABC",
+			v2:   "4.34.2F",
+			want: GreaterThan,
+		},
+		{
+			name: "long_numbers",
+			v1:   "1.10",
+			v2:   "1.2",
+			want: GreaterThan,
+		},
+		{
+			name: "empty_strings",
+			v1:   "",
+			v2:   "",
+			want: Equal,
+		},
+		{
+			name: "empty_vs_non_empty",
+			v1:   "",
+			v2:   "1.0",
+			want: LessThan,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := CompareVersions(tc.v1, tc.v2)
+			if got != tc.want {
+				t.Errorf("CompareVersions(%q, %q) got %v, want %v", tc.v1, tc.v2, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestMetadataMatchSWRange(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -168,7 +313,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 		wantMatch  bool
 	}{
 		{
-			name:      "sw range match",
+			name:      "sw_range_match",
 			swVersion: "1.5",
 			ftMetaData: []*FTMetadata{
 				{
@@ -181,7 +326,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range match, sw version longer than max",
+			name:      "sw_range_match_sw_version_longer_than_max",
 			swVersion: "2.0.1",
 			ftMetaData: []*FTMetadata{
 				{
@@ -194,7 +339,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range match, numeric suffix",
+			name:      "sw_range_match_numeric_suffix",
 			swVersion: "1.5.1",
 			ftMetaData: []*FTMetadata{
 				{
@@ -207,7 +352,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range match, letter suffix",
+			name:      "sw_range_match_letter_suffix",
 			swVersion: "4.34.2F-(some-random-suffix)",
 			ftMetaData: []*FTMetadata{
 				{
@@ -220,7 +365,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range mismatch",
+			name:      "sw_range_mismatch",
 			swVersion: "2.5",
 			ftMetaData: []*FTMetadata{
 				{
@@ -234,7 +379,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 		},
 
 		{
-			name:      "sw range mismatch, numeric suffix",
+			name:      "sw_range_mismatch_numeric_suffix",
 			swVersion: "2.5.1",
 			ftMetaData: []*FTMetadata{
 				{
@@ -247,7 +392,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range match, letter suffix",
+			name:      "sw_range_match_letter_suffix",
 			swVersion: "4.34.2F",
 			ftMetaData: []*FTMetadata{
 				{
@@ -260,7 +405,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range match, equal min",
+			name:      "sw_range_match_equal_min",
 			swVersion: "1.0",
 			ftMetaData: []*FTMetadata{
 				{
@@ -273,7 +418,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range mismatch, equal max",
+			name:      "sw_range_mismatch_equal_max",
 			swVersion: "2.0",
 			ftMetaData: []*FTMetadata{
 				{
@@ -286,7 +431,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range match, letter comparison",
+			name:      "sw_range_match_letter_comparison",
 			swVersion: "1.5B",
 			ftMetaData: []*FTMetadata{
 				{
@@ -299,7 +444,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw range mismatch, after, letter comparison",
+			name:      "sw_range_mismatch_after_letter_comparison",
 			swVersion: "1.5D",
 			ftMetaData: []*FTMetadata{
 				{
@@ -312,7 +457,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range mismatch, before, letter comparison",
+			name:      "sw_range_mismatch_before_letter_comparison",
 			swVersion: "1.5A",
 			ftMetaData: []*FTMetadata{
 				{
@@ -325,7 +470,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range match, letter is greater than number",
+			name:      "sw_range_match_letter_is_greater_than_number",
 			swVersion: "1.A",
 			ftMetaData: []*FTMetadata{
 				{
@@ -338,7 +483,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw outside range, letter is greater than number",
+			name:      "sw_outside_range_letter_is_greater_than_number",
 			swVersion: "1.B",
 			ftMetaData: []*FTMetadata{
 				{
@@ -351,7 +496,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range mismatch, less than min",
+			name:      "sw_range_mismatch_less_than_min",
 			swVersion: "0.9",
 			ftMetaData: []*FTMetadata{
 				{
@@ -364,7 +509,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "longer version in range, inside range",
+			name:      "longer_version_in_range_inside_range",
 			swVersion: "1.3",
 			ftMetaData: []*FTMetadata{
 				{
@@ -377,7 +522,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "longer version in range, outside range",
+			name:      "longer_version_in_range_outside_range",
 			swVersion: "1.3",
 			ftMetaData: []*FTMetadata{
 				{
@@ -390,7 +535,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: false,
 		},
 		{
-			name:      "sw range match, identical letter components",
+			name:      "sw_range_match_identical_letter_components",
 			swVersion: "1.A.2",
 			ftMetaData: []*FTMetadata{
 				{
@@ -403,7 +548,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "sw version is prefix of min version",
+			name:      "sw_version_is_prefix_of_min_version",
 			swVersion: "1.2",
 			ftMetaData: []*FTMetadata{
 				{
@@ -440,7 +585,7 @@ func TestMetadataMatchSWRange(t *testing.T) {
 // TestSensibility tests that the FunctionalTranslator reasonably initializes and handles FTs to
 // avoid panics.
 func TestSensibility(t *testing.T) {
-	t.Run("simple-ft-new", func(t *testing.T) {
+	t.Run("simple_ft_new", func(t *testing.T) {
 		ft, err := NewFunctionalTranslator(FunctionalTranslatorOptions{
 			ID: "test",
 			Translate: func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
@@ -460,7 +605,7 @@ func TestSensibility(t *testing.T) {
 		}
 	})
 
-	t.Run("nil-translate-new", func(t *testing.T) {
+	t.Run("nil_translate_new", func(t *testing.T) {
 		_, err := NewFunctionalTranslator(FunctionalTranslatorOptions{
 			ID: "test",
 			Metadata: []*FTMetadata{
@@ -474,7 +619,7 @@ func TestSensibility(t *testing.T) {
 		}
 	})
 
-	t.Run("nil-output-to-input", func(t *testing.T) {
+	t.Run("nil_output_to_input", func(t *testing.T) {
 		nilOutputToInputFT, err := NewFunctionalTranslator(FunctionalTranslatorOptions{
 			ID: "test",
 			Translate: func(*gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
@@ -672,13 +817,13 @@ func TestOutputToInput(t *testing.T) {
 		ok   bool
 	}{
 		{
-			name: "path-found",
+			name: "path_found",
 			path: outputPath,
 			want: stringPaths[outputPath],
 			ok:   true,
 		},
 		{
-			name: "path-not-found",
+			name: "path_not_found",
 			path: "/openconfig/interfaces/interface/state/counters/",
 		},
 	}

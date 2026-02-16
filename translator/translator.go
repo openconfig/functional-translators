@@ -39,12 +39,16 @@ type SWRange struct {
 	ExclusiveMax string
 }
 
-type compareResult int
+// CompareResult is the result of a version comparison.
+type CompareResult int
 
 const (
-	lessThan compareResult = iota
-	equal
-	greaterThan
+	// LessThan means the first version is less than the second.
+	LessThan CompareResult = iota
+	// Equal means the two versions are equal.
+	Equal
+	// GreaterThan means the first version is greater than the second.
+	GreaterThan
 )
 
 // Contains evaluates whether the software version of the device matches the given FT metadata.
@@ -55,15 +59,15 @@ const (
 // Numbers are compared to strings as strings, e.g. "A" > "12".
 func (r *SWRange) Contains(version string) bool {
 	// version must be >= Min
-	if compareVersions(version, r.InclusiveMin) == lessThan {
+	if CompareVersions(version, r.InclusiveMin) == LessThan {
 		return false
 	}
 	// version must be < Max
-	return compareVersions(version, r.ExclusiveMax) == lessThan
+	return CompareVersions(version, r.ExclusiveMax) == LessThan
 }
 
-// compareVersions returns whether v1 is less than, equal to, or greater than v2.
-func compareVersions(v1, v2 string) compareResult {
+// CompareVersions returns whether v1 is less than, equal to, or greater than v2.
+func CompareVersions(v1, v2 string) CompareResult {
 	c1 := versionCompRE.FindAllString(strings.ToUpper(v1), -1)
 	c2 := versionCompRE.FindAllString(strings.ToUpper(v2), -1)
 	maxLen := len(c1)
@@ -85,21 +89,21 @@ func compareVersions(v1, v2 string) compareResult {
 
 		if err1 == nil && err2 == nil { // Both are numbers
 			if n1 < n2 {
-				return lessThan
+				return LessThan
 			}
 			if n1 > n2 {
-				return greaterThan
+				return GreaterThan
 			}
 		} else { // At least one is not a number, compare as strings
 			if s1 < s2 {
-				return lessThan
+				return LessThan
 			}
 			if s1 > s2 {
-				return greaterThan
+				return GreaterThan
 			}
 		}
 	}
-	return equal
+	return Equal
 }
 
 // FTMetadata contains metadata to identify when a FT should be used.
