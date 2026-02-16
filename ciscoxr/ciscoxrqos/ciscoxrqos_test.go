@@ -461,6 +461,328 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 	}
+
+	outputClassNameWithColonSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-qos-ma-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "qos"},
+						{Name: "interface-table"},
+						{Name: "interface", Key: map[string]string{"interface-name": "Bundle-Ether1"}},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "class-name"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "oc:TC7:BE1",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 100,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 10,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 200,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 20,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	outputClassNameTrailingColonSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-qos-ma-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "qos"},
+						{Name: "interface-table"},
+						{Name: "interface", Key: map[string]string{"interface-name": "Bundle-Ether1"}},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "class-name"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "oc:TC7:BE1:",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 100,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 10,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 200,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 20,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	outputClassNameEmptySR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-qos-ma-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "qos"},
+						{Name: "interface-table"},
+						{Name: "interface", Key: map[string]string{"interface-name": "Bundle-Ether1"}},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "class-name"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 100,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "transmit-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 10,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 200,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "output"},
+								{Name: "service-policy-names"},
+								{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+								{Name: "statistics"},
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "total-drop-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 20,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	successOutput := &gnmipb.SubscribeResponse{
 		Response: &gnmipb.SubscribeResponse_Update{
 			Update: &gnmipb.Notification{
@@ -679,6 +1001,94 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 	}
+	outputClassNameWithColonOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "output"},
+								{Name: "queues"},
+								{Name: "queue", Key: map[string]string{"name": "BE1"}},
+								{Name: "state"},
+								{Name: "dropped-octets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 200,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "output"},
+								{Name: "queues"},
+								{Name: "queue", Key: map[string]string{"name": "BE1"}},
+								{Name: "state"},
+								{Name: "dropped-pkts"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 20,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "output"},
+								{Name: "queues"},
+								{Name: "queue", Key: map[string]string{"name": "BE1"}},
+								{Name: "state"},
+								{Name: "transmit-octets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 100,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "output"},
+								{Name: "queues"},
+								{Name: "queue", Key: map[string]string{"name": "BE1"}},
+								{Name: "state"},
+								{Name: "transmit-pkts"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 	tests := []struct {
 		name    string
 		input   *gnmipb.SubscribeResponse
@@ -691,23 +1101,38 @@ func TestTranslate(t *testing.T) {
 			want:  successOutput,
 		},
 		{
-			name:  "success member interface",
+			name:  "success_member_interface",
 			input: successMemberSR,
 			want:  successMemberOutput,
 		},
 		{
-			name:    "mismatch stats len for output qos",
+			name:    "mismatch_stats_len_for_output_qos",
 			input:   mismatchOpLenSR,
 			wantErr: true,
 		},
 		{
-			name:    "mismatch stats len for input qos",
+			name:    "mismatch_stats_len_for_input_qos",
 			input:   mismatchInLenSR,
 			wantErr: true,
 		},
 		{
-			name:  "class name does not have any parts separated by -",
+			name:  "class_name_does_not_have_any_parts_separated_by_",
 			input: wrongClassNameSR,
+			want:  nil,
+		},
+		{
+			name:  "output_class_name_with_colon",
+			input: outputClassNameWithColonSR,
+			want:  outputClassNameWithColonOutput,
+		},
+		{
+			name:  "output_class_name_with_trailing_colon",
+			input: outputClassNameTrailingColonSR,
+			want:  nil,
+		},
+		{
+			name:  "empty_output_class_name",
+			input: outputClassNameEmptySR,
 			want:  nil,
 		},
 	}

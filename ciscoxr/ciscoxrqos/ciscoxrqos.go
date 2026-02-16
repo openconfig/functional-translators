@@ -245,7 +245,9 @@ func buildOutputStats(prefix *gnmipb.Path, leaf *gnmipb.Update, intfOutStats map
 	}
 	switch elems[startIndex].GetName() {
 	case "class-name":
-		t.className = append(t.className, leaf.GetVal().GetStringVal())
+		fullClassName := leaf.GetVal().GetStringVal()
+		parts := strings.Split(fullClassName, ":")
+		t.className = append(t.className, parts[len(parts)-1])
 	case "general-stats":
 		switch elems[startIndex+1].GetName() {
 		case "total-drop-bytes":
@@ -322,6 +324,9 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		}
 		intfOutput := qosRoot.GetOrCreateQos().GetOrCreateInterfaces().GetOrCreateInterface(intfName).GetOrCreateOutput()
 		for i, className := range intfOutStat.className {
+			if className == "" {
+				continue
+			}
 			queue := intfOutput.GetOrCreateQueues().GetOrCreateQueue(className)
 			queue.GetOrCreateState().DroppedOctets = &intfOutStat.droppedOctets[i]
 			queue.GetOrCreateState().DroppedPkts = &intfOutStat.droppedPkts[i]
