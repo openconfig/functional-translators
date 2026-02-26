@@ -1,0 +1,21 @@
+update: {
+  prefix: { origin: "openconfig" }
+  update: {
+    path: {
+      elem: { name: "oam" }
+      elem: { name: "cfm" }
+      elem: { name: "domains" }
+      elem: { name: "maintenance-domain" key: { key: "domain-name" value: "domain3" } }
+      elem: { name: "maintenance-associations" }
+      elem: { name: "maintenance-association" key: { key: "association-name" value: "30" } }
+      elem: { name: "mep-endpoints" }
+      elem: { name: "mep-endpoint" key: { key: "mep-id" value: "5" } }
+      elem: { name: "pm-profiles" }
+      elem: { name: "pm-profile" key: { key: "profile-name" value: "wrapper-profile" } }
+      elem: { name: "state" }
+      elem: { name: "delay-measurement-state" }
+      elem: { name: "frame-delay-two-way-average" }
+    }
+    val: { uint_val: 10 }
+  }
+}

@@ -1,0 +1,35 @@
+update: {
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "Sysdb" }
+      elem: { name: "cfm" }
+      elem: { name: "config" }
+      elem: { name: "mdConfig" }
+      elem: { name: "domain3" }
+      elem: { name: "maConfig" }
+      elem: { name: "maNameFormatShortInt_30" }
+      elem: { name: "cfmProfileName" }
+    }
+    val: {
+      string_val: "cfm_delay_Port-Channel4-cfm_loss_Port-Channel4"
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "Smash" }
+      elem: { name: "cfm" }
+      elem: { name: "mepSmashTable" }
+      elem: { name: "slmMiStatsCurrent" }
+      # Key ends with the marker, implying empty MEP ID
+      elem: { name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_" }
+      elem: { name: "slmMiStats" }
+      elem: { name: "forwardAvgFlr" }
+    }
+    val: {
+      string_val: "0"
+    }
+  }
+}

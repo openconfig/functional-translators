@@ -37,6 +37,9 @@ const (
 	// AristaCfmStateFunctionalTranslator is the name of the Arista CFM state functional translator.
 	AristaCfmStateFunctionalTranslator = "arista-cfm-state-ft"
 
+	// AristaCFMPMFunctionalTranslator is the name of the Arista CFM PM functional translator.
+	AristaCFMPMFunctionalTranslator = "arista-cfm-pm-ft"
+
 	// AristaInterfaceDescriptionFunctionalTranslator is the name of the Arista interface description functional translator.
 	AristaInterfaceDescriptionFunctionalTranslator = "arista-interface-description-ft"
 

@@ -1,0 +1,34 @@
+update: {
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "Sysdb" }
+      elem: { name: "cfm" }
+      elem: { name: "config" }
+      elem: { name: "mdConfig" }
+      elem: { name: "domain3" }
+      elem: { name: "maConfig" }
+      elem: { name: "maNameFormatShortInt_30" }
+      elem: { name: "cfmProfileName" }
+    }
+    val: {
+      string_val: ""
+    }
+  }
+  update: {
+    path: {
+      elem: { name: "Smash" }
+      elem: { name: "cfm" }
+      elem: { name: "mepSmashTable" }
+      elem: { name: "dmMiStatsCurrent" }
+      elem: { name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5" }
+      elem: { name: "dmMiStats" }
+      elem: { name: "delayTwoWayAvg" }
+    }
+    val: {
+      double_val: 1.0894836363636367e-05
+    }
+  }
+}
