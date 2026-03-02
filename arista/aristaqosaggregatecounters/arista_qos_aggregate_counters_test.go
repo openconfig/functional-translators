@@ -112,7 +112,7 @@ func TestTranslate(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			name:           "First member joins and updates counter",
+			name:           "first_member_joins_and_updates_counter",
 			setup:          ResetGlobalCache,
 			inputPath:      "testdata/join_pc_and_counter_update_input.txt",
 			wantOutputPath: "testdata/join_pc_and_counter_update_output.txt",
@@ -124,67 +124,67 @@ func TestTranslate(t *testing.T) {
 			wantOutputPath: "testdata/counter_change_output_single_notification.txt",
 		},
 		{
-			name:           "Second member joins, triggering re-aggregation",
+			name:           "second_member_joins_triggering_re_aggregation",
 			setup:          setupStateForTwoMembers, // Pre-populates cache with the first member for cx12.sql12
 			inputPath:      "testdata/two_members_aggregation_input.txt",
 			wantOutputPath: "testdata/two_members_aggregation_output.txt",
 		},
 		{
-			name:           "Removing a member from a bundle triggers re-aggregation",
+			name:           "removing_a_member_from_a_bundle_triggers_re_aggregation",
 			setup:          setupStateForMemberRemoval, // Pre-populates with both members for cx12.sql12
 			inputPath:      "testdata/remove_member_input.txt",
 			wantOutputPath: "testdata/remove_member_output.txt",
 		},
 		{
-			name:           "Multiple targets state isolation",
+			name:           "multiple_targets_state_isolation",
 			setup:          setupStateForMultipleTargets, // Pre-populates cache for cx12.sql12
 			inputPath:      "testdata/multiple_targets_input.txt",
 			wantOutputPath: "testdata/multiple_targets_output.txt",
 		},
 		{
-			name:           "Counter change triggers re-aggregation",
+			name:           "counter_change_triggers_re_aggregation",
 			setup:          setupStateForCounterChange, // Pre-populates cache for cx12.sql12
 			inputPath:      "testdata/counter_change_input.txt",
 			wantOutputPath: "testdata/counter_change_output.txt",
 		},
 		{
-			name:           "Member removed while still in the waiting room",
+			name:           "member_removed_while_still_in_the_waiting_room",
 			setup:          ResetGlobalCache,
 			inputPath:      "testdata/remove_from_waiting_room_input.txt",
 			wantOutputPath: "testdata/remove_from_waiting_room_output.txt",
 		},
 		{
-			name:      "Malformed aggregate-id path that matches pattern but fails parsing",
+			name:      "malformed_aggregate_id_path_that_matches_pattern_but_fails_parsing",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/malformed_aggregate_id_input.txt",
 			wantNil:   true,
 		},
 		{
-			name:      "Delete handler ignores non-aggregate-id paths",
+			name:      "delete_handler_ignores_non_aggregate_id_paths",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/delete_non_aggregate_id_input.txt",
 			wantNil:   true,
 		},
 		{
-			name:      "QoS path with unexpected queue name format",
+			name:      "qos_path_with_unexpected_queue_name_format",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/unexpected_queue_format_input.txt",
 			wantNil:   true,
 		},
 		{
-			name:      "Invalid update path that does not match patterns",
+			name:      "invalid_update_path_that_does_not_match_patterns",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/invalid_update_path_input.txt",
 			wantNil:   true, // The translator should ignore this update completely.
 		},
 		{
-			name:      "Invalid delete path that does not match patterns",
+			name:      "invalid_delete_path_that_does_not_match_patterns",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/invalid_delete_path_input.txt",
 			wantNil:   true, // The translator should ignore this delete.
 		},
 		{
-			name:      "Malformed QoS path that matches pattern but fails parsing",
+			name:      "malformed_qos_path_that_matches_pattern_but_fails_parsing",
 			setup:     ResetGlobalCache,
 			inputPath: "testdata/malformed_qos_path_input.txt",
 			wantNil:   true, // The update is matched but then rejected by the parser, resulting in no output.

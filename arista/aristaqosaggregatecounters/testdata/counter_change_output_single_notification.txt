@@ -38,7 +38,6 @@ update: {
       elem: {
         name: "dropped-octets"
       }
-      target: "cx02.mtv95"
     }
     val: {
       uint_val: 0
@@ -78,7 +77,6 @@ update: {
       elem: {
         name: "dropped-pkts"
       }
-      target: "cx02.mtv95"
     }
     val: {
       uint_val: 0
@@ -118,7 +116,6 @@ update: {
       elem: {
         name: "transmit-octets"
       }
-      target: "cx02.mtv95"
     }
     val: {
       uint_val: 0
@@ -158,7 +155,6 @@ update: {
       elem: {
         name: "transmit-pkts"
       }
-      target: "cx02.mtv95"
     }
     val: {
       uint_val: 0

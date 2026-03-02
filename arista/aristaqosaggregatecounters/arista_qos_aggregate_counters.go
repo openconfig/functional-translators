@@ -403,6 +403,9 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		}
 
 		// This ensures the singleton port QOS counters are preserved.
+		// Clear the Origin and Target from the fullPath as they will be set in the Notification Prefix.
+		fullPath.Origin = ""
+		fullPath.Target = ""
 		passthroughUpdates = append(passthroughUpdates, &gnmipb.Update{
 			Path: fullPath,
 			Val:  update.GetVal(),
