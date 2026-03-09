@@ -15,10 +15,12 @@
 package simplemapper
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
+	"github.com/openconfig/ygot/ytypes"
 	"github.com/openconfig/functional-translators/arista/aristainterface/yang/openconfig"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
@@ -370,6 +372,32 @@ func TestApplyBind(t *testing.T) {
 			},
 		},
 		{
+			name:     "success - constant key",
+			bindings: map[string]string{"<var1>": "data1"},
+			path: &gnmipb.Path{
+				Elem: []*gnmipb.PathElem{
+					{
+						Name: "path",
+						Key: map[string]string{
+							"keyA": "<var1>",
+							"keyB": "const",
+						},
+					},
+				},
+			},
+			want: &gnmipb.Path{
+				Elem: []*gnmipb.PathElem{
+					{
+						Name: "path",
+						Key: map[string]string{
+							"keyA": "data1",
+							"keyB": "const",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "error - var not found",
 			bindings: map[string]string{
 				"<var1>": "data1",
@@ -443,6 +471,26 @@ func TestYangValToGNMIVal(t *testing.T) {
 		{
 			name:    "error - unsupported type, empty struct",
 			val:     struct{}{},
+			wantErr: true,
+		},
+		{
+			name:    "error - nil value",
+			val:     nil,
+			wantErr: true,
+		},
+		{
+			name:    "error - nil string value",
+			val:     (*string)(nil),
+			wantErr: true,
+		},
+		{
+			name:    "error - nil bool value",
+			val:     (*bool)(nil),
+			wantErr: true,
+		},
+		{
+			name:    "error - nil float64 value",
+			val:     (*float64)(nil),
 			wantErr: true,
 		},
 	}
@@ -624,5 +672,564 @@ func TestVarsToWildcards(t *testing.T) {
 				t.Errorf("varsToWildcards() returned an unexpected diff (-want +got): %v", diff)
 			}
 		})
+	}
+}
+
+func TestUpdateHandler(t *testing.T) {
+	isc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load input schema: %v", err)
+	}
+	osc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load output schema: %v", err)
+	}
+	m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil })
+	if err != nil {
+		t.Fatalf("NewSimpleMapper() failed: %v", err)
+	}
+
+	notification := &gnmipb.Notification{
+		Update: []*gnmipb.Update{
+			{
+				Path: &gnmipb.Path{
+					Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth0"}},
+						{Name: "config"},
+						{Name: "description"},
+					},
+				},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+			},
+		},
+	}
+
+	got, err := m.updateHandler(isc, osc, notification)
+	if err != nil {
+		t.Fatalf("updateHandler() failed: %v", err)
+	}
+
+	if got == nil {
+		t.Fatal("updateHandler() returned nil")
+	}
+
+	if got.Prefix == nil {
+		t.Errorf("updateHandler() returned notification with nil prefix")
+	}
+	t.Run("no updates match", func(t *testing.T) {
+		m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+			"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+		}, nil)
+		if err != nil {
+			t.Fatalf("NewSimpleMapper() failed: %v", err)
+		}
+		notification := &gnmipb.Notification{
+			Update: []*gnmipb.Update{{
+				Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "non-existent"}}},
+				Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+			}},
+		}
+		// We need to use a valid path for unmarshal but not mapped.
+		notification.Update[0].Path = &gnmipb.Path{Elem: []*gnmipb.PathElem{
+			{Name: "interfaces"},
+			{Name: "interface", Key: map[string]string{"name": "eth0"}},
+			{Name: "config"},
+			{Name: "name"},
+		}}
+		got, err := m.updateHandler(isc, osc, notification)
+		if err != nil {
+			t.Fatalf("updateHandler() failed: %v", err)
+		}
+		if got != nil {
+			t.Errorf("updateHandler() = %v, want nil", got)
+		}
+	})
+}
+
+func TestHandler(t *testing.T) {
+	m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil })
+	if err != nil {
+		t.Fatalf("NewSimpleMapper() failed: %v", err)
+	}
+
+	tests := []struct {
+		name string
+		in   *gnmipb.SubscribeResponse
+		want *gnmipb.Notification
+	}{
+		{
+			name: "single update",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Update: []*gnmipb.Update{{
+							Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "eth0"}},
+								{Name: "config"},
+								{Name: "description"},
+							}},
+							Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+						}},
+					},
+				},
+			},
+			want: &gnmipb.Notification{
+				Prefix: &gnmipb.Path{Origin: "openconfig"},
+				Update: []*gnmipb.Update{{
+					Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth0"}},
+						{Name: "config"},
+						{Name: "description"},
+					}},
+					Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+				}},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gotSR, err := m.Handler(tc.in)
+			if err != nil {
+				t.Fatalf("Handler() failed: %v", err)
+			}
+			got := gotSR.GetUpdate()
+			if diff := cmp.Diff(tc.want, got, protocmp.Transform(), protocmp.IgnoreFields(&gnmipb.Notification{}, "timestamp")); diff != "" {
+				t.Errorf("Handler() returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestHandler_Deletes(t *testing.T) {
+	m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
+		return []*gnmipb.Path{{
+			Elem: []*gnmipb.PathElem{
+				{Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "eth0"}},
+				{Name: "config"},
+				{Name: "description"},
+			},
+		}}, nil
+	})
+	if err != nil {
+		t.Fatalf("NewSimpleMapper() failed: %v", err)
+	}
+
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{},
+		},
+	}
+
+	want := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Origin: "openconfig"},
+		Delete: []*gnmipb.Path{{
+			Elem: []*gnmipb.PathElem{
+				{Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "eth0"}},
+				{Name: "config"},
+				{Name: "description"},
+			},
+		}},
+	}
+
+	gotSR, err := m.Handler(in)
+	if err != nil {
+		t.Fatalf("Handler() failed: %v", err)
+	}
+	got := gotSR.GetUpdate()
+	if diff := cmp.Diff(want, got, protocmp.Transform(), protocmp.IgnoreFields(&gnmipb.Notification{}, "timestamp")); diff != "" {
+		t.Errorf("Handler() returned unexpected diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestHandler_Filtering(t *testing.T) {
+	m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
+		return []*gnmipb.Path{
+			{ // Kept
+				Elem: []*gnmipb.PathElem{
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "eth0"}},
+					{Name: "config"},
+				},
+			},
+			{ // Filtered
+				Elem: []*gnmipb.PathElem{
+					{Name: "system"},
+					{Name: "config"},
+				},
+			},
+		}, nil
+	})
+	if err != nil {
+		t.Fatalf("NewSimpleMapper() failed: %v", err)
+	}
+
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Update: []*gnmipb.Update{
+					{ // Filtered because not in mappings
+						Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+							{Name: "interfaces"},
+							{Name: "interface", Key: map[string]string{"name": "eth0"}},
+							{Name: "config"},
+							{Name: "name"},
+						}},
+						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "eth0"}},
+					},
+				},
+			},
+		},
+	}
+
+	want := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Origin: "openconfig"},
+		Delete: []*gnmipb.Path{{
+			Elem: []*gnmipb.PathElem{
+				{Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "eth0"}},
+				{Name: "config"},
+			},
+		}},
+	}
+
+	gotSR, err := m.Handler(in)
+	if err != nil {
+		t.Fatalf("Handler() failed: %v", err)
+	}
+	got := gotSR.GetUpdate()
+	if diff := cmp.Diff(want, got, protocmp.Transform(), protocmp.IgnoreFields(&gnmipb.Notification{}, "timestamp")); diff != "" {
+		t.Errorf("Handler() returned unexpected diff (-want +got):\n%s", diff)
+	}
+}
+
+func TestHandler_EmptyInput(t *testing.T) {
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, nil, nil)
+	got, err := m.Handler(&gnmipb.SubscribeResponse{})
+	if err != nil {
+		t.Errorf("Handler() failed: %v", err)
+	}
+	if got != nil {
+		t.Errorf("Handler() = %v, want nil", got)
+	}
+}
+
+func TestHandler_NoOutput(t *testing.T) {
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil })
+
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Update: []*gnmipb.Update{{
+					Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth0"}},
+						{Name: "config"},
+						{Name: "name"},
+					}},
+					Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "eth0"}},
+				}},
+			},
+		},
+	}
+	got, err := m.Handler(in)
+	if err != nil {
+		t.Errorf("Handler() failed: %v", err)
+	}
+	if got != nil {
+		t.Errorf("Handler() = %v, want nil", got)
+	}
+}
+
+func TestHandler_UpdateError(t *testing.T) {
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil })
+
+	// Trigger updateHandler error (unmarshal failure - wrong type)
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Update: []*gnmipb.Update{{
+					Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth0"}},
+						{Name: "config"},
+						{Name: "enabled"},
+					}},
+					Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "not-a-bool"}},
+				}},
+			},
+		},
+	}
+	_, err := m.Handler(in)
+	if err == nil {
+		t.Errorf("Handler() succeeded for bad input, want error")
+	}
+}
+
+func TestHandler_DeleteError(t *testing.T) {
+	// Trigger deleteHandler error
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, nil, func(*gnmipb.Notification) ([]*gnmipb.Path, error) {
+		return nil, fmt.Errorf("delete error")
+	})
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{},
+		},
+	}
+	_, err := m.Handler(in)
+	if err == nil {
+		t.Errorf("Handler() succeeded for delete error, want error")
+	}
+}
+
+func TestHandler_NilDeletes(t *testing.T) {
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, nil)
+
+	in := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{},
+		},
+	}
+	got, err := m.Handler(in)
+	if err != nil {
+		t.Errorf("Handler() failed: %v", err)
+	}
+	if got != nil {
+		t.Errorf("Handler() = %v, want nil", got)
+	}
+}
+
+func TestNewSimpleMapper_Errors(t *testing.T) {
+	badSchema := func() (*ytypes.Schema, error) { return nil, fmt.Errorf("bad schema") }
+	tests := []struct {
+		name      string
+		inSchema  SchemaFn
+		outSchema SchemaFn
+		mappings  map[string]string
+	}{
+		{
+			name:     "bad input schema",
+			inSchema: badSchema,
+			outSchema: func() (*ytypes.Schema, error) {
+				s, _ := openconfig.Schema()
+				return s, nil
+			},
+		},
+		{
+			name: "bad output schema",
+			inSchema: func() (*ytypes.Schema, error) {
+				s, _ := openconfig.Schema()
+				return s, nil
+			},
+			outSchema: badSchema,
+		},
+		{
+			name:      "bad output path",
+			inSchema:  openconfig.Schema,
+			outSchema: openconfig.Schema,
+			mappings:  map[string]string{"/interfaces/interface[name]": "/valid/path"},
+		},
+		{
+			name:      "bad input path",
+			inSchema:  openconfig.Schema,
+			outSchema: openconfig.Schema,
+			mappings:  map[string]string{"/valid/path": "/interfaces/interface[name]"},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewSimpleMapper(tc.inSchema, tc.outSchema, tc.mappings, nil)
+			if err == nil {
+				t.Errorf("NewSimpleMapper() for %s succeeded, want error", tc.name)
+			}
+		})
+	}
+}
+
+func TestUpdateHandler_Errors(t *testing.T) {
+	isc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load input schema: %v", err)
+	}
+	osc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load output schema: %v", err)
+	}
+	m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, nil)
+
+	tests := []struct {
+		name         string
+		notification *gnmipb.Notification
+	}{
+		{
+			name: "unmarshal failure",
+			notification: &gnmipb.Notification{
+				Update: []*gnmipb.Update{{
+					Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "non-existent"}}},
+					Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+				}},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := m.updateHandler(isc, osc, tc.notification)
+			if err == nil {
+				t.Errorf("updateHandler() for %s succeeded, want error", tc.name)
+			}
+		})
+	}
+
+	t.Run("applyBind failure", func(t *testing.T) {
+		m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+			"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<missing>]/config/description",
+		}, nil)
+		notification := &gnmipb.Notification{
+			Update: []*gnmipb.Update{{
+				Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "eth0"}},
+					{Name: "config"},
+					{Name: "description"},
+				}},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+			}},
+		}
+		_, err := m.updateHandler(isc, osc, notification)
+		if err == nil {
+			t.Errorf("updateHandler() succeeded for missing binding in output, want error")
+		}
+	})
+
+	t.Run("GetNode error skipping", func(t *testing.T) {
+		m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+			"/openconfig/interfaces/interface[name=<name>]/config/description": "/interfaces/interface[name=eth0]/config/non-existent",
+		}, nil)
+		notification := &gnmipb.Notification{
+			Update: []*gnmipb.Update{{
+				Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "eth0"}},
+					{Name: "config"},
+					{Name: "description"},
+				}},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+			}},
+		}
+		_, err := m.updateHandler(isc, osc, notification)
+		if err != nil {
+			t.Errorf("updateHandler() failed for non-existent input path, want success (skip): %v", err)
+		}
+	})
+
+	t.Run("yangValToGNMIVal failure", func(t *testing.T) {
+		m, _ := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+			"/openconfig/interfaces/interface[name=<name>]/state/last-change": "/openconfig/interfaces/interface[name=<name>]/config/description",
+		}, nil)
+		// last-change is uint64 in OC, which is supported by Unmarshal but not by yangValToGNMIVal.
+		notification := &gnmipb.Notification{
+			Update: []*gnmipb.Update{{
+				Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "eth0"}},
+					{Name: "state"},
+					{Name: "last-change"},
+				}},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 12345}},
+			}},
+		}
+		_, err := m.updateHandler(isc, osc, notification)
+		if err == nil {
+			t.Errorf("updateHandler() succeeded for unsupported type, want error")
+		}
+	})
+}
+
+func TestUpdateHandler_PrefixFlattening(t *testing.T) {
+	isc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load input schema: %v", err)
+	}
+	osc, err := openconfig.Schema()
+	if err != nil {
+		t.Fatalf("Failed to load output schema: %v", err)
+	}
+	// Map leaves that share a common prefix.
+	m, err := NewSimpleMapper(openconfig.Schema, openconfig.Schema, map[string]string{
+		"/openconfig/interfaces/interface[name=<name>]/config/description": "/openconfig/interfaces/interface[name=<name>]/config/description",
+	}, nil)
+	if err != nil {
+		t.Fatalf("NewSimpleMapper() failed: %v", err)
+	}
+
+	notification := &gnmipb.Notification{
+		Update: []*gnmipb.Update{
+			{
+				Path: &gnmipb.Path{
+					Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth0"}},
+						{Name: "config"},
+						{Name: "description"},
+					},
+				},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "foo"}},
+			},
+			{
+				Path: &gnmipb.Path{
+					Elem: []*gnmipb.PathElem{
+						{Name: "interfaces"},
+						{Name: "interface", Key: map[string]string{"name": "eth1"}},
+						{Name: "config"},
+						{Name: "description"},
+					},
+				},
+				Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "bar"}},
+			},
+		},
+	}
+
+	got, err := m.updateHandler(isc, osc, notification)
+	if err != nil {
+		t.Fatalf("updateHandler() failed: %v", err)
+	}
+
+	if got == nil {
+		t.Fatal("updateHandler() returned nil")
+	}
+
+	// Verify that the prefix is empty (flattened)
+	if len(got.Prefix.GetElem()) != 0 {
+		t.Errorf("updateHandler() prefix not flattened: %v", got.Prefix)
+	}
+
+	// Verify that update paths are full paths.
+	// Since we send /interfaces/interface/config/description, full path has 4 elements.
+	// /interfaces/interface/name is also a full path but has only 3 elements, so we check for prefix instead.
+	for _, u := range got.Update {
+		if u.Path.GetElem()[0].Name != "interfaces" {
+			t.Errorf("updateHandler() update path is not a full path (not flattened?): %v", u.Path)
+		}
 	}
 }

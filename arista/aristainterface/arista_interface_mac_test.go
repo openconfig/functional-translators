@@ -487,6 +487,108 @@ func TestTranslate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "pass-through-empty-deletes",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 123,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: target,
+							Elem: []*gnmipb.PathElem{
+								{Name: "interfaces"},
+								{
+									Name: "interface",
+									Key:  map[string]string{"name": "Port-Channel4"},
+								},
+								{Name: "ethernet"},
+								{Name: "state"},
+							},
+						},
+						Delete: []*gnmipb.Path{
+							{}, {}, {}, {}, {},
+						},
+					},
+				},
+			},
+			want: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 123,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{Elem: []*gnmipb.PathElem{{Name: "interfaces"}, {Name: "interface", Key: map[string]string{"name": "Port-Channel4"}}, {Name: "ethernet"}, {Name: "state"}}},
+							{Elem: []*gnmipb.PathElem{{Name: "interfaces"}, {Name: "interface", Key: map[string]string{"name": "Port-Channel4"}}, {Name: "ethernet"}, {Name: "state"}}},
+							{Elem: []*gnmipb.PathElem{{Name: "interfaces"}, {Name: "interface", Key: map[string]string{"name": "Port-Channel4"}}, {Name: "ethernet"}, {Name: "state"}}},
+							{Elem: []*gnmipb.PathElem{{Name: "interfaces"}, {Name: "interface", Key: map[string]string{"name": "Port-Channel4"}}, {Name: "ethernet"}, {Name: "state"}}},
+							{Elem: []*gnmipb.PathElem{{Name: "interfaces"}, {Name: "interface", Key: map[string]string{"name": "Port-Channel4"}}, {Name: "ethernet"}, {Name: "state"}}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "lacp-mac-delete-with-nil-keys",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+									{Name: "interfaces"},
+									{
+										Name: "interface",
+										Key:  nil,
+									},
+									{Name: "state"},
+									{Name: "system-id-mac"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "lacp-mac-delete-with-no-name-key",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+									{Name: "interfaces"},
+									{
+										Name: "interface",
+										Key: map[string]string{
+											"not-name": "Port-Channel1",
+										},
+									},
+									{Name: "state"},
+									{Name: "system-id-mac"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
 	}
 
 	ft := NewMacFT()

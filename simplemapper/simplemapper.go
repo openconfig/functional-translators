@@ -16,6 +16,7 @@
 package simplemapper
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -109,18 +110,36 @@ func varsToWildcards(path *gnmipb.Path) *gnmipb.Path {
 	return ret
 }
 
+var errNilValue = errors.New("nil value")
+
+// wrap is a generic helper that handles the nil pointer check and the gNMI wrapping logic.
+func wrap[T any](ptr *T, wrapFn func(T) *gnmipb.TypedValue) (*gnmipb.TypedValue, error) {
+	if ptr == nil {
+		return nil, errNilValue
+	}
+	return wrapFn(*ptr), nil
+}
+
 // TODO: Support the rest of the types.
 // TODO: Support automatic casting when types are different in input and output schemas.
 func yangValToGNMIVal(val any) (*gnmipb.TypedValue, error) {
 	switch v := val.(type) {
 	case *string:
-		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: *v}}, nil
+		return wrap(v, func(x string) *gnmipb.TypedValue {
+			return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: x}}
+		})
 	case *bool:
-		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: *v}}, nil
+		return wrap(v, func(x bool) *gnmipb.TypedValue {
+			return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: x}}
+		})
 	case *float64:
-		return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: *v}}, nil
+		return wrap(v, func(x float64) *gnmipb.TypedValue {
+			return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: x}}
+		})
+	case nil:
+		return nil, errNilValue
 	default:
-		return nil, fmt.Errorf("unsupported type: %v", v)
+		return nil, fmt.Errorf("unsupported type: %T", v)
 	}
 }
 
@@ -236,11 +255,24 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 		if err != nil {
 			// We get an error if the path doesn't exist, which is benign, so we log and continue for all errors.
 			// TODO: Consider returning other types of errors if we can distinguish them.
-			log.V(1).Infof("entry skipped, no nodes found: %v", err)
+			log.V(1).Infof("Entry skipped, no nodes found: %v", err)
 			continue
 		}
 
 		for _, tn := range nodes {
+			if tn.Data == nil {
+				continue
+			}
+
+			val, err := yangValToGNMIVal(tn.Data)
+			if err != nil {
+				if errors.Is(err, errNilValue) {
+					// Skip nil pointers inside interfaces.
+					continue
+				}
+				return nil, fmt.Errorf("failed to convert yang val to gNMI val: %v", err)
+			}
+
 			bindings, err := bindKeys(mapEntry.input, tn.Path)
 			if err != nil {
 				return nil, fmt.Errorf("failed to bind keys for input path: %v", err)
@@ -251,10 +283,6 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 			}
 			if _, _, err := ytypes.GetOrCreateNode(outSchema.RootSchema(), returnRootGoStruct, outPath); err != nil {
 				return nil, fmt.Errorf("failed to get or create node for output path: %v", err)
-			}
-			val, err := yangValToGNMIVal(tn.Data)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert yang val to gNMI val: %v", err)
 			}
 			if err := ytypes.SetNode(outSchema.RootSchema(), returnRootGoStruct, outPath, val); err != nil {
 				return nil, fmt.Errorf("failed to set node for output path: %v", err)
@@ -269,16 +297,40 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 	if len(outgoingNotifications) != 1 {
 		return nil, fmt.Errorf("received %d notifications, expected only one: %v", len(outgoingNotifications), outgoingNotifications)
 	}
-	if outgoingNotifications[0].GetPrefix() == nil {
-		outgoingNotifications[0].Prefix = &gnmipb.Path{}
+	if len(outgoingNotifications[0].GetUpdate()) == 0 {
+		return nil, nil
 	}
-	outgoingNotifications[0].Prefix.Origin = "openconfig"
-	return outgoingNotifications[0], nil
+	out := outgoingNotifications[0]
+	// If ygot calculated a prefix containing elements, flatten it into the
+	// update paths. This ensures that all updates and deletes in the
+	// notification are relative to a prefix that contains no elements
+	// (i.e., they are full paths), which is required for deletes to be
+	// handled correctly.
+	if out.GetPrefix() != nil && len(out.GetPrefix().GetElem()) > 0 {
+		prefixElems := out.GetPrefix().GetElem()
+		for _, u := range out.GetUpdate() {
+			if u.Path != nil {
+				updateElems := u.Path.GetElem()
+				newElems := make([]*gnmipb.PathElem, 0, len(prefixElems)+len(updateElems))
+				newElems = append(newElems, prefixElems...)
+				newElems = append(newElems, updateElems...)
+				u.Path.Elem = newElems
+			}
+		}
+		out.GetPrefix().Elem = nil
+	}
+	if out.GetPrefix() == nil {
+		out.Prefix = &gnmipb.Path{}
+	}
+	return out, nil
 }
 
 // Handler translates gNMI notifications. This should be used as the Translate function for a functional translator.
 // TODO(team): Write unit tests for this, besides those in the functional translators that use this.
 func (m *SimpleMapper) Handler(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+	if m.deleteHandler == nil {
+		m.deleteHandler = func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil }
+	}
 	if sr.GetUpdate() == nil {
 		return nil, nil
 	}
@@ -287,21 +339,37 @@ func (m *SimpleMapper) Handler(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeR
 	if err != nil {
 		return nil, fmt.Errorf("failed to handle updates: %v", err)
 	}
-	// TODO: It seems like this can't be nil, so we may not need this nil check.
-	if outgoingNotification == nil {
-		outgoingNotification = &gnmipb.Notification{}
-	}
-	if outgoingNotification.GetPrefix() == nil {
-		outgoingNotification.Prefix = &gnmipb.Path{}
-	}
-	outgoingNotification.Prefix.Origin = "openconfig"
-	outgoingNotification.Prefix.Target = sr.GetUpdate().GetPrefix().GetTarget()
-	outgoingNotification.Timestamp = sr.GetUpdate().GetTimestamp()
-
 	deletes, err := m.deleteHandler(notification)
 	if err != nil {
 		return nil, fmt.Errorf("failed to handle deletes: %v", err)
 	}
+	// Per gNMI spec, delete paths should not contain origin/target if
+	// prefix is used.
+	var cleanedDeletes []*gnmipb.Path
+	for _, d := range deletes {
+		// Clone the path to avoid modifying the original in-place, which might be
+		// shared if deleteHandler returns paths from the original notification.
+		cloned := proto.Clone(d).(*gnmipb.Path)
+		cloned.Origin = ""
+		cloned.Target = ""
+		cleanedDeletes = append(cleanedDeletes, cloned)
+	}
+	deletes = cleanedDeletes
+
+	if outgoingNotification == nil && len(deletes) == 0 {
+		return nil, nil
+	}
+
+	target := notification.GetPrefix().GetTarget()
+	if outgoingNotification == nil {
+		outgoingNotification = &gnmipb.Notification{
+			Prefix:    &gnmipb.Path{Target: target},
+			Timestamp: notification.GetTimestamp(),
+		}
+	} else {
+		outgoingNotification.Prefix.Target = target
+	}
+	outgoingNotification.Prefix.Origin = "openconfig"
 	outgoingNotification.Delete = deletes
 
 	outgoingNotification = ftutilities.Filter(outgoingNotification, func(path *gnmipb.Path, isDelete bool) bool {

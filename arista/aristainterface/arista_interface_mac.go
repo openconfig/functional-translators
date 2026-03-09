@@ -55,13 +55,21 @@ func macDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	for _, d := range deletes {
 		fullPath := ftutilities.Join(prefix, d)
 		gotSchema := ftutilities.GNMIPathToSchemaString(fullPath, true)
+		elems := fullPath.GetElem()
 
 		switch {
-		case strings.HasPrefix(lacpMacSchema, gotSchema):
-			intfName := d.GetElem()[intfNameIdx].GetKey()["name"]
+		case strings.HasPrefix(lacpMacSchema, gotSchema) && len(elems) > intfNameIdx:
+			keys := elems[intfNameIdx].GetKey()
+			if keys == nil {
+				continue
+			}
+			intfName, ok := keys["name"]
+			if !ok {
+				continue
+			}
 			returnDeletes = append(returnDeletes, intfMacPath(intfName))
 		case strings.HasPrefix(intfMacSchema, gotSchema):
-			returnDeletes = append(returnDeletes, d)
+			returnDeletes = append(returnDeletes, fullPath)
 		default:
 			continue
 		}
