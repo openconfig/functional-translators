@@ -31,7 +31,7 @@ const (
 	// IdentityFunctionalTranslator is the name of the identity functional translator.
 	IdentityFunctionalTranslator = "identity-ft"
 
-	// AristaInterfaceDescriptionFunctionalTranslator is the name of the Arista BGP neighbor enabled functional translator.
+	// AristaBGPNeighborEnabledFunctionalTranslator is the name of the Arista BGP neighbor enabled functional translator.
 	AristaBGPNeighborEnabledFunctionalTranslator = "arista-bgp-neighbor-enabled-ft"
 
 	// AristaCfmStateFunctionalTranslator is the name of the Arista CFM state functional translator.
