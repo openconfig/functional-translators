@@ -66,7 +66,8 @@ func NewDescFT() *translator.FunctionalTranslator {
 			OutputToInputMap: p,
 			Metadata: []*translator.FTMetadata{
 				{
-					Vendor: "arista",
+					Vendor:               "arista",
+					SoftwareVersionRange: &translator.SWRange{ExclusiveMax: "4.34.0"},
 				},
 			},
 		},
