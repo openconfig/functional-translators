@@ -1,0 +1,15 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  delete: {
+    elem: { name: "interfaces" }
+    elem: {
+      name: "interface"
+      key: { key: "name" value: "Vlan40" }
+    }
+    elem: { name: "state" }
+    elem: { name: "oper-status" }
+  }
+}

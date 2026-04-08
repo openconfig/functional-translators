@@ -49,6 +49,9 @@ const (
 	// AristaInterfaceMacFunctionalTranslator is the name of the Arista interface mac address functional translator.
 	AristaInterfaceMacFunctionalTranslator = "arista-interface-mac-ft"
 
+	// AristaInterfaceStatusFunctionalTranslator is the name of the Arista interface status functional translator.
+	AristaInterfaceStatusFunctionalTranslator = "arista-interface-status-ft"
+
 	// AristaMacsecStateFunctionalTranslator is the name of the Arista MACSec ckn and status functional translator.
 	AristaMacsecStateFunctionalTranslator = "arista-macsec-state-ft"
 

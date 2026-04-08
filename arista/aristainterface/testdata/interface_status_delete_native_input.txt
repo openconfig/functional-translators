@@ -1,0 +1,15 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  delete: {
+    elem: { name: "Sysdb" }
+    elem: { name: "interface" }
+    elem: { name: "status" }
+    elem: { name: "eth" }
+    elem: { name: "vlan" }
+    elem: { name: "intfStatus" }
+    elem: { name: "Vlan40" }
+  }
+}

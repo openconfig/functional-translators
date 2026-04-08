@@ -1,0 +1,21 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "Sysdb" }
+      elem: { name: "interface" }
+      elem: { name: "config" }
+      elem: { name: "eth" }
+      elem: { name: "vlan" }
+      elem: { name: "intfConfig" }
+      elem: { name: "Vlan10" }
+      elem: { name: "adminEnabledStateLocal" }
+    }
+    val: {
+      string_val: "shutdown"
+    }
+  }
+}

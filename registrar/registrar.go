@@ -52,6 +52,7 @@ var (
 		ftconsts.AristaCfmStateFunctionalTranslator:                       aristacfmstate.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator:           aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
+		ftconsts.AristaInterfaceStatusFunctionalTranslator:                aristainterface.NewStatusFT(),
 		ftconsts.AristaMacsecCountersTranslator:                           aristamacseccounters.New(),
 		ftconsts.AristaMacsecStateFunctionalTranslator:                    aristamacsecstate.New(),
 		ftconsts.AristaPWStateFunctionalTranslator:                        aristapwstate.New(),
