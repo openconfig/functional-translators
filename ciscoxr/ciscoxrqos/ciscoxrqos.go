@@ -277,10 +277,25 @@ func buildInputStats(prefix *gnmipb.Path, leaf *gnmipb.Update, intfInStats map[s
 		}
 		intfInStats[intfName] = t
 	}
+
+	if len(elems) <= 8 {
+		log.Warningf("Unexpected path structure, len(elems) is %d, want > 8: %v", len(elems), path)
+		return intfInStats
+	}
+
 	switch elems[8].GetName() {
 	case "class-name":
-		t.className = append(t.className, leaf.GetVal().GetStringVal())
+		fullClassName := leaf.GetVal().GetStringVal()
+		if i := strings.LastIndex(fullClassName, ":"); i != -1 {
+			t.className = append(t.className, fullClassName[i+1:])
+		} else {
+			t.className = append(t.className, fullClassName)
+		}
 	case "general-stats":
+		if len(elems) <= 9 {
+			log.Warningf("Unexpected path structure, len(elems) is %d, want > 9: %v", len(elems), path)
+			return intfInStats
+		}
 		switch elems[9].GetName() {
 		case "pre-policy-matched-bytes":
 			t.matchedOctets = append(t.matchedOctets, leaf.GetVal().GetUintVal())

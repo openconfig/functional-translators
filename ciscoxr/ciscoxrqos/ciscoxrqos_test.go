@@ -461,7 +461,186 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 	}
+	inputClassNameWithColonSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-qos-ma-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "qos"},
+						{Name: "interface-table"},
+						{Name: "interface", Key: map[string]string{"interface-name": "Bundle-Ether1"}},
+						{Name: "input"},
+						{Name: "service-policy-names"},
+						{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+						{Name: "statistics"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "class-name"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "oc:inet-mplsogre-classifier-nc1",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "pre-policy-matched-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 300,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "pre-policy-matched-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 30,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
+	inputClassNameWithColonOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "input"},
+								{Name: "classifiers"},
+								{Name: "classifier", Key: map[string]string{"type": "IPV4"}},
+								{Name: "terms"},
+								{Name: "term", Key: map[string]string{"id": "nc1"}},
+								{Name: "state"},
+								{Name: "matched-octets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 300,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Bundle-Ether1"}},
+								{Name: "input"},
+								{Name: "classifiers"},
+								{Name: "classifier", Key: map[string]string{"type": "IPV4"}},
+								{Name: "terms"},
+								{Name: "term", Key: map[string]string{"id": "nc1"}},
+								{Name: "state"},
+								{Name: "matched-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 30,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	inputClassNameTrailingColonSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-qos-ma-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "qos"},
+						{Name: "interface-table"},
+						{Name: "interface", Key: map[string]string{"interface-name": "Bundle-Ether1"}},
+						{Name: "input"},
+						{Name: "service-policy-names"},
+						{Name: "service-policy-instance", Key: map[string]string{"service-policy-name": "INGRESS_POLICY"}},
+						{Name: "statistics"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "class-name"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "oc:inet-mplsogre-classifier-nc1:",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "pre-policy-matched-bytes"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 300,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "class-stats"},
+								{Name: "general-stats"},
+								{Name: "pre-policy-matched-packets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 30,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 	outputClassNameWithColonSR := &gnmipb.SubscribeResponse{
 		Response: &gnmipb.SubscribeResponse_Update{
 			Update: &gnmipb.Notification{
@@ -1133,6 +1312,16 @@ func TestTranslate(t *testing.T) {
 		{
 			name:  "empty_output_class_name",
 			input: outputClassNameEmptySR,
+			want:  nil,
+		},
+		{
+			name:  "input_class_name_with_colon",
+			input: inputClassNameWithColonSR,
+			want:  inputClassNameWithColonOutput,
+		},
+		{
+			name:  "input_class_name_with_trailing_colon",
+			input: inputClassNameTrailingColonSR,
 			want:  nil,
 		},
 	}
