@@ -78,9 +78,9 @@ func New() *translator.FunctionalTranslator {
 						InclusiveMin: "4.33.0F",
 						/* TODO: bhageshbhutani - Get Vendor confirmation of the support for the below version
 						for the required OC path starting from the below version.
-						https://b.corp.google.com/issues/433946399#comment28
+						b/442520271
 						*/
-						ExclusiveMax: "4.36",
+						ExclusiveMax: "4.37",
 					},
 				},
 			},
