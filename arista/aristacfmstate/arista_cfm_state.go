@@ -17,6 +17,7 @@ package aristacfmstate
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/functional-translators/ftconsts"
@@ -25,6 +26,8 @@ import (
 
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
+
+const assocPrefix = "maNameFormatShortInt_"
 
 var (
 	translateMap = map[string][]string{
@@ -102,7 +105,10 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 				return nil, fmt.Errorf("path %v is too short", fullPath)
 			}
 			domainID := elems[4].GetName()
-			assocID := elems[6].GetName()
+			assocID, ok := extractAssocID(elems[6].GetName())
+			if !ok {
+				break
+			}
 			localMepID := elems[8].GetName()
 			outgoingUpdate := &gnmipb.Update{
 				Path: returnPath(domainID, assocID, localMepID),
@@ -130,7 +136,10 @@ func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 		for _, pattern := range deletePathPatterns {
 			if ftutilities.MatchPath(fullPath, pattern) {
 				domainID := elems[4].GetName()
-				assocID := elems[6].GetName()
+				assocID, ok := extractAssocID(elems[6].GetName())
+				if !ok {
+					break
+				}
 				localMepID := elems[8].GetName()
 				deletes = append(deletes, returnPath(domainID, assocID, localMepID))
 				break
@@ -138,6 +147,14 @@ func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 		}
 	}
 	return deletes, nil
+}
+
+func extractAssocID(assocKey string) (string, bool) {
+	if !strings.HasPrefix(assocKey, assocPrefix) {
+		log.Warningf("Unexpected assoc key format: %q", assocKey)
+		return "", false
+	}
+	return strings.TrimPrefix(assocKey, assocPrefix), true
 }
 
 // returnPath returns a gNMI path for the update.
