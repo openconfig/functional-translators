@@ -18,6 +18,7 @@ package aristacfmpm
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -59,10 +60,12 @@ var (
 		"/openconfig/oam/cfm/domains/maintenance-domain/maintenance-associations/maintenance-association/mep-endpoints/mep-endpoint/pm-profiles/pm-profile/state/delay-measurement-state/frame-delay-two-way-average": {
 			"/eos_native/Smash/cfm/mepSmashTable/dmMiStatsCurrent",
 			"/eos_native/Sysdb/cfm/config/mdConfig",
+			"/eos_native/Sysdb/cfm/status/mdStatus",
 		},
 		"/openconfig/oam/cfm/domains/maintenance-domain/maintenance-associations/maintenance-association/mep-endpoints/mep-endpoint/pm-profiles/pm-profile/state/loss-measurement-state/far-end-average-frame-loss-ratio": {
 			"/eos_native/Smash/cfm/mepSmashTable/slmMiStatsCurrent",
 			"/eos_native/Sysdb/cfm/config/mdConfig",
+			"/eos_native/Sysdb/cfm/status/mdStatus",
 		},
 	}
 	updatePathPatterns = []*gnmipb.Path{
@@ -95,6 +98,19 @@ var (
 				{Name: elemCfmProfileName},
 			},
 		},
+		{
+			Origin: "eos_native",
+			Elem: []*gnmipb.PathElem{
+				{Name: rootSysdb}, {Name: elemCfm}, {Name: "status"}, {Name: "mdStatus"},
+				{Name: "*"}, // domain
+				{Name: "maStatus"},
+				{Name: "*"}, // maName
+				{Name: "localMepStatus"},
+				{Name: "*"}, // localMepID
+				{Name: "rdiTxCondition"},
+				{Name: "rdi"},
+			},
+		},
 	}
 	deletePathPatterns = []*gnmipb.Path{
 		{
@@ -122,18 +138,26 @@ var (
 				{Name: elemCfmProfileName},
 			},
 		},
+		{
+			Origin: "eos_native",
+			Elem: []*gnmipb.PathElem{
+				{Name: rootSysdb}, {Name: elemCfm}, {Name: "status"}, {Name: "mdStatus"},
+				{Name: "*"}, // domain
+				{Name: "maStatus"},
+				{Name: "*"}, // maName
+				{Name: "localMepStatus"},
+				{Name: "*"}, // localMepID
+			},
+		},
 	}
 )
 
 type impl struct {
-	profileNameCache map[string]string
 }
 
 // New creates a functional translator.
 func New() *translator.FunctionalTranslator {
-	i := &impl{
-		profileNameCache: make(map[string]string),
-	}
+	i := &impl{}
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			ID:               ftconsts.AristaCFMPMFunctionalTranslator,
@@ -282,7 +306,9 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 		return nil, nil
 	}
 	prefix := notification.GetPrefix()
+	target := prefix.GetTarget()
 	var updates []*gnmipb.Update
+	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
 	for _, update := range notification.GetUpdate() {
 		fullPath := ftutilities.Join(prefix, update.GetPath())
 		for _, path := range updatePathPatterns {
@@ -296,15 +322,19 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 			case rootSmash:
 				// Path: Smash/cfm/mepSmashTable/<statType>/<key>/<statGroup>/<metric>
 				key := elems[4].GetName()
-				assocID, domainID, localMEPID, err := parseSmashKey(key)
+				assocID, domainID, parsedLocalMEPID, err := parseSmashKey(key)
 				if err != nil {
 					return nil, fmt.Errorf("error parsing smash key %q: %v", key, err)
 				}
 
-				cacheKey := fmt.Sprintf("%s:%s", domainID, assocID)
-				profileName, ok := i.profileNameCache[cacheKey]
-				if !ok || profileName == "" {
+				cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
+				profileName, ok := targetCFM.ProfileName(cacheKey)
+				if !ok {
 					continue
+				}
+				localMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+				if !ok {
+					localMEPID = parsedLocalMEPID
 				}
 
 				var metricType string
@@ -331,23 +361,30 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 				updates = append(updates, outgoingUpdate)
 
 			case rootSysdb:
-				// Path: Sysdb/cfm/config/mdConfig/<domain>/maConfig/<assoc>/cfmProfileName
 				domainID := elems[4].GetName()
 				assocKey := elems[6].GetName()
-
-				// assocKey is like "maNameFormatShortInt_123"
 				const assocPrefix = "maNameFormatShortInt_"
 				if !strings.HasPrefix(assocKey, assocPrefix) {
-					return nil, fmt.Errorf("unexpected assoc key format: %q", assocKey)
+					log.Warningf("Unexpected assoc key format: %q", assocKey)
+					continue
 				}
 				assocID := strings.TrimPrefix(assocKey, assocPrefix)
+				cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
 
-				profileName := valueToString(update.GetVal())
-				if profileName == "" {
-					continue // Ignore empty or invalid values
+				if elems[2].GetName() == elemConfig {
+					// Path: Sysdb/cfm/config/mdConfig/<domain>/maConfig/<assoc>/cfmProfileName
+					profileName := valueToString(update.GetVal())
+					if profileName == "" {
+						continue // Ignore empty or invalid values
+					}
+					targetCFM.SetProfileName(cacheKey, profileName)
+				} else { // Path matches Sysdb status pattern based on updatePathPatterns
+					// Path: Sysdb/cfm/status/mdStatus/<domain>/maStatus/<assoc>/localMepStatus/<id>/...
+					if len(elems) >= 9 {
+						localMEPID := elems[8].GetName()
+						targetCFM.SetLocalMEPID(cacheKey, localMEPID)
+					}
 				}
-				cacheKey := fmt.Sprintf("%s:%s", domainID, assocID)
-				i.profileNameCache[cacheKey] = profileName
 			}
 			break
 		}
@@ -357,7 +394,10 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 
 func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	prefix := notification.GetPrefix()
+	target := prefix.GetTarget()
 	var deletes []*gnmipb.Path
+	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
+	// Loop 1: Process Smash deletes first (telemetry)
 	for _, del := range notification.GetDelete() {
 		fullPath := ftutilities.Join(prefix, del)
 		for _, pattern := range deletePathPatterns {
@@ -365,47 +405,83 @@ func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path,
 				continue
 			}
 			elems := fullPath.GetElem()
-
-			switch elems[0].GetName() {
-			case rootSmash:
-				// Path: Smash/cfm/mepSmashTable/<statType>/<key>/<statGroup>/<metric>
-				key := elems[4].GetName()
-				assocID, domainID, localMEPID, err := parseSmashKey(key)
-				if err != nil {
-					return nil, fmt.Errorf("error parsing smash key %q: %v", key, err)
-				}
-
-				cacheKey := fmt.Sprintf("%s:%s", domainID, assocID)
-				profileName, ok := i.profileNameCache[cacheKey]
-				if !ok || profileName == "" {
-					continue
-				}
-
-				var metricType string
-				switch elems[3].GetName() {
-				case elemDmMiStatsCurrent:
-					metricType = metricDelay
-				case elemSlmMiStatsCurrent:
-					metricType = metricLoss
-				default:
-					log.Errorf("Unexpected metric type: %s", elems[3].GetName())
-					continue
-				}
-
-				deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricType))
-
-			case rootSysdb:
-				domainID := elems[4].GetName()
-				assocKey := elems[6].GetName()
-				const assocPrefix = "maNameFormatShortInt_"
-				if !strings.HasPrefix(assocKey, assocPrefix) {
-					return nil, fmt.Errorf("unexpected assoc key format: %q", assocKey)
-				}
-				assocID := strings.TrimPrefix(assocKey, assocPrefix)
-
-				cacheKey := fmt.Sprintf("%s:%s", domainID, assocID)
-				delete(i.profileNameCache, cacheKey)
+			if elems[0].GetName() != rootSmash {
+				continue
 			}
+
+			// Process Smash delete
+			key := elems[4].GetName()
+			assocID, domainID, parsedLocalMEPID, err := parseSmashKey(key)
+			if err != nil {
+				log.Warningf("Error parsing smash key %q: %v", key, err)
+				continue
+			}
+
+			cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
+			profileName, ok := targetCFM.ProfileName(cacheKey)
+			if !ok {
+				continue
+			}
+			localMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+			if !ok {
+				localMEPID = parsedLocalMEPID
+			}
+
+			var metricType string
+			switch elems[3].GetName() {
+			case elemDmMiStatsCurrent:
+				metricType = metricDelay
+			case elemSlmMiStatsCurrent:
+				metricType = metricLoss
+			default:
+				log.Errorf("Unexpected metric type: %s", elems[3].GetName())
+				continue
+			}
+
+			deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricType))
+			break
+		}
+	}
+
+	// Loop 2: Process Sysdb deletes last (metadata/cache)
+	for _, del := range notification.GetDelete() {
+		fullPath := ftutilities.Join(prefix, del)
+		for _, pattern := range deletePathPatterns {
+			if !ftutilities.MatchPath(fullPath, pattern) {
+				continue
+			}
+			elems := fullPath.GetElem()
+			if elems[0].GetName() != rootSysdb {
+				continue
+			}
+
+			// Process Sysdb delete
+			if len(elems) < 7 {
+				log.Warningf("Path too short to extract domain and assoc IDs: %v", fullPath)
+				continue
+			}
+			domainID := elems[4].GetName()
+			assocKey := elems[6].GetName()
+			const assocPrefix = "maNameFormatShortInt_"
+			if !strings.HasPrefix(assocKey, assocPrefix) {
+				log.Warningf("Unexpected assoc key format: %q", assocKey)
+				continue
+			}
+			assocID := strings.TrimPrefix(assocKey, assocPrefix)
+
+			cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
+			if elems[2].GetName() == elemConfig {
+				targetCFM.DeleteProfileName(cacheKey)
+			} else { // Path matches Sysdb status pattern based on deletePathPatterns
+				if len(elems) >= 9 {
+					deletedMEPID := elems[8].GetName()
+					cachedMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+					if ok && cachedMEPID == deletedMEPID {
+						targetCFM.DeleteLocalMEPID(cacheKey)
+					}
+				}
+			}
+			break
 		}
 	}
 	return deletes, nil
@@ -517,14 +593,19 @@ func (i *impl) convertMetricValue(tv *gnmipb.TypedValue, metricType string) (*gn
 		return nil, fmt.Errorf("unsupported metric value type: %T", v)
 	}
 
+	if valFloat < 0 {
+		log.Warningf("Negative metric value received: %f for type %s. Setting to 0.", valFloat, metricType)
+		valFloat = 0
+	}
+
 	var uintVal uint64
 	switch metricType {
 	case metricDelay:
 		// Convert seconds to microseconds
-		uintVal = uint64(valFloat * 1e6)
+		uintVal = uint64(math.Round(valFloat * 1e6))
 	case metricLoss:
 		// native string/number is a raw ratio like "0" or "123".
-		uintVal = uint64(valFloat)
+		uintVal = uint64(math.Round(valFloat))
 	default:
 		return nil, fmt.Errorf("unknown metric type: %s", metricType)
 	}

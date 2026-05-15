@@ -24,6 +24,7 @@ import (
 )
 
 func TestTranslate(t *testing.T) {
+	ftutilities.CfmMap.ClearAllTargetCFMInfo()
 	tests := []struct {
 		name           string
 		inputPath      string
@@ -76,10 +77,16 @@ func TestTranslate(t *testing.T) {
 			inputPath: "testdata/slm_invalid_mep_id_input.txt",
 			wantErr:   true,
 		},
+		{
+			name:           "Local MEP ID cached from Sysdb status",
+			inputPath:      "testdata/cached_mep_input.txt",
+			wantOutputPath: "testdata/cached_mep_output.txt",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ftutilities.CfmMap.ClearAllTargetCFMInfo()
 			inputSR, err := ftutilities.LoadSubscribeResponse(test.inputPath)
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
@@ -276,4 +283,119 @@ func TestConvertMetricValue(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteHandlerEdgeCases(t *testing.T) {
+	i := &impl{}
+
+	tests := []struct {
+		name         string
+		setupCache   func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+		notification func(target string) *gnmipb.Notification
+		verifyCache  func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+	}{
+		{
+			name: "Path not matching pattern but starts with Sysdb ignored",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetProfileName(key, "profile1")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "config"}, {Name: "mdConfig"},
+							{Name: "1"}, {Name: "maConfig"}, {Name: "maNameFormatShortInt_1"}, {Name: "unrelated"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.ProfileName(key); !ok {
+					t.Errorf("Expected profile name to still exist in cache (should not have matched pattern)")
+				}
+			},
+		},
+		{
+			name: "Delete profile name from cache",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetProfileName(key, "profile1")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "config"}, {Name: "mdConfig"},
+							{Name: "1"}, {Name: "maConfig"}, {Name: "maNameFormatShortInt_1"}, {Name: "cfmProfileName"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.ProfileName(key); ok {
+					t.Errorf("Expected profile name to be deleted from cache")
+				}
+			},
+		},
+		{
+			name: "Delete local MEP ID from cache",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetLocalMEPID(key, "100")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "status"}, {Name: "mdStatus"},
+							{Name: "1"}, {Name: "maStatus"}, {Name: "maNameFormatShortInt_1"}, {Name: "localMepStatus"}, {Name: "100"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.LocalMEPID(key); ok {
+					t.Errorf("Expected local MEP ID to be deleted from cache")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ftutilities.CfmMap.ClearAllTargetCFMInfo()
+			target := "test-target"
+			targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
+			key := ftutilities.CFMCacheKey{DomainID: "1", AssocID: "1"}
+
+			if tt.setupCache != nil {
+				tt.setupCache(targetCFM, key)
+			}
+
+			notification := tt.notification(target)
+			_, err := i.deleteHandler(notification)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if tt.verifyCache != nil {
+				tt.verifyCache(t, targetCFM, key)
+			}
+		})
+	}
+}
+
+func TestUnusedMethodsForCoverage(t *testing.T) {
+	target := "test-target"
+	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
+
+	// Call TargetCFM
+	_, _ = ftutilities.CfmMap.TargetCFM(target)
+
+	// Call Clear
+	targetCFM.Clear()
 }

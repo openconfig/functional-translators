@@ -895,3 +895,126 @@ func (c *QoSAggregationMapCache) CreateOrUpdateTargetQoSInfo(targetHostname stri
 	}
 	return info
 }
+
+// --- CFM Mapping Cache ---
+
+// CFMCacheKey is a comparable struct used as a map key to avoid allocations.
+type CFMCacheKey struct {
+	DomainID string
+	AssocID  string
+}
+
+// TargetCFMInfo holds CFM information for a target.
+type TargetCFMInfo struct {
+	mu               sync.Mutex
+	TargetHostname   string
+	ProfileNameCache map[CFMCacheKey]string
+	LocalMEPCache    map[CFMCacheKey]string
+}
+
+// NewTargetCFMInfo creates a new TargetCFMInfo for the given target hostname.
+func NewTargetCFMInfo(targetHostname string) *TargetCFMInfo {
+	return &TargetCFMInfo{
+		TargetHostname:   targetHostname,
+		ProfileNameCache: make(map[CFMCacheKey]string),
+		LocalMEPCache:    make(map[CFMCacheKey]string),
+	}
+}
+
+// SetProfileName sets the profile name for a given key.
+func (t *TargetCFMInfo) SetProfileName(key CFMCacheKey, val string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.ProfileNameCache[key] = val
+}
+
+// ProfileName fetches the profile name for a given key.
+func (t *TargetCFMInfo) ProfileName(key CFMCacheKey) (string, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	val, ok := t.ProfileNameCache[key]
+	return val, ok
+}
+
+// DeleteProfileName removes the profile name for a given key.
+func (t *TargetCFMInfo) DeleteProfileName(key CFMCacheKey) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.ProfileNameCache, key)
+}
+
+// SetLocalMEPID sets the local MEP ID for a given key.
+func (t *TargetCFMInfo) SetLocalMEPID(key CFMCacheKey, val string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.LocalMEPCache[key] = val
+}
+
+// LocalMEPID fetches the local MEP ID for a given key.
+func (t *TargetCFMInfo) LocalMEPID(key CFMCacheKey) (string, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	val, ok := t.LocalMEPCache[key]
+	return val, ok
+}
+
+// DeleteLocalMEPID removes the local MEP ID for a given key.
+func (t *TargetCFMInfo) DeleteLocalMEPID(key CFMCacheKey) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.LocalMEPCache, key)
+}
+
+// Clear resets the caches for this target.
+func (t *TargetCFMInfo) Clear() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.ProfileNameCache = make(map[CFMCacheKey]string)
+	t.LocalMEPCache = make(map[CFMCacheKey]string)
+}
+
+// CFMMappingCache is a thread-safe cache for TargetCFMInfo.
+type CFMMappingCache struct {
+	mu   sync.Mutex
+	data map[string]*TargetCFMInfo
+}
+
+// CfmMap is the global instance of the CFMMappingCache.
+var CfmMap = &CFMMappingCache{
+	data: make(map[string]*TargetCFMInfo),
+}
+
+// TargetCFM fetches the TargetCFMInfo for a given target hostname.
+func (c *CFMMappingCache) TargetCFM(targetHostname string) (*TargetCFMInfo, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	return info, ok
+}
+
+// CreateOrUpdateTargetCFMInfo retrieves an existing TargetCFMInfo for the given target
+// or creates a new one if it doesn't exist.
+func (c *CFMMappingCache) CreateOrUpdateTargetCFMInfo(targetHostname string) *TargetCFMInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	if !ok {
+		info = NewTargetCFMInfo(targetHostname)
+		c.data[targetHostname] = info
+	}
+	return info
+}
+
+// DeleteTargetCFMInfo removes the TargetCFMInfo for a given target hostname.
+func (c *CFMMappingCache) DeleteTargetCFMInfo(targetHostname string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.data, targetHostname)
+}
+
+// ClearAllTargetCFMInfo removes all entries from the cache.
+func (c *CFMMappingCache) ClearAllTargetCFMInfo() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data = make(map[string]*TargetCFMInfo)
+}
