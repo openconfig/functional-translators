@@ -1018,3 +1018,164 @@ func (c *CFMMappingCache) ClearAllTargetCFMInfo() {
 	defer c.mu.Unlock()
 	c.data = make(map[string]*TargetCFMInfo)
 }
+
+// --- QoS Policer Drop Map Cache ---
+
+// TargetPolicerInfo holds policer drop information for a specific target device.
+type TargetPolicerInfo struct {
+	mu               sync.Mutex
+	TargetHostname   string
+	AttachmentPoints map[string]*AttachmentPointInfo // map[AttachmentPointName]*AttachmentPointInfo
+}
+
+// counterType is an iota-based enum for different policer counter names.
+type counterType int
+
+const (
+	byteDrop counterType = iota
+	pktDrop
+	yellowByteIn
+	yellowPktIn
+	unknownCounter
+)
+
+// counterMap maps string counter names to their counterType enum.
+var counterMap = map[string]counterType{
+	"byteDropCount":     byteDrop,
+	"pktDropCount":      pktDrop,
+	"yellowByteInCount": yellowByteIn,
+	"yellowPktInCount":  yellowPktIn,
+}
+
+// MemberCounters holds the 4 QoS counter metrics for a single physical member interface.
+type MemberCounters struct {
+	ByteDropCount     uint64
+	PktDropCount      uint64
+	YellowByteInCount uint64
+	YellowPktInCount  uint64
+}
+
+// AttachmentPointInfo holds drop counts for all physical members of a specific logical interface.
+type AttachmentPointInfo struct {
+	mu              sync.Mutex
+	attachmentPoint string
+	Members         map[string]*MemberCounters // map[PhysicalInterfaceName]*MemberCounters
+}
+
+// PolicerAggMapCache is a thread-safe cache for TargetPolicerInfo.
+type PolicerAggMapCache struct {
+	mu   sync.Mutex
+	data map[string]*TargetPolicerInfo // map[TargetHostname]*TargetPolicerInfo
+}
+
+// PolicerAggMap is the global instance of the PolicerAggMapCache.
+var (
+	PolicerAggMap = &PolicerAggMapCache{
+		data: make(map[string]*TargetPolicerInfo),
+	}
+)
+
+// CreateOrUpdateTargetPolicerInfo retrieves an existing TargetPolicerInfo or creates a new one.
+func (c *PolicerAggMapCache) CreateOrUpdateTargetPolicerInfo(targetHostname string) *TargetPolicerInfo {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	info, ok := c.data[targetHostname]
+	if !ok {
+		info = &TargetPolicerInfo{
+			TargetHostname:   targetHostname,
+			AttachmentPoints: make(map[string]*AttachmentPointInfo),
+		}
+		c.data[targetHostname] = info
+	}
+	return info
+}
+
+// CreateOrRetrieveAttachmentPoint returns the AttachmentPointInfo, creating it if it doesn't exist.
+func (t *TargetPolicerInfo) CreateOrRetrieveAttachmentPoint(apName string) *AttachmentPointInfo {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.AttachmentPoints == nil {
+		t.AttachmentPoints = make(map[string]*AttachmentPointInfo)
+	}
+	if _, ok := t.AttachmentPoints[apName]; !ok {
+		t.AttachmentPoints[apName] = &AttachmentPointInfo{
+			attachmentPoint: apName,
+			Members:         make(map[string]*MemberCounters),
+		}
+	}
+	return t.AttachmentPoints[apName]
+}
+
+// AttachmentPointInfo retrieves the info for a specific attachment point.
+func (t *TargetPolicerInfo) AttachmentPointInfo(apName string) (*AttachmentPointInfo, bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	info, ok := t.AttachmentPoints[apName]
+	return info, ok
+}
+
+// DeleteAttachmentPoint removes an attachment point when it has no more physical members.
+func (t *TargetPolicerInfo) DeleteAttachmentPoint(apName string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.AttachmentPoints != nil {
+		delete(t.AttachmentPoints, apName)
+	}
+}
+
+// SetMemberCounter safely updates a specific counter for a physical member.
+func (a *AttachmentPointInfo) SetMemberCounter(member, counterName string, count uint64) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.Members == nil {
+		a.Members = make(map[string]*MemberCounters)
+	}
+	memberCounters, ok := a.Members[member]
+	if !ok {
+		memberCounters = &MemberCounters{}
+		a.Members[member] = memberCounters
+	}
+	cType, ok := counterMap[counterName]
+	if !ok {
+		return false // Unknown counter name
+	}
+
+	switch cType {
+	case byteDrop:
+		memberCounters.ByteDropCount = count
+	case pktDrop:
+		memberCounters.PktDropCount = count
+	case yellowByteIn:
+		memberCounters.YellowByteInCount = count
+	case yellowPktIn:
+		memberCounters.YellowPktInCount = count
+	default:
+		// Not a tracked metric, do not trigger an OC update
+		return false
+	}
+	return true
+}
+
+// DeleteMember safely removes a physical member from the attachment point's cache.
+// It returns the number of remaining members to allow for cleanup.
+func (a *AttachmentPointInfo) DeleteMember(member string) int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.Members != nil {
+		delete(a.Members, member)
+	}
+	return len(a.Members)
+}
+
+// AggregateCounters calculates the total drops/exceeds across all physical members.
+func (a *AttachmentPointInfo) AggregateCounters() (byteDrop, pktDrop, yellowByte, yellowPkt uint64) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, m := range a.Members {
+		byteDrop += m.ByteDropCount
+		pktDrop += m.PktDropCount
+		yellowByte += m.YellowByteInCount
+		yellowPkt += m.YellowPktInCount
+	}
+	return
+}
