@@ -120,8 +120,8 @@ func wrap[T any](ptr *T, wrapFn func(T) *gnmipb.TypedValue) (*gnmipb.TypedValue,
 	return wrapFn(*ptr), nil
 }
 
-// TODO: Support the rest of the types.
-// TODO: Support automatic casting when types are different in input and output schemas.
+// TODO(team): Support the rest of the types.
+// TODO(team): Support automatic casting when types are different in input and output schemas.
 func yangValToGNMIVal(val any) (*gnmipb.TypedValue, error) {
 	switch v := val.(type) {
 	case *string:
@@ -147,8 +147,9 @@ func yangValToGNMIVal(val any) (*gnmipb.TypedValue, error) {
 type SchemaFn func() (*ytypes.Schema, error)
 
 type pathMapping struct {
-	input  *gnmipb.Path
-	output *gnmipb.Path
+	input         *gnmipb.Path
+	output        *gnmipb.Path
+	inputWildcard *gnmipb.Path
 }
 
 // parseMapperPath converts a path string to a gNMI path and a schema path. It takes care of
@@ -185,8 +186,9 @@ func NewSimpleMapper(inSchema, outSchema SchemaFn, outputToInput map[string]stri
 			return nil, err
 		}
 		mappings = append(mappings, pathMapping{
-			input:  iPath,
-			output: oPath,
+			input:         iPath,
+			output:        oPath,
+			inputWildcard: varsToWildcards(iPath),
 		})
 		if _, ok := outputToInputSchemaMap[oSchemaPath]; !ok {
 			outputToInputSchemaMap[oSchemaPath] = make(map[string]bool)
@@ -243,18 +245,15 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 		return nil, fmt.Errorf("failed to unmarshal notifications with input schema: %v", err)
 	}
 
-	returnRootGoStruct, err := ygot.DeepCopy(outSchema.Root)
+	outRoot, err := ygot.DeepCopy(outSchema.Root)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deep copy output schema root: %v", err)
 	}
 	for _, mapEntry := range m.mapEntries {
-		// TODO: Consider storing this in the pathMapping struct as an optimization.
-		inWildcardPath := varsToWildcards(mapEntry.input)
-
-		nodes, err := ytypes.GetNode(inSchema.RootSchema(), inSchema.Root, inWildcardPath, &ytypes.GetHandleWildcards{})
+		nodes, err := ytypes.GetNode(inSchema.RootSchema(), inSchema.Root, mapEntry.inputWildcard, &ytypes.GetHandleWildcards{})
 		if err != nil {
 			// We get an error if the path doesn't exist, which is benign, so we log and continue for all errors.
-			// TODO: Consider returning other types of errors if we can distinguish them.
+			// TODO(team): Consider returning other types of errors if we can distinguish them.
 			log.V(1).Infof("Entry skipped, no nodes found: %v", err)
 			continue
 		}
@@ -281,16 +280,16 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply bindings to output path: %v", err)
 			}
-			if _, _, err := ytypes.GetOrCreateNode(outSchema.RootSchema(), returnRootGoStruct, outPath); err != nil {
+			if _, _, err := ytypes.GetOrCreateNode(outSchema.RootSchema(), outRoot, outPath); err != nil {
 				return nil, fmt.Errorf("failed to get or create node for output path: %v", err)
 			}
-			if err := ytypes.SetNode(outSchema.RootSchema(), returnRootGoStruct, outPath, val); err != nil {
+			if err := ytypes.SetNode(outSchema.RootSchema(), outRoot, outPath, val); err != nil {
 				return nil, fmt.Errorf("failed to set node for output path: %v", err)
 			}
 		}
 	}
 
-	outgoingNotifications, err := ygot.TogNMINotifications(returnRootGoStruct, notification.GetTimestamp(), ygot.GNMINotificationsConfig{UsePathElem: true})
+	outgoingNotifications, err := ygot.TogNMINotifications(outRoot, notification.GetTimestamp(), ygot.GNMINotificationsConfig{UsePathElem: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert outgoing notification: %v", err)
 	}
@@ -326,7 +325,6 @@ func (m *SimpleMapper) updateHandler(inSchema, outSchema *ytypes.Schema, notific
 }
 
 // Handler translates gNMI notifications. This should be used as the Translate function for a functional translator.
-// TODO(team): Write unit tests for this, besides those in the functional translators that use this.
 func (m *SimpleMapper) Handler(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
 	if m.deleteHandler == nil {
 		m.deleteHandler = func(*gnmipb.Notification) ([]*gnmipb.Path, error) { return nil, nil }
