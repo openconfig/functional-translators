@@ -1556,24 +1556,3 @@ func TestAristaMACSecMapCache(t *testing.T) {
 		t.Errorf("RetrieveTargetMacSecInfo(%q) after ClearAll: ok = true, want false", target2)
 	}
 }
-
-func TestCreateOrRetrieveAttachmentPoint_NilMap(t *testing.T) {
-	// Create an uninitialized struct to simulate the nil map condition
-	info := &TargetPolicerInfo{
-		TargetHostname: "test-device",
-		// AttachmentPoints is implicitly nil here
-	}
-
-	// Call the method, which should hit the `if t.AttachmentPoints == nil` branch
-	ap := info.CreateOrRetrieveAttachmentPoint("Port-Channel1")
-
-	if ap == nil {
-		t.Fatalf("CreateOrRetrieveAttachmentPoint returned nil")
-	}
-	if info.AttachmentPoints == nil {
-		t.Fatalf("AttachmentPoints map was not initialized")
-	}
-	if info.AttachmentPoints["Port-Channel1"] != ap {
-		t.Errorf("Attachment point was not added to the map correctly")
-	}
-}
