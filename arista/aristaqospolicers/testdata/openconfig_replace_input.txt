@@ -1,0 +1,20 @@
+update: {
+  timestamp: 1780671106808290818
+  prefix: {
+    origin: "openconfig"
+    target: "target-2"
+    elem: { name: "qos" }
+    elem: { name: "interfaces" }
+    elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel4" } }
+    elem: { name: "input" }
+    elem: { name: "scheduler-policy" }
+    elem: { name: "schedulers" }
+    elem: { name: "scheduler" key: { key: "sequence" value: "0" } }
+  }
+  update: { path: { elem: { name: "state" } elem: { name: "sequence" } } val: { uint_val: 0 } }
+  update: { path: { elem: { name: "state" } elem: { name: "conforming-pkts" } } val: { uint_val: 65105165824 } }
+  update: { path: { elem: { name: "state" } elem: { name: "conforming-octets" } } val: { uint_val: 97645197957000 } }
+  delete: {
+    elem: { name: "state" }
+  }
+}

@@ -1,0 +1,11 @@
+update: {
+  timestamp: 2000
+  prefix: {
+    origin: "openconfig"
+    target: "target-2"
+  }
+  update: {
+    path: { elem: { name: "qos" } elem: { name: "interfaces" } }
+    val: { string_val: "test" }
+  }
+}

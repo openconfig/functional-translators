@@ -1,0 +1,18 @@
+update: {
+  timestamp: 8000
+  prefix: {
+    origin: "eos_native"
+    target: "target-2"
+    elem: { name: "Sysdb" }
+    elem: { name: "qos" }
+    elem: { name: "status" }
+    elem: { name: "policingStatus" }
+    elem: { name: "intfPolicer" }
+    elem: { name: "Ethernet4/1_" }
+    elem: { name: "counter" }
+  }
+  update: {
+    path: { elem: { name: "byteDropCount" } }
+    val: { uint_val: 50 }
+  }
+}

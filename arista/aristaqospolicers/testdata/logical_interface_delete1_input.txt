@@ -1,0 +1,15 @@
+update: {
+  timestamp: 4000
+  prefix: {
+    origin: "eos_native"
+    target: "target-2"
+    elem: { name: "Sysdb" }
+    elem: { name: "qos" }
+    elem: { name: "status" }
+    elem: { name: "policingStatus" }
+    elem: { name: "intfPolicer" }
+  }
+  delete: {
+    elem: { name: "Ethernet4/2_Port-Channel3.1" }
+  }
+}

@@ -1,0 +1,18 @@
+update: {
+  timestamp: 2000
+  prefix: {
+    origin: "eos_native"
+    target: "target-2"
+    elem: { name: "Sysdb" }
+    elem: { name: "qos" }
+    elem: { name: "status" }
+    elem: { name: "policingStatus" }
+    elem: { name: "intfPolicer" }
+    elem: { name: "Ethernet4/1_Port-Channel3.1" }
+    elem: { name: "counter" }
+  }
+  update: { path: { elem: { name: "byteDropCount" } } val: { uint_val: 50 } }
+  update: { path: { elem: { name: "pktDropCount" } } val: { uint_val: 5 } }
+  update: { path: { elem: { name: "yellowByteInCount" } } val: { uint_val: 20 } }
+  update: { path: { elem: { name: "yellowPktInCount" } } val: { uint_val: 2 } }
+}
