@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package juniperamacseccounters translates MACsec interface counters and SC/SA statistics from Juniper native to OpenConfig.
+// Package juniperamacseccounters translates MACsec interface counters from Juniper native to OpenConfig.
 package juniperamacseccounters
 
 import (
@@ -30,69 +30,38 @@ import (
 var (
 	// Juniper native paths to OpenConfig MACsec interface counters translation map
 	translateMap = map[string][]string{
-		// Interface level MACsec counters
-		"/openconfig/macsec/interfaces/interface/state/counters/tx-untagged-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/tx-untagged-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-badicv-pkts": {
+			"/junos/interfaces/interface/macsec/state/counters/rx-badicv-packets",
 		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-untagged-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-untagged-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-unrecognized-ckn": {
+			"/junos/interfaces/interface/macsec/state/counters/rx-unrecognized-ckn",
 		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-badtag-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-badtag-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-err-in": {
+			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-err-in",
 		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-unknownsci-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-unknownsci-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-ctrl": {
+			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-ctrl",
 		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-nosci-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-nosci-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-pkts-ctrl": {
+			"/junos/interfaces/interface/macsec/state/counters/rx-pkts-ctrl",
 		},
-		// Secure Channel TX statistics
-		"/openconfig/macsec/interfaces/interface/scsa-tx/scsa-tx/state/counters/sc-auth-only": {
-			"/junos/interfaces/interface/macsec/scsa-tx/state/counters/sc-auth-only-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-dropped": {
+			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-dropped",
 		},
-		"/openconfig/macsec/interfaces/interface/scsa-tx/scsa-tx/state/counters/sc-encrypted": {
-			"/junos/interfaces/interface/macsec/scsa-tx/state/counters/sc-encrypted-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/scsa-tx/scsa-tx/state/counters/sa-auth-only": {
-			"/junos/interfaces/interface/macsec/scsa-tx/state/counters/sa-auth-only-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/scsa-tx/scsa-tx/state/counters/sa-encrypted": {
-			"/junos/interfaces/interface/macsec/scsa-tx/state/counters/sa-encrypted-packets",
-		},
-		// Secure Channel RX statistics
-		"/openconfig/macsec/interfaces/interface/scsa-rx/scsa-rx/state/counters/sc-invalid": {
-			"/junos/interfaces/interface/macsec/scsa-rx/state/counters/sc-invalid-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/scsa-rx/scsa-rx/state/counters/sc-valid": {
-			"/junos/interfaces/interface/macsec/scsa-rx/state/counters/sc-valid-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/scsa-rx/scsa-rx/state/counters/sa-invalid": {
-			"/junos/interfaces/interface/macsec/scsa-rx/state/counters/sa-invalid-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/scsa-rx/scsa-rx/state/counters/sa-valid": {
-			"/junos/interfaces/interface/macsec/scsa-rx/state/counters/sa-valid-packets",
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-pkts-dropped": {
+			"/junos/interfaces/interface/macsec/state/counters/rx-pkts-dropped",
 		},
 	}
 
 	// Update path patterns for Juniper native counters
 	updatePathPatterns = []*gnmipb.Path{
-		// Interface level counters
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
 				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "tx-untagged-packets"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-untagged-packets"},
+				{Name: "rx-badicv-packets"},
 			},
 		},
 		{
@@ -101,7 +70,7 @@ var (
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
 				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-badtag-packets"},
+				{Name: "rx-unrecognized-ckn"},
 			},
 		},
 		{
@@ -110,7 +79,7 @@ var (
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
 				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-unknownsci-packets"},
+				{Name: "tx-pkts-err-in"},
 			},
 		},
 		{
@@ -119,18 +88,7 @@ var (
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
 				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-nosci-packets"},
-			},
-		},
-		// TX SC/SA counters
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-tx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-tx
-				{Name: "sc-auth-only-packets"},
+				{Name: "tx-pkts-ctrl"},
 			},
 		},
 		{
@@ -138,9 +96,8 @@ var (
 			Elem: []*gnmipb.PathElem{
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-tx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-tx
-				{Name: "sc-encrypted-packets"},
+				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
+				{Name: "rx-pkts-ctrl"},
 			},
 		},
 		{
@@ -148,9 +105,8 @@ var (
 			Elem: []*gnmipb.PathElem{
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-tx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-tx
-				{Name: "sa-auth-only-packets"},
+				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
+				{Name: "tx-pkts-dropped"},
 			},
 		},
 		{
@@ -158,69 +114,21 @@ var (
 			Elem: []*gnmipb.PathElem{
 				{Name: "interfaces"}, {Name: "interface"},
 				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-tx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-tx
-				{Name: "sa-encrypted-packets"},
-			},
-		},
-		// RX SC/SA counters
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-rx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-rx
-				{Name: "sc-invalid-packets"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-rx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-rx
-				{Name: "sc-valid-packets"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-rx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-rx
-				{Name: "sa-invalid-packets"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "scsa-rx"}, {Name: "state"}, {Name: "counters"},
-				{Name: "*"}, // sci-rx
-				{Name: "sa-valid-packets"},
+				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
+				{Name: "rx-pkts-dropped"},
 			},
 		},
 	}
 
 	// Mapping of Juniper leaf names to OpenConfig leaf names
 	vendorToOCLeaf = map[string]string{
-		"tx-untagged-packets":   "tx-untagged-pkts",
-		"rx-untagged-packets":   "rx-untagged-pkts",
-		"rx-badtag-packets":     "rx-badtag-pkts",
-		"rx-unknownsci-packets": "rx-unknownsci-pkts",
-		"rx-nosci-packets":      "rx-nosci-pkts",
-		"sc-auth-only-packets":  "sc-auth-only",
-		"sc-encrypted-packets":  "sc-encrypted",
-		"sa-auth-only-packets":  "sa-auth-only",
-		"sa-encrypted-packets":  "sa-encrypted",
-		"sc-invalid-packets":    "sc-invalid",
-		"sc-valid-packets":      "sc-valid",
-		"sa-invalid-packets":    "sa-invalid",
-		"sa-valid-packets":      "sa-valid",
+		"rx-badicv-packets":   "rx-badicv-pkts",
+		"rx-unrecognized-ckn": "rx-unrecognized-ckn",
+		"tx-pkts-err-in":      "tx-pkts-err-in",
+		"tx-pkts-ctrl":        "tx-pkts-ctrl",
+		"rx-pkts-ctrl":        "rx-pkts-ctrl",
+		"tx-pkts-dropped":     "tx-pkts-dropped",
+		"rx-pkts-dropped":     "rx-pkts-dropped",
 	}
 )
 
@@ -270,52 +178,6 @@ func outgoingVal(fullPath *gnmipb.Path, incomingVal *gnmipb.TypedValue) (*gnmipb
 	return &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: uint64(v)}}, nil
 }
 
-// extractInterfaceAndSCI extracts interface name and SCI (if applicable) from the path.
-func extractInterfaceAndSCI(fullPath *gnmipb.Path) (interfaceName, sci string, isScsa bool, err error) {
-	elems := fullPath.GetElem()
-	if len(elems) < 3 {
-		return "", "", false, fmt.Errorf("path %v has fewer than 3 elements", fullPath)
-	}
-
-	// Find interface element - it's after "interfaces/interface"
-	var intfIdx int
-	for i, elem := range elems {
-		if elem.GetName() == "interface" && i > 0 && elems[i-1].GetName() == "interfaces" {
-			intfIdx = i + 1
-			break
-		}
-	}
-
-	if intfIdx >= len(elems) {
-		return "", "", false, fmt.Errorf("could not find interface element in path %v", fullPath)
-	}
-
-	interfaceName = elems[intfIdx].GetName()
-
-	// Check if this is an SCSA path (contains scsa-tx or scsa-rx)
-	for _, elem := range elems {
-		if elem.GetName() == "scsa-tx" || elem.GetName() == "scsa-rx" {
-			isScsa = true
-			break
-		}
-	}
-
-	// If SCSA path, extract SCI - it's the first wildcard match after scsa-tx/scsa-rx
-	if isScsa {
-		for i, elem := range elems {
-			if (elem.GetName() == "scsa-tx" || elem.GetName() == "scsa-rx") && i+2 < len(elems) {
-				// Skip "state" and get the next element which should be a counter container
-				if elems[i+1].GetName() == "state" && elems[i+2].GetName() == "counters" && i+3 < len(elems) {
-					sci = elems[i+3].GetName()
-					break
-				}
-			}
-		}
-	}
-
-	return interfaceName, sci, isScsa, nil
-}
-
 // updateHandler processes updates and transforms them to OpenConfig format.
 func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 	prefix := n.GetPrefix()
@@ -336,10 +198,9 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 				return nil, fmt.Errorf("vendor leaf '%s' not found in mapping for path %v", vendorLeaf, fullPath)
 			}
 
-			interfaceName, sci, isScsa, err := extractInterfaceAndSCI(fullPath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to extract interface and SCI from path %v: %v", fullPath, err)
-			}
+			// The interface ID is the 3rd last element in the path.
+			lastElemIndex := len(fullPath.GetElem()) - 1
+			intfID := fullPath.GetElem()[lastElemIndex-2].GetName()
 
 			incomingVal := update.GetVal()
 			outVal, err := outgoingVal(fullPath, incomingVal)
@@ -347,39 +208,18 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 				return nil, fmt.Errorf("failed to get outgoing value for path %v: %v", fullPath, err)
 			}
 
-			var outgoingUpdate *gnmipb.Update
-			if isScsa {
-				// Determine if TX or RX from the path
-				var scaType string
-				for _, elem := range fullPath.GetElem() {
-					if elem.GetName() == "scsa-tx" {
-						scaType = "scsa-tx"
-						break
-					} else if elem.GetName() == "scsa-rx" {
-						scaType = "scsa-rx"
-						break
-					}
-				}
-
-				outgoingUpdate = &gnmipb.Update{
-					Path: returnScSAPath(interfaceName, scaType, sci, ocLeaf),
-					Val:  outVal,
-				}
-			} else {
-				outgoingUpdate = &gnmipb.Update{
-					Path: returnInterfacePath(interfaceName, ocLeaf),
-					Val:  outVal,
-				}
+			outgoingUpdate := &gnmipb.Update{
+				Path: returnPath(intfID, ocLeaf),
+				Val:  outVal,
 			}
-
 			updates = append(updates, outgoingUpdate)
 		}
 	}
 	return updates, nil
 }
 
-// returnInterfacePath returns the OpenConfig path for interface level counters.
-func returnInterfacePath(interfaceName, leaf string) *gnmipb.Path {
+// returnPath returns a gNMI path for the update.
+func returnPath(interfaceName, leaf string) *gnmipb.Path {
 	return &gnmipb.Path{
 		Elem: []*gnmipb.PathElem{
 			{Name: "macsec"},
@@ -388,32 +228,6 @@ func returnInterfacePath(interfaceName, leaf string) *gnmipb.Path {
 				Name: "interface",
 				Key: map[string]string{
 					"name": interfaceName,
-				},
-			},
-			{Name: "state"},
-			{Name: "counters"},
-			{Name: leaf},
-		},
-	}
-}
-
-// returnScSAPath returns the OpenConfig path for SC/SA level counters.
-func returnScSAPath(interfaceName, scaType, sci, leaf string) *gnmipb.Path {
-	return &gnmipb.Path{
-		Elem: []*gnmipb.PathElem{
-			{Name: "macsec"},
-			{Name: "interfaces"},
-			{
-				Name: "interface",
-				Key: map[string]string{
-					"name": interfaceName,
-				},
-			},
-			{Name: scaType},
-			{
-				Name: scaType,
-				Key: map[string]string{
-					scaType[5:]: sci, // "sci-tx" or "sci-rx"
 				},
 			},
 			{Name: "state"},

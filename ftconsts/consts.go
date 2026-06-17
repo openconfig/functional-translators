@@ -109,4 +109,10 @@ const (
 
 	// CiscoXRVendorTranslator is the name of a translator that provides Vendor information.
 	CiscoXRVendorDropsTranslator = "ciscoxr-vendordrops-ft"
+
+	// JuniperMacsecStateFunctionalTranslator is the name of the Juniper MACsec state functional translator.
+	JuniperMacsecStateFunctionalTranslator = "juniper-macsec-state-ft"
+
+	// JuniperMacsecCountersTranslator is the name of the Juniper MACsec counters functional translator.
+	JuniperMacsecCountersTranslator = "juniper-macsec-counters-ft"
 )

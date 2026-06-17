@@ -24,9 +24,9 @@ import (
 	"sync"
 
 	log "github.com/golang/glog"
-	"google.golang.org/protobuf/encoding/prototext"
-	"github.com/openconfig/ygot/ygot"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/ygot/ygot"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // StripPathPrefix strips the prefix from the path.
@@ -160,6 +160,9 @@ var ValidOrigins = map[string]struct{}{
 
 	// Arista
 	"eos_native": {},
+
+	// Juniper
+	"junos": {},
 
 	// Cisco XR-controller-optics-oper
 	"Cisco-IOS-XR-controller-optics-oper": {},
