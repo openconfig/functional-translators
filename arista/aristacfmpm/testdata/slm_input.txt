@@ -31,4 +31,18 @@ update: {
       uint_val: 123
     }
   }
+  update: {
+    path: {
+      elem: { name: "Smash" }
+      elem: { name: "cfm" }
+      elem: { name: "mepSmashTable" }
+      elem: { name: "slmMiStatsCurrent" }
+      elem: { name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5_7_1" }
+      elem: { name: "slmMiStats" }
+      elem: { name: "backwardAvgFlr" }
+    }
+    val: {
+      uint_val: 456
+    }
+  }
 }

@@ -273,6 +273,18 @@ func TestConvertMetricValue(t *testing.T) {
 			metricType: "unknown",
 			wantErr:    true,
 		},
+		{
+			name:       "valid near end loss",
+			tv:         &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: 123.4}},
+			metricType: metricLossNear,
+			wantErr:    false,
+		},
+		{
+			name:       "valid far end loss",
+			tv:         &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: 456.7}},
+			metricType: metricLossFar,
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -398,4 +410,100 @@ func TestUnusedMethodsForCoverage(t *testing.T) {
 
 	// Call Clear
 	targetCFM.Clear()
+}
+
+func TestUpdateHandlerEdgeCases(t *testing.T) {
+	oldPatterns := updatePathPatterns
+	defer func() { updatePathPatterns = oldPatterns }()
+
+	updatePathPatterns = append([]*gnmipb.Path(nil), oldPatterns...)
+	updatePathPatterns = append(updatePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			{Name: "*"},
+		},
+	})
+	updatePathPatterns = append(updatePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			{Name: "*"}, {Name: elemSlmMiStats}, {Name: "UNKNOWN_METRIC"},
+		},
+	})
+
+	i := &impl{}
+	notification1 := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Update: []*gnmipb.Update{{
+			Path: &gnmipb.Path{
+				Origin: "eos_native",
+				Elem: []*gnmipb.PathElem{
+					{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+					{Name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5_7_1"},
+				},
+			},
+			Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+		}},
+	}
+	updates1, err := i.updateHandler(notification1)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(updates1) != 0 {
+		t.Errorf("Expected 0 updates, got %d", len(updates1))
+	}
+
+	notification2 := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Update: []*gnmipb.Update{{
+			Path: &gnmipb.Path{
+				Origin: "eos_native",
+				Elem: []*gnmipb.PathElem{
+					{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+					{Name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5_7_1"},
+					{Name: "slmMiStats"}, {Name: "UNKNOWN_METRIC"},
+				},
+			},
+			Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+		}},
+	}
+	updates2, err := i.updateHandler(notification2)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(updates2) != 0 {
+		t.Errorf("Expected 0 updates, got %d", len(updates2))
+	}
+}
+
+func TestDeleteHandlerSmashLength(t *testing.T) {
+	oldPatterns := deletePathPatterns
+	defer func() { deletePathPatterns = oldPatterns }()
+
+	deletePathPatterns = append([]*gnmipb.Path(nil), oldPatterns...)
+	deletePathPatterns = append(deletePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+		},
+	})
+
+	i := &impl{}
+	notification := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Delete: []*gnmipb.Path{{
+			Origin: "eos_native",
+			Elem: []*gnmipb.PathElem{
+				{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			},
+		}},
+	}
+	deletes, err := i.deleteHandler(notification)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(deletes) != 0 {
+		t.Errorf("Expected 0 deletes, got %d", len(deletes))
+	}
 }

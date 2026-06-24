@@ -43,6 +43,7 @@ const (
 	elemSlmMiStats        = "slmMiStats"
 	elemDelayTwoWayAvg    = "delayTwoWayAvg"
 	elemForwardAvgFlr     = "forwardAvgFlr"
+	elemBackwardAvgFlr    = "backwardAvgFlr"
 
 	// Sysdb paths
 	elemConfig         = "config"
@@ -51,8 +52,9 @@ const (
 	elemCfmProfileName = "cfmProfileName"
 
 	// Metrics
-	metricDelay = "delay"
-	metricLoss  = "loss"
+	metricDelay    = "delay"
+	metricLossFar  = "lossFar"
+	metricLossNear = "lossNear"
 )
 
 var (
@@ -63,6 +65,11 @@ var (
 			"/eos_native/Sysdb/cfm/status/mdStatus",
 		},
 		"/openconfig/oam/cfm/domains/maintenance-domain/maintenance-associations/maintenance-association/mep-endpoints/mep-endpoint/pm-profiles/pm-profile/state/loss-measurement-state/far-end-average-frame-loss-ratio": {
+			"/eos_native/Smash/cfm/mepSmashTable/slmMiStatsCurrent",
+			"/eos_native/Sysdb/cfm/config/mdConfig",
+			"/eos_native/Sysdb/cfm/status/mdStatus",
+		},
+		"/openconfig/oam/cfm/domains/maintenance-domain/maintenance-associations/maintenance-association/mep-endpoints/mep-endpoint/pm-profiles/pm-profile/state/loss-measurement-state/near-end-average-frame-loss-ratio": {
 			"/eos_native/Smash/cfm/mepSmashTable/slmMiStatsCurrent",
 			"/eos_native/Sysdb/cfm/config/mdConfig",
 			"/eos_native/Sysdb/cfm/status/mdStatus",
@@ -85,6 +92,15 @@ var (
 				{Name: "*"}, // key containing domainID, assocID, and localMepID
 				{Name: elemSlmMiStats},
 				{Name: elemForwardAvgFlr},
+			},
+		},
+		{
+			Origin: "eos_native",
+			Elem: []*gnmipb.PathElem{
+				{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+				{Name: "*"}, // key containing domainID, assocID, and localMepID
+				{Name: elemSlmMiStats},
+				{Name: elemBackwardAvgFlr},
 			},
 		},
 
@@ -342,9 +358,18 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 				case elemDmMiStatsCurrent:
 					metricType = metricDelay
 				case elemSlmMiStatsCurrent:
-					metricType = metricLoss
+					if len(elems) < 7 {
+						continue
+					}
+					switch elems[6].GetName() {
+					case elemForwardAvgFlr:
+						metricType = metricLossFar
+					case elemBackwardAvgFlr:
+						metricType = metricLossNear
+					default:
+						continue
+					}
 				default:
-					log.Errorf("Unexpected metric type: %s", elems[3].GetName())
 					continue
 				}
 
@@ -409,6 +434,10 @@ func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path,
 				continue
 			}
 
+			if len(elems) < 5 {
+				continue
+			}
+
 			// Process Smash delete
 			key := elems[4].GetName()
 			assocID, domainID, parsedLocalMEPID, err := parseSmashKey(key)
@@ -426,19 +455,15 @@ func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path,
 			if !ok {
 				localMEPID = parsedLocalMEPID
 			}
-
-			var metricType string
 			switch elems[3].GetName() {
 			case elemDmMiStatsCurrent:
-				metricType = metricDelay
+				deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricDelay))
 			case elemSlmMiStatsCurrent:
-				metricType = metricLoss
+				deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricLossFar))
+				deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricLossNear))
 			default:
-				log.Errorf("Unexpected metric type: %s", elems[3].GetName())
 				continue
 			}
-
-			deletes = append(deletes, pmPath(domainID, assocID, localMEPID, profileName, metricType))
 			break
 		}
 	}
@@ -529,9 +554,15 @@ func pmPath(domainID, assocID, localMEPID, profileName, metricType string) *gnmi
 	case metricDelay:
 		path.Elem = append(path.Elem, &gnmipb.PathElem{Name: "delay-measurement-state"})
 		path.Elem = append(path.Elem, &gnmipb.PathElem{Name: "frame-delay-two-way-average"})
-	case metricLoss:
+	case metricLossFar, metricLossNear:
 		path.Elem = append(path.Elem, &gnmipb.PathElem{Name: "loss-measurement-state"})
-		path.Elem = append(path.Elem, &gnmipb.PathElem{Name: "far-end-average-frame-loss-ratio"})
+		var leafName string
+		if metricType == metricLossNear {
+			leafName = "near-end-average-frame-loss-ratio"
+		} else {
+			leafName = "far-end-average-frame-loss-ratio"
+		}
+		path.Elem = append(path.Elem, &gnmipb.PathElem{Name: leafName})
 	}
 
 	return path
@@ -603,7 +634,7 @@ func (i *impl) convertMetricValue(tv *gnmipb.TypedValue, metricType string) (*gn
 	case metricDelay:
 		// Convert seconds to microseconds
 		uintVal = uint64(math.Round(valFloat * 1e6))
-	case metricLoss:
+	case metricLossFar, metricLossNear:
 		// native string/number is a raw ratio like "0" or "123".
 		uintVal = uint64(math.Round(valFloat))
 	default:
