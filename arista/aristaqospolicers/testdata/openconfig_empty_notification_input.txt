@@ -1,8 +1,0 @@
-update: {
-  timestamp: 1000
-  prefix: {
-    origin: "openconfig"
-    target: "target-2"
-    elem: { name: "qos" }
-  }
-}
