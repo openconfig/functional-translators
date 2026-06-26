@@ -44,6 +44,15 @@ var (
 		"/openconfig/macsec/interfaces/interface/state/counters/rx-unrecognized-ckn": {
 			"/junos/macsec/interfaces/interface/mka/state/counters/jnx-cak-error",
 		},
+		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-err-in": {
+			"/junos/macsec/interfaces/interface/mka/state/counters/out-mkpdu",
+		},
+		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-dropped": {
+			"/junos/macsec/interfaces/interface/mka/state/counters/out-mkpdu",
+		},
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-pkts-dropped": {
+			"/junos/macsec/interfaces/interface/mka/state/counters/in-mkpdu",
+		},
 	}
 
 	// Update path patterns for Juniper native counters
@@ -89,8 +98,9 @@ var (
 	// Mapping of Juniper leaf names to OpenConfig leaf names (one native leaf may map to multiple OC leaves)
 	vendorToOCLeaves = map[string][]string{
 		"jnx-integrity-check-value-mismatch": {"rx-badicv-pkts"},
-		"out-mkpdu":                          {"tx-pkts-ctrl"},
-		"in-mkpdu":                           {"rx-pkts-ctrl"},
+		"out-mkpdu":                          {"tx-pkts-ctrl", "tx-pkts-err-in", "tx-pkts-dropped"},
+		"in-mkpdu":                           {"rx-pkts-ctrl", "rx-pkts-dropped"},
+		"jnx-cak-error":                      {"rx-unrecognized-ckn"},
 	}
 )
 

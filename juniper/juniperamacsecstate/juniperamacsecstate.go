@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"maps"
 	"sort"
+	"strings"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/functional-translators/ftconsts"
@@ -53,6 +54,16 @@ var (
 				{Name: "macsec"}, {Name: "interfaces"},
 				{Name: "interface", Key: map[string]string{"name": "*"}},
 				{Name: "name"},
+			},
+		},
+		// CKN value from MKA state
+		{
+			Origin: "junos",
+			Elem: []*gnmipb.PathElem{
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "mka"}, {Name: "state"},
+				{Name: "jnx-cak-name"},
 			},
 		},
 	}
@@ -165,10 +176,17 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 
 			switch counterName {
 			case "name":
-				// Presence of the interface name in macsec tree indicates MACsec is enabled and secured
+				// Presence of the interface name in macsec tree indicates MACsec is enabled
 				ifaceInfo.SetIntfCPStatus(true)
-				ifaceInfo.SetIntfSuccess("default", true)
-				ifaceInfo.SetIntfPrincipal("default", true)
+			case "jnx-cak-name":
+				// Extract the actual CKN value from the update
+				cknVal := strings.ToLower(update.GetVal().GetStringVal())
+				if cknVal == "" {
+					log.Warningf("Empty jnx-cak-name value for interface '%s' on path %v", interfaceName, fullPath)
+					break
+				}
+				ifaceInfo.SetIntfSuccess(cknVal, true)
+				ifaceInfo.SetIntfPrincipal(cknVal, true)
 			default:
 				log.Warningf("Unknown counter name '%s' encountered for MACsec status processing for path %v", counterName, fullPath)
 			}
