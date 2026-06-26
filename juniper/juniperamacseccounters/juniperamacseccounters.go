@@ -28,28 +28,21 @@ import (
 )
 
 var (
-	// Juniper native paths to OpenConfig MACsec interface counters translation map
+	// Juniper native paths to OpenConfig MACsec interface counters translation map.
+	// Note: The origin (junos) is required by the framework but must be stripped
+	// before subscribing on the device.
 	translateMap = map[string][]string{
 		"/openconfig/macsec/interfaces/interface/state/counters/rx-badicv-pkts": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-badicv-packets",
-		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-unrecognized-ckn": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-unrecognized-ckn",
-		},
-		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-err-in": {
-			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-err-in",
+			"/junos/macsec/interfaces/interface/mka/state/counters/jnx-integrity-check-value-mismatch",
 		},
 		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-ctrl": {
-			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-ctrl",
+			"/junos/macsec/interfaces/interface/mka/state/counters/out-mkpdu",
 		},
 		"/openconfig/macsec/interfaces/interface/state/counters/rx-pkts-ctrl": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-pkts-ctrl",
+			"/junos/macsec/interfaces/interface/mka/state/counters/in-mkpdu",
 		},
-		"/openconfig/macsec/interfaces/interface/state/counters/tx-pkts-dropped": {
-			"/junos/interfaces/interface/macsec/state/counters/tx-pkts-dropped",
-		},
-		"/openconfig/macsec/interfaces/interface/state/counters/rx-pkts-dropped": {
-			"/junos/interfaces/interface/macsec/state/counters/rx-pkts-dropped",
+		"/openconfig/macsec/interfaces/interface/state/counters/rx-unrecognized-ckn": {
+			"/junos/macsec/interfaces/interface/mka/state/counters/jnx-cak-error",
 		},
 	}
 
@@ -58,77 +51,46 @@ var (
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-badicv-packets"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "mka"}, {Name: "state"}, {Name: "counters"},
+				{Name: "jnx-integrity-check-value-mismatch"},
 			},
 		},
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-unrecognized-ckn"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "mka"}, {Name: "state"}, {Name: "counters"},
+				{Name: "out-mkpdu"},
 			},
 		},
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "tx-pkts-err-in"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "mka"}, {Name: "state"}, {Name: "counters"},
+				{Name: "in-mkpdu"},
 			},
 		},
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "tx-pkts-ctrl"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-pkts-ctrl"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "tx-pkts-dropped"},
-			},
-		},
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "counters"},
-				{Name: "rx-pkts-dropped"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "mka"}, {Name: "state"}, {Name: "counters"},
+				{Name: "jnx-cak-error"},
 			},
 		},
 	}
 
-	// Mapping of Juniper leaf names to OpenConfig leaf names
-	vendorToOCLeaf = map[string]string{
-		"rx-badicv-packets":   "rx-badicv-pkts",
-		"rx-unrecognized-ckn": "rx-unrecognized-ckn",
-		"tx-pkts-err-in":      "tx-pkts-err-in",
-		"tx-pkts-ctrl":        "tx-pkts-ctrl",
-		"rx-pkts-ctrl":        "rx-pkts-ctrl",
-		"tx-pkts-dropped":     "tx-pkts-dropped",
-		"rx-pkts-dropped":     "rx-pkts-dropped",
+	// Mapping of Juniper leaf names to OpenConfig leaf names (one native leaf may map to multiple OC leaves)
+	vendorToOCLeaves = map[string][]string{
+		"jnx-integrity-check-value-mismatch": {"rx-badicv-pkts"},
+		"out-mkpdu":                          {"tx-pkts-ctrl"},
+		"in-mkpdu":                           {"rx-pkts-ctrl"},
 	}
 )
 
@@ -193,14 +155,22 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 			}
 
 			vendorLeaf := fullPath.GetElem()[len(fullPath.GetElem())-1].GetName()
-			ocLeaf, found := vendorToOCLeaf[vendorLeaf]
+			ocLeaves, found := vendorToOCLeaves[vendorLeaf]
 			if !found {
 				return nil, fmt.Errorf("vendor leaf '%s' not found in mapping for path %v", vendorLeaf, fullPath)
 			}
 
-			// The interface ID is the 3rd last element in the path.
-			lastElemIndex := len(fullPath.GetElem()) - 1
-			intfID := fullPath.GetElem()[lastElemIndex-2].GetName()
+			// Extract interface name from the "interface" element key
+			var intfID string
+			for _, elem := range fullPath.GetElem() {
+				if elem.GetName() == "interface" {
+					intfID = elem.GetKey()["name"]
+					break
+				}
+			}
+			if intfID == "" {
+				return nil, fmt.Errorf("interface name key not found in path %v", fullPath)
+			}
 
 			incomingVal := update.GetVal()
 			outVal, err := outgoingVal(fullPath, incomingVal)
@@ -208,11 +178,13 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 				return nil, fmt.Errorf("failed to get outgoing value for path %v: %v", fullPath, err)
 			}
 
-			outgoingUpdate := &gnmipb.Update{
-				Path: returnPath(intfID, ocLeaf),
-				Val:  outVal,
+			for _, ocLeaf := range ocLeaves {
+				outgoingUpdate := &gnmipb.Update{
+					Path: returnPath(intfID, ocLeaf),
+					Val:  outVal,
+				}
+				updates = append(updates, outgoingUpdate)
 			}
-			updates = append(updates, outgoingUpdate)
 		}
 	}
 	return updates, nil

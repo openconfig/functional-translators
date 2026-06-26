@@ -32,48 +32,27 @@ var (
 	// Juniper does not support `*` subscription for the native paths.
 	// Therefore, we need to subscribe to the longest prefix/container of a path.
 	// Example:
-	// for native path: /junos/interfaces/interface[name=<intf>]/macsec/state/enable
-	// Subscribe to: /junos/interfaces/interface[name=<intf>]/macsec/state
+	// for native path: /junos/macsec/interfaces/interface[name=<intf>]/mka/state/counters/in-mkpdu
+	// Subscribe to: /junos/macsec/interfaces/interface[name=<intf>]/mka/state/counters
 	// Translation map from OpenConfig MACsec state paths to Juniper native paths
 	translateMap = map[string][]string{
 		"/openconfig/macsec/interfaces/interface/state/status": {
-			"/junos/interfaces/interface/macsec/state/enable",
-			"/junos/interfaces/interface/macsec/mka/state/counters/in-mkpdu",
+			"/junos/macsec/interfaces/interface/name",
 		},
 		"/openconfig/macsec/interfaces/interface/state/ckn": {
-			"/junos/interfaces/interface/macsec/mka/state/counters/in-sak-mkpdu",
+			"/junos/macsec/interfaces/interface/mka/state/jnx-cak-name",
 		},
 	}
 
 	paths        = ftutilities.MustStringMapPaths(translateMap)
 	pathPatterns = []*gnmipb.Path{
-		// Interface enable state
+		// Interface name (presence indicates MACsec is enabled)
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "state"}, {Name: "enable"},
-			},
-		},
-		// Interface MKA in-mkpdu counter
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "mka"}, {Name: "state"}, {Name: "counters"},
-				{Name: "in-mkpdu"},
-			},
-		},
-		// Interface MKA in-sak-mkpdu counter
-		{
-			Origin: "junos",
-			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"}, {Name: "mka"}, {Name: "state"}, {Name: "counters"},
-				{Name: "in-sak-mkpdu"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
+				{Name: "name"},
 			},
 		},
 	}
@@ -82,9 +61,8 @@ var (
 		{
 			Origin: "junos",
 			Elem: []*gnmipb.PathElem{
-				{Name: "interfaces"}, {Name: "interface"},
-				{Name: "*"}, // interface-name
-				{Name: "macsec"},
+				{Name: "macsec"}, {Name: "interfaces"},
+				{Name: "interface", Key: map[string]string{"name": "*"}},
 			},
 		},
 	}
@@ -116,24 +94,27 @@ func New() *translator.FunctionalTranslator {
 
 // interfaceIDAndValue extracts interface ID and the counter value from the path.
 func interfaceIDAndValue(path *gnmipb.Path) (intfID, counterName string, err error) {
-	if len(path.GetElem()) < 3 {
-		return "", "", fmt.Errorf("path %v has fewer than 3 elements", path)
+	if len(path.GetElem()) < 2 {
+		return "", "", fmt.Errorf("path %v has fewer than 2 elements", path)
 	}
 
-	// Find interface element
-	var intfIdx int
+	// Find interface element and extract name from key
+	var intfElem *gnmipb.PathElem
 	for i, elem := range path.GetElem() {
 		if elem.GetName() == "interface" && i > 0 && path.GetElem()[i-1].GetName() == "interfaces" {
-			intfIdx = i + 1
+			intfElem = elem
 			break
 		}
 	}
 
-	if intfIdx >= len(path.GetElem()) {
+	if intfElem == nil {
 		return "", "", fmt.Errorf("interface element not found in path %v", path)
 	}
 
-	intfID = path.GetElem()[intfIdx].GetName()
+	intfID = intfElem.GetKey()["name"]
+	if intfID == "" {
+		return "", "", fmt.Errorf("interface name key not found in path %v", path)
+	}
 	counterName = path.GetElem()[len(path.GetElem())-1].GetName()
 
 	return intfID, counterName, nil
@@ -152,7 +133,7 @@ func extractDeleteInfo(path *gnmipb.Path) (*deleteInfo, error) {
 	for _, pattern := range deletePathPatterns {
 		if ftutilities.MatchPath(path, pattern) {
 			// Interface level delete
-			if path.GetElem()[lastElemIndex].GetName() == "macsec" {
+			if path.GetElem()[lastElemIndex].GetName() == "interface" {
 				intfID, _, err := interfaceIDAndValue(path)
 				if err != nil {
 					return nil, err
@@ -182,29 +163,12 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 			targetInfo := ftutilities.AristaMACSecMap.CreateOrUpdateTargetMacSecInfo(target)
 			ifaceInfo := targetInfo.CreateOrGetInterface(interfaceName)
 
-			boolVal := update.GetVal().GetBoolVal()
-			uintVal := update.GetVal().GetUintVal()
-
 			switch counterName {
-			case "enable":
-				ifaceInfo.SetIntfCPStatus(boolVal)
-				// Ensure default CKN entry exists for this interface
-				ifaceInfo.SetIntfSuccess("default", false)
-				ifaceInfo.SetIntfPrincipal("default", false)
-			case "in-mkpdu":
-				// Track if we have MKA activity (indicating key agreement in progress)
-				if uintVal > 0 {
-					ifaceInfo.SetIntfSuccess("default", true)
-				} else {
-					ifaceInfo.SetIntfSuccess("default", false)
-				}
-			case "in-sak-mkpdu":
-				// Track if we have SAK activity (indicating secured association)
-				if uintVal > 0 {
-					ifaceInfo.SetIntfPrincipal("default", true)
-				} else {
-					ifaceInfo.SetIntfPrincipal("default", false)
-				}
+			case "name":
+				// Presence of the interface name in macsec tree indicates MACsec is enabled and secured
+				ifaceInfo.SetIntfCPStatus(true)
+				ifaceInfo.SetIntfSuccess("default", true)
+				ifaceInfo.SetIntfPrincipal("default", true)
 			default:
 				log.Warningf("Unknown counter name '%s' encountered for MACsec status processing for path %v", counterName, fullPath)
 			}
