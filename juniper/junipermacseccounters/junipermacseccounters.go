@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package juniperamacseccounters translates MACsec interface counters from Juniper native to OpenConfig.
-package juniperamacseccounters
+// Package junipermacseccounters translates MACsec interface counters from Juniper native to OpenConfig.
+package junipermacseccounters
 
 import (
 	"encoding/json"
@@ -195,6 +195,7 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 				}
 				updates = append(updates, outgoingUpdate)
 			}
+			break
 		}
 	}
 	return updates, nil

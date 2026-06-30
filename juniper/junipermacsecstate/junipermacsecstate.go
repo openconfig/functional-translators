@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package juniperamacsecstate translates MACsec interface state and MKA state from Juniper native to OpenConfig.
-package juniperamacsecstate
+// Package junipermacsecstate translates MACsec interface state and MKA state from Juniper native to OpenConfig.
+package junipermacsecstate
 
 import (
 	"fmt"
-	"maps"
 	"sort"
 	"strings"
 
@@ -30,12 +29,13 @@ import (
 )
 
 var (
+	// Translation map from OpenConfig MACsec state paths to Juniper native paths.
 	// Juniper does not support `*` subscription for the native paths.
 	// Therefore, we need to subscribe to the longest prefix/container of a path.
 	// Example:
-	// for native path: /junos/macsec/interfaces/interface[name=<intf>]/mka/state/counters/in-mkpdu
-	// Subscribe to: /junos/macsec/interfaces/interface[name=<intf>]/mka/state/counters
-	// Translation map from OpenConfig MACsec state paths to Juniper native paths
+	// for native path: /junos/macsec/interfaces/interface[name=<intf>]/mka/state/jnx-cak-name
+	// Subscribe to: /junos/macsec/interfaces/interface[name=<intf>]/mka/state
+
 	translateMap = map[string][]string{
 		"/openconfig/macsec/interfaces/interface/state/status": {
 			"/junos/macsec/interfaces/interface/name",
@@ -238,8 +238,8 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 		log.V(1).Infof("no CKNs found for interface '%s' on target '%s'. Returning empty CKN and status list.", interfaceName, target)
 		return nil, nil, true
 	}
-	var cknNamesToSort []string
-	for ckn := range maps.Keys(ifaceInfo.CloneStatuses()) {
+	cknNamesToSort := make([]string, 0, len(ifaceInfo.CloneStatuses()))
+	for ckn := range ifaceInfo.CloneStatuses() {
 		cknNamesToSort = append(cknNamesToSort, ckn)
 	}
 	if len(cknNamesToSort) == 0 {
