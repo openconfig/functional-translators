@@ -38,13 +38,13 @@ func TestTranslateInterfaceCounters(t *testing.T) {
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/0"},
 								{Name: "macsec"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
+								{Name: "mka"},
 								{Name: "state"},
 								{Name: "counters"},
-								{Name: "rx-badicv-packets"},
+								{Name: "jnx-integrity-check-value-mismatch"},
 							},
 						},
 						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 1000}},
@@ -65,13 +65,13 @@ func TestTranslateInterfaceCounters(t *testing.T) {
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/0"},
 								{Name: "macsec"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
+								{Name: "mka"},
 								{Name: "state"},
 								{Name: "counters"},
-								{Name: "rx-unrecognized-ckn"},
+								{Name: "jnx-cak-error"},
 							},
 						},
 						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 50}},

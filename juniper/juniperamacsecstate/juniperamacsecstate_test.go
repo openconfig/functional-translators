@@ -17,6 +17,7 @@ package juniperamacsecstate
 import (
 	"testing"
 
+	"github.com/openconfig/functional-translators/ftutilities"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -39,45 +40,26 @@ func TestTranslateInterfaceState(t *testing.T) {
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/0"},
 								{Name: "macsec"},
-								{Name: "state"},
-								{Name: "enable"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
+								{Name: "name"},
 							},
 						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: true}},
+						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "et-0/0/0"}},
 					},
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/0"},
 								{Name: "macsec"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
 								{Name: "mka"},
 								{Name: "state"},
-								{Name: "counters"},
-								{Name: "in-mkpdu"},
+								{Name: "jnx-cak-name"},
 							},
 						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 10}},
-					},
-					{
-						Path: &gnmipb.Path{
-							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/0"},
-								{Name: "macsec"},
-								{Name: "mka"},
-								{Name: "state"},
-								{Name: "counters"},
-								{Name: "in-sak-mkpdu"},
-							},
-						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 5}},
+						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "abc123def456"}},
 					},
 				},
 			},
@@ -90,51 +72,32 @@ func TestTranslateInterfaceState(t *testing.T) {
 				Timestamp: 2000,
 				Prefix: &gnmipb.Path{
 					Origin: "junos",
-					Target: "device1",
+					Target: "device2",
 				},
 				Update: []*gnmipb.Update{
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/1"},
 								{Name: "macsec"},
-								{Name: "state"},
-								{Name: "enable"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/1"}},
+								{Name: "name"},
 							},
 						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: false}},
+						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "et-0/0/1"}},
 					},
 					{
 						Path: &gnmipb.Path{
 							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/1"},
 								{Name: "macsec"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "et-0/0/1"}},
 								{Name: "mka"},
 								{Name: "state"},
-								{Name: "counters"},
-								{Name: "in-mkpdu"},
+								{Name: "jnx-cak-name"},
 							},
 						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
-					},
-					{
-						Path: &gnmipb.Path{
-							Elem: []*gnmipb.PathElem{
-								{Name: "interfaces"},
-								{Name: "interface"},
-								{Name: "et-0/0/1"},
-								{Name: "macsec"},
-								{Name: "mka"},
-								{Name: "state"},
-								{Name: "counters"},
-								{Name: "in-sak-mkpdu"},
-							},
-						},
-						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+						Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_StringVal{StringVal: "def789abc012"}},
 					},
 				},
 			},
@@ -145,6 +108,9 @@ func TestTranslateInterfaceState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Clean up state map before each test.
+			ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+
 			sr := &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
 					Update: test.notification,
@@ -194,10 +160,9 @@ func TestDeleteHandler(t *testing.T) {
 				Delete: []*gnmipb.Path{
 					{
 						Elem: []*gnmipb.PathElem{
-							{Name: "interfaces"},
-							{Name: "interface"},
-							{Name: "et-0/0/0"},
 							{Name: "macsec"},
+							{Name: "interfaces"},
+							{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
 						},
 					},
 				},
@@ -222,43 +187,48 @@ func TestExtractInterfaceAndSCI(t *testing.T) {
 		name          string
 		path          *gnmipb.Path
 		expIntf       string
-		expSCI        string
-		expIsScsa     bool
+		expCounter    string
 		expectedError bool
 	}{
 		{
 			name: "Interface state path",
 			path: &gnmipb.Path{
 				Elem: []*gnmipb.PathElem{
-					{Name: "interfaces"},
-					{Name: "interface"},
-					{Name: "et-0/0/0"},
 					{Name: "macsec"},
-					{Name: "state"},
-					{Name: "enable"},
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "et-0/0/0"}},
+					{Name: "name"},
 				},
 			},
-			expIntf:   "et-0/0/0",
-			expSCI:    "",
-			expIsScsa: false,
+			expIntf:    "et-0/0/0",
+			expCounter: "name",
 		},
 		{
-			name: "SCSA RX state path",
+			name: "MKA state path",
 			path: &gnmipb.Path{
 				Elem: []*gnmipb.PathElem{
-					{Name: "interfaces"},
-					{Name: "interface"},
-					{Name: "et-0/0/1"},
 					{Name: "macsec"},
-					{Name: "scsa-rx"},
+					{Name: "interfaces"},
+					{Name: "interface", Key: map[string]string{"name": "et-0/0/1"}},
+					{Name: "mka"},
 					{Name: "state"},
-					{Name: "0011223344556677"},
-					{Name: "sci-rx"},
+					{Name: "jnx-cak-name"},
 				},
 			},
-			expIntf:   "et-0/0/1",
-			expSCI:    "0011223344556677",
-			expIsScsa: true,
+			expIntf:    "et-0/0/1",
+			expCounter: "jnx-cak-name",
+		},
+		{
+			name: "Path with no interface key",
+			path: &gnmipb.Path{
+				Elem: []*gnmipb.PathElem{
+					{Name: "macsec"},
+					{Name: "interfaces"},
+					{Name: "interface"},
+					{Name: "name"},
+				},
+			},
+			expectedError: true,
 		},
 	}
 
@@ -274,9 +244,8 @@ func TestExtractInterfaceAndSCI(t *testing.T) {
 				t.Errorf("expected interface '%s', got '%s'", test.expIntf, intfID)
 			}
 
-			// Verify counterName is not empty for valid paths
-			if !test.expectedError && counterName == "" {
-				t.Errorf("expected non-empty counterName for valid path")
+			if !test.expectedError && counterName != test.expCounter {
+				t.Errorf("expected counterName '%s', got '%s'", test.expCounter, counterName)
 			}
 		})
 	}

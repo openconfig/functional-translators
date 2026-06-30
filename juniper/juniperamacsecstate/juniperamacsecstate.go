@@ -160,8 +160,24 @@ func extractDeleteInfo(path *gnmipb.Path) (*deleteInfo, error) {
 	return nil, nil
 }
 
+// knownLeaves is the set of leaf names that this translator processes.
+// Used for O(1) early-exit before expensive path joining and matching.
+var knownLeaves = map[string]bool{
+	"name":         true,
+	"jnx-cak-name": true,
+}
+
 // metadata populates the MACsec map with the native paths that contribute to the derived MACsec status.
 func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string, error) {
+	// O(1) early exit: skip updates whose leaf name cannot match any pathPattern.
+	updateElems := update.GetPath().GetElem()
+	if len(updateElems) == 0 {
+		return "", nil
+	}
+	if !knownLeaves[updateElems[len(updateElems)-1].GetName()] {
+		return "", nil
+	}
+
 	fullPath := ftutilities.Join(prefix, update.GetPath())
 	matched := false
 	interfaceName, counterName, err := interfaceIDAndValue(fullPath)
@@ -171,7 +187,7 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 	for _, pattern := range pathPatterns {
 		if ftutilities.MatchPath(fullPath, pattern) {
 			matched = true
-			targetInfo := ftutilities.AristaMACSecMap.CreateOrUpdateTargetMacSecInfo(target)
+			targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo(target)
 			ifaceInfo := targetInfo.CreateOrGetInterface(interfaceName)
 
 			switch counterName {
@@ -201,9 +217,9 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 // translateMACSecState returns the MACsec status and ckn for the given interface.
 func translateMACSecState(interfaceName string, target string) (intfMACSecStatus, cknKeys []string, skip bool) {
 	var success, principal bool
-	targetInfo, ok := ftutilities.AristaMACSecMap.RetrieveTargetMacSecInfo(target)
+	targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target)
 	if !ok {
-		log.V(1).Infof("target '%s' not found in AristaMACSecMap for status translation.", target)
+		log.V(1).Infof("target '%s' not found in MACSecStateMap for status translation.", target)
 		return nil, nil, true
 	}
 
@@ -348,6 +364,15 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	for intfName := range interfaceSeen {
 		if !interfacesForOCDelete[intfName] {
 			finalInterfacesForOCUpdate[intfName] = true
+		}
+	}
+
+	// Evict cached state for deleted interfaces to prevent stale data.
+	if len(interfacesForOCDelete) > 0 {
+		if targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target); ok {
+			for intfName := range interfacesForOCDelete {
+				targetInfo.ClearInterfaceInfo(intfName)
+			}
 		}
 	}
 

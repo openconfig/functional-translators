@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestJoin(t *testing.T) {
@@ -1480,7 +1480,7 @@ func TestTargetMacSecInfo(t *testing.T) {
 }
 
 func TestAristaMACSecMapCache(t *testing.T) {
-	cache := &AristaMACSecMapCache{
+	cache := &MACSecStateMapCache{
 		data: make(map[string]*TargetMacSecInfo),
 	}
 
