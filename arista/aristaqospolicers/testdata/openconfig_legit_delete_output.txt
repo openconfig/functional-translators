@@ -1,0 +1,14 @@
+update: {
+  timestamp: 1780838098249364993
+  prefix: {
+    origin: "openconfig"
+    target: "target-2"
+    elem: { name: "qos" }
+    elem: { name: "interfaces" }
+    elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel4" } }
+    elem: { name: "input" }
+  }
+  delete: {
+    elem: { name: "scheduler-policy" }
+  }
+}

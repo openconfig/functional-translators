@@ -1556,3 +1556,57 @@ func TestAristaMACSecMapCache(t *testing.T) {
 		t.Errorf("RetrieveTargetMacSecInfo(%q) after ClearAll: ok = true, want false", target2)
 	}
 }
+
+func TestCreateOrRetrieveAttachmentPoint_NilMap(t *testing.T) {
+	// Create an uninitialized struct to simulate the nil map condition
+	info := &TargetPolicerInfo{
+		Hostname: "test-device",
+		// AttachmentPoints is implicitly nil here
+	}
+
+	// Call the method, which should hit the `if t.AttachmentPoints == nil` branch
+	ap := info.CreateOrRetrieveAttachmentPoint("Port-Channel1")
+
+	if ap == nil {
+		t.Fatalf("CreateOrRetrieveAttachmentPoint returned nil")
+	}
+	if info.AttachmentPoints == nil {
+		t.Fatalf("AttachmentPoints map was not initialized")
+	}
+	if info.AttachmentPoints["Port-Channel1"] != ap {
+		t.Errorf("Attachment point was not added to the map correctly")
+	}
+}
+
+func TestSetMemberCounter_NilMap(t *testing.T) {
+	// Create an uninitialized struct to simulate the nil map condition
+	apInfo := &AttachmentPointInfo{
+		// Members map is implicitly nil here
+	}
+
+	// This will force execution into the `if a.Members == nil` branch
+	success := apInfo.SetMemberCounter("Ethernet1/1", "byteDropCount", 500)
+
+	if !success {
+		t.Errorf("SetMemberCounter returned false, want true")
+	}
+	if apInfo.Members == nil {
+		t.Errorf("SetMemberCounter failed to initialize the Members map")
+	}
+	if apInfo.Members["Ethernet1/1"].ByteDropCount != 500 {
+		t.Errorf("SetMemberCounter failed to set the correct value")
+	}
+}
+
+func TestSetMemberCounter_UntrackedMetric(t *testing.T) {
+	// Create an empty struct
+	apInfo := &AttachmentPointInfo{}
+
+	// Passing an unrecognized counter name will force execution into the
+	// fallback branch (line 1154) that returns false for untracked metrics
+	success := apInfo.SetMemberCounter("Ethernet1/1", "unknownCounterMetric", 500)
+
+	if success {
+		t.Errorf("SetMemberCounter returned true for an untracked metric, want false")
+	}
+}
