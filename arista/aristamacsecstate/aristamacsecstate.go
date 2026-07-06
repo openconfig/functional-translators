@@ -288,12 +288,14 @@ func returnPathForMACSecCKN(interfaceName string) *gnmipb.Path {
 	}
 }
 
-// knownLeaves is the set of leaf names that this translator processes.
-// Used for O(1) early-exit before expensive path joining and matching.
-var knownLeaves = map[string]bool{
-	"controlledPortEnabled": true,
-	"success":               true,
-	"principal":             true,
+// isKnownLeaf reports whether leaf is a leaf name that this translator processes.
+// Used for early-exit before expensive path joining and matching.
+func isKnownLeaf(leaf string) bool {
+	switch leaf {
+	case "controlledPortEnabled", "success", "principal":
+		return true
+	}
+	return false
 }
 
 // metadata populates the MACSec map with the native paths that contribute to the derived MACSec status.
@@ -303,7 +305,7 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 	if len(updateElems) == 0 {
 		return "", nil
 	}
-	if !knownLeaves[updateElems[len(updateElems)-1].GetName()] {
+	if !isKnownLeaf(updateElems[len(updateElems)-1].GetName()) {
 		return "", nil
 	}
 
