@@ -103,7 +103,7 @@ func New() *translator.FunctionalTranslator {
 	return ft
 }
 
-// interfaceIDAndValue extracts interface ID and the counter value from the path.
+// interfaceIDAndValue extracts the interface name from the key and the leaf name from the path.
 func interfaceIDAndValue(path *gnmipb.Path) (intfID, counterName string, err error) {
 	if len(path.GetElem()) < 2 {
 		return "", "", fmt.Errorf("path %v has fewer than 2 elements", path)
@@ -160,11 +160,14 @@ func extractDeleteInfo(path *gnmipb.Path) (*deleteInfo, error) {
 	return nil, nil
 }
 
-// knownLeaves is the set of leaf names that this translator processes.
-// Used for O(1) early-exit before expensive path joining and matching.
-var knownLeaves = map[string]bool{
-	"name":         true,
-	"jnx-cak-name": true,
+// isKnownLeaf reports whether leaf is a leaf name that this translator processes.
+// Used for early-exit before expensive path joining and matching.
+func isKnownLeaf(leaf string) bool {
+	switch leaf {
+	case "name", "jnx-cak-name":
+		return true
+	}
+	return false
 }
 
 // metadata populates the MACsec map with the native paths that contribute to the derived MACsec status.
@@ -174,7 +177,7 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 	if len(updateElems) == 0 {
 		return "", nil
 	}
-	if !knownLeaves[updateElems[len(updateElems)-1].GetName()] {
+	if !isKnownLeaf(updateElems[len(updateElems)-1].GetName()) {
 		return "", nil
 	}
 
@@ -215,7 +218,7 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 }
 
 // translateMACSecState returns the MACsec status and ckn for the given interface.
-func translateMACSecState(interfaceName string, target string) (intfMACSecStatus, cknKeys []string, skip bool) {
+func translateMACSecState(interfaceName string, target string) (intfMACSecStatuses, cknKeys []string, skip bool) {
 	var success, principal bool
 	targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target)
 	if !ok {
@@ -272,9 +275,9 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 			// This should not happen if macsec is working as expected and the native paths are correctly populated.
 			cknStatus = "Unknown"
 		}
-		intfMACSecStatus = append(intfMACSecStatus, cknStatus)
+		intfMACSecStatuses = append(intfMACSecStatuses, cknStatus)
 	}
-	return intfMACSecStatus, cknKeys, false
+	return intfMACSecStatuses, cknKeys, false
 }
 
 // returnPathForMACSecStatus returns OpenConfig path for MACsec status of the given interface.

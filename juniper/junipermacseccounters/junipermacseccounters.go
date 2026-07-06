@@ -167,7 +167,7 @@ func updateHandler(n *gnmipb.Notification) ([]*gnmipb.Update, error) {
 			vendorLeaf := fullPath.GetElem()[len(fullPath.GetElem())-1].GetName()
 			ocLeaves, found := vendorToOCLeaves[vendorLeaf]
 			if !found {
-				return nil, fmt.Errorf("vendor leaf '%s' not found in mapping for path %v", vendorLeaf, fullPath)
+				return nil, fmt.Errorf("vendor leaf %q not found in mapping for path %v", vendorLeaf, fullPath)
 			}
 
 			// Extract interface name from the "interface" element key

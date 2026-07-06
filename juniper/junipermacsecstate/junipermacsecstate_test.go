@@ -132,12 +132,12 @@ func TestTranslateInterfaceState(t *testing.T) {
 			}
 
 			if len(outNotif.GetUpdate()) != test.expectedLen {
-				t.Errorf("expected %d updates, got %d", test.expectedLen, len(outNotif.GetUpdate()))
+				t.Errorf("translate() returned %d updates, want %d", len(outNotif.GetUpdate()), test.expectedLen)
 			}
 
 			// Verify origin is set to openconfig
 			if outNotif.GetPrefix().GetOrigin() != "openconfig" {
-				t.Errorf("expected origin 'openconfig', got '%s'", outNotif.GetPrefix().GetOrigin())
+				t.Errorf("translate() origin = %q, want %q", outNotif.GetPrefix().GetOrigin(), "openconfig")
 			}
 		})
 	}
@@ -176,7 +176,7 @@ func TestDeleteHandler(t *testing.T) {
 			intfForDelete := deleteHandler(test.notification)
 
 			if len(intfForDelete) != test.expectDeletes {
-				t.Errorf("expected %d deletes, got %d", test.expectDeletes, len(intfForDelete))
+				t.Errorf("deleteHandler() returned %d deletes, want %d", len(intfForDelete), test.expectDeletes)
 			}
 		})
 	}
@@ -237,15 +237,15 @@ func TestExtractInterfaceAndSCI(t *testing.T) {
 			intfID, counterName, err := interfaceIDAndValue(test.path)
 
 			if (err != nil) != test.expectedError {
-				t.Errorf("unexpected error state: got %v, expected error: %v", err, test.expectedError)
+				t.Errorf("interfaceIDAndValue() error = %v, wantErr %v", err, test.expectedError)
 			}
 
 			if intfID != test.expIntf {
-				t.Errorf("expected interface '%s', got '%s'", test.expIntf, intfID)
+				t.Errorf("interfaceIDAndValue() intfID = %q, want %q", intfID, test.expIntf)
 			}
 
 			if !test.expectedError && counterName != test.expCounter {
-				t.Errorf("expected counterName '%s', got '%s'", test.expCounter, counterName)
+				t.Errorf("interfaceIDAndValue() counterName = %q, want %q", counterName, test.expCounter)
 			}
 		})
 	}

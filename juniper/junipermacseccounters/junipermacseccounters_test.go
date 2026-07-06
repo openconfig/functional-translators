@@ -105,12 +105,12 @@ func TestTranslateInterfaceCounters(t *testing.T) {
 			}
 
 			if len(outNotif.GetUpdate()) != test.expectedLen {
-				t.Errorf("expected %d updates, got %d", test.expectedLen, len(outNotif.GetUpdate()))
+				t.Errorf("translate() returned %d updates, want %d", len(outNotif.GetUpdate()), test.expectedLen)
 			}
 
 			// Verify origin is set to openconfig
 			if outNotif.GetPrefix().GetOrigin() != "openconfig" {
-				t.Errorf("expected origin 'openconfig', got '%s'", outNotif.GetPrefix().GetOrigin())
+				t.Errorf("translate() origin = %q, want %q", outNotif.GetPrefix().GetOrigin(), "openconfig")
 			}
 		})
 	}
