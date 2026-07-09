@@ -89,10 +89,7 @@ func New() *translator.FunctionalTranslator {
 			Metadata: []*translator.FTMetadata{
 				{
 					Vendor: ftconsts.VendorJuniper,
-					SoftwareVersionRange: &translator.SWRange{
-						InclusiveMin: "22.3",
-						ExclusiveMax: "26.0",
-					},
+					// TODO: Consider whether software image conditions are needed for non-OC paths.
 				},
 			},
 		},
@@ -201,13 +198,13 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 				// Extract the actual CKN value from the update
 				cknVal := strings.ToLower(update.GetVal().GetStringVal())
 				if cknVal == "" {
-					log.Warningf("Empty jnx-cak-name value for interface '%s' on path %v", interfaceName, fullPath)
+					log.Warningf("Empty jnx-cak-name value for interface %q on path %v", interfaceName, fullPath)
 					break
 				}
 				ifaceInfo.SetIntfSuccess(cknVal, true)
 				ifaceInfo.SetIntfPrincipal(cknVal, true)
 			default:
-				log.Warningf("Unknown counter name '%s' encountered for MACsec status processing for path %v", counterName, fullPath)
+				log.Warningf("Unknown counter name %q encountered for MACsec status processing for path %v", counterName, fullPath)
 			}
 		}
 	}
@@ -222,23 +219,23 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 	var success, principal bool
 	targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target)
 	if !ok {
-		log.V(1).Infof("target '%s' not found in MACSecStateMap for status translation.", target)
+		log.V(1).Infof("target %q not found in MACSecStateMap for status translation.", target)
 		return nil, nil, true
 	}
 
 	ifaceInfo, ok := targetInfo.InterfaceInfo(interfaceName)
 	if !ok {
-		log.V(1).Infof("interface '%s' on target '%s' not found for status translation.", interfaceName, target)
+		log.V(1).Infof("interface %q on target %q not found for status translation.", interfaceName, target)
 		return nil, nil, true
 	}
 	controlledPortEnabled, cpStatusSet := ifaceInfo.IntfCPStatus()
 	if !cpStatusSet {
-		log.V(1).Infof("cpStatusSet is false for interface '%s' on target '%s'. Returning empty CKN and status list.", interfaceName, target)
+		log.V(1).Infof("cpStatusSet is false for interface %q on target %q. Returning empty CKN and status list.", interfaceName, target)
 		return nil, nil, true
 	}
 
 	if len(ifaceInfo.CloneStatuses()) == 0 {
-		log.V(1).Infof("no CKNs found for interface '%s' on target '%s'. Returning empty CKN and status list.", interfaceName, target)
+		log.V(1).Infof("no CKNs found for interface %q on target %q. Returning empty CKN and status list.", interfaceName, target)
 		return nil, nil, true
 	}
 	cknNamesToSort := make([]string, 0, len(ifaceInfo.CloneStatuses()))
@@ -259,7 +256,7 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 		// Check if all required values have been set using the IsComplete method.
 		// If not, we can't determine a definitive status yet.
 		if !ifaceInfo.IsComplete(c) {
-			log.V(1).Infof("macsec data for interface '%s' on target '%s' is not yet complete. CPStatusSet: %t, PrincipalSet: %t, SuccessSet: %t",
+			log.V(1).Infof("macsec data for interface %q on target %q is not yet complete. CPStatusSet: %t, PrincipalSet: %t, SuccessSet: %t",
 				interfaceName, target, controlledPortEnabled, principal, success)
 			return nil, nil, true
 		}
@@ -408,7 +405,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_LeaflistVal{LeaflistVal: &gnmipb.ScalarArray{Element: cknElements}}},
 		}
 		outgoingUpdates = append(outgoingUpdates, cknUpdate)
-		log.V(1).Infof("target %s: Generating OC Update for status (len %d) and CKN (len %d) leaf-lists for interface '%s'.", target, len(intfMACSecStatuses), len(ckns), interfaceName)
+		log.V(1).Infof("target %s: Generating OC Update for status (len %d) and CKN (len %d) leaf-lists for interface %q.", target, len(intfMACSecStatuses), len(ckns), interfaceName)
 	}
 
 	if len(outgoingUpdates) == 0 && len(outgoingDeletes) == 0 {

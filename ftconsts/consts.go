@@ -118,7 +118,4 @@ const (
 
 	// JuniperMacsecStateFunctionalTranslator is the name of the Juniper MACsec state functional translator.
 	JuniperMacsecStateFunctionalTranslator = "juniper-macsec-state-ft"
-
-	// JuniperMacsecCountersTranslator is the name of the Juniper MACsec counters functional translator.
-	JuniperMacsecCountersTranslator = "juniper-macsec-counters-ft"
 )

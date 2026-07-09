@@ -40,7 +40,6 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrtransceiver"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrvendordrops"
 	"github.com/openconfig/functional-translators/ftconsts"
-	"github.com/openconfig/functional-translators/juniper/junipermacseccounters"
 	"github.com/openconfig/functional-translators/juniper/junipermacsecstate"
 	"github.com/openconfig/functional-translators/translator"
 )
@@ -76,7 +75,6 @@ var (
 		ftconsts.CiscoXRSubinterfaceCounterTranslator:                     ciscoxrsubcounters.New(),
 		ftconsts.CiscoXRTransceiverTranslator:                             ciscoxrtransceiver.New(),
 		ftconsts.CiscoXRVendorDropsTranslator:                             ciscoxrvendordrops.New(),
-		ftconsts.JuniperMacsecCountersTranslator:                          junipermacseccounters.New(),
 		ftconsts.JuniperMacsecStateFunctionalTranslator:                   junipermacsecstate.New(),
 		// go/keep-sorted end
 	}

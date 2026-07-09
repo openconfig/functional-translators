@@ -24,9 +24,9 @@ import (
 	"sync"
 
 	log "github.com/golang/glog"
-	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/openconfig/ygot/ygot"
 	"google.golang.org/protobuf/encoding/prototext"
+	"github.com/openconfig/ygot/ygot"
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 // StripPathPrefix strips the prefix from the path.
@@ -458,6 +458,8 @@ func (i *InterfaceMacSecInfo) ResetCPStatus() {
 
 // SetIntfPrincipal sets the principal status for a given CKN and marks it as set.
 func (i *InterfaceMacSecInfo) SetIntfPrincipal(ckn string, b bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	cknInfo := i.CreateOrGetCKN(ckn)
 	cknInfo.principal = b
 	cknInfo.principalSet = true
@@ -1027,7 +1029,7 @@ func (c *CFMMappingCache) ClearAllTargetCFMInfo() {
 // TargetPolicerInfo holds policer drop information for a specific target device.
 type TargetPolicerInfo struct {
 	mu               sync.Mutex
-	Hostname   		 	 string
+	Hostname         string
 	AttachmentPoints map[string]*AttachmentPointInfo // map[AttachmentPointName]*AttachmentPointInfo
 }
 
@@ -1059,9 +1061,9 @@ type MemberCounters struct {
 
 // AttachmentPointInfo holds drop counts for all physical members of a specific logical interface.
 type AttachmentPointInfo struct {
-	mu              sync.Mutex
-	Name            string
-	Members         map[string]*MemberCounters // map[PhysicalInterfaceName]*MemberCounters
+	mu      sync.Mutex
+	Name    string
+	Members map[string]*MemberCounters // map[PhysicalInterfaceName]*MemberCounters
 }
 
 // PolicerAggMapCache is a thread-safe cache for TargetPolicerInfo.
@@ -1084,7 +1086,7 @@ func (c *PolicerAggMapCache) CreateOrUpdateTargetPolicerInfo(hostname string) *T
 	info, ok := c.data[hostname]
 	if !ok {
 		info = &TargetPolicerInfo{
-			Hostname:   hostname,
+			Hostname:         hostname,
 			AttachmentPoints: make(map[string]*AttachmentPointInfo),
 		}
 		c.data[hostname] = info
@@ -1101,8 +1103,8 @@ func (t *TargetPolicerInfo) CreateOrRetrieveAttachmentPoint(apName string) *Atta
 	}
 	if _, ok := t.AttachmentPoints[apName]; !ok {
 		t.AttachmentPoints[apName] = &AttachmentPointInfo{
-			Name:     apName,
-			Members:         make(map[string]*MemberCounters),
+			Name:    apName,
+			Members: make(map[string]*MemberCounters),
 		}
 	}
 	return t.AttachmentPoints[apName]

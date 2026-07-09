@@ -18,8 +18,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/openconfig/functional-translators/ftutilities"
 	"google.golang.org/protobuf/testing/protocmp"
+	"github.com/openconfig/functional-translators/ftutilities"
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 func TestTranslate(t *testing.T) {
@@ -273,6 +274,185 @@ func TestFinalInterfacesForOCUpdate(t *testing.T) {
 
 			if diff := cmp.Diff(tc.expectedFinalOCUpdate, actualFinalInterfacesForOCUpdate); diff != "" {
 				t.Errorf("finalInterfacesForOCUpdate produced unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTranslate_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func()
+		input   *gnmipb.SubscribeResponse
+		wantErr bool
+		wantNil bool
+	}{
+		{
+			name: "short path ending in success",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "short"}, {Name: "success"}}},
+								Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: true}},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid delete path length",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Delete: []*gnmipb.Path{
+							{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "cpStatus"}, {Name: "Eth1"}, {Name: "extra"}}},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "delete interface not found in map",
+			setup: func() {
+				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+				ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
+			},
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Delete: []*gnmipb.Path{
+							{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "cpStatus"}, {Name: "NonExistent"}}},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "target not found in translate",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "non-existent-device"},
+						Delete: []*gnmipb.Path{
+							{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "portStatus"}, {Name: "Eth1"}, {Name: "activeCkn"}, {Name: "ckn1"}}},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "interface cpStatusSet is false",
+			setup: func() {
+				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
+				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
+				ifaceInfo.SetIntfSuccess("ckn1", true)
+				ifaceInfo.SetIntfPrincipal("ckn1", true)
+			},
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "portStatus"}, {Name: "Eth1"}, {Name: "activeCkn"}, {Name: "ckn1"}, {Name: "success"}}},
+								Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: true}},
+							},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "no CKNs found",
+			setup: func() {
+				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
+				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
+				ifaceInfo.SetIntfCPStatus(true)
+			},
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "cpStatus"}, {Name: "Eth1"}, {Name: "controlledPortEnabled"}}},
+								Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: true}},
+							},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "interface data is not complete",
+			setup: func() {
+				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
+				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
+				ifaceInfo.SetIntfCPStatus(true)
+				ifaceInfo.CreateOrGetCKN("ckn1")
+			},
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{{Name: "Sysdb"}, {Name: "macsec"}, {Name: "status"}, {Name: "cpStatus"}, {Name: "Eth1"}, {Name: "controlledPortEnabled"}}},
+								Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_BoolVal{BoolVal: true}},
+							},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "metadata empty updateElems",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Prefix: &gnmipb.Path{Origin: "eos_native", Target: "device1"},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: []*gnmipb.PathElem{}},
+							},
+						},
+					},
+				},
+			},
+			wantNil: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ft := New()
+			if tc.setup != nil {
+				tc.setup()
+			} else {
+				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+			}
+			res, err := ft.Translate(tc.input)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("Translate() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if tc.wantNil && res != nil {
+				t.Errorf("Translate() returned %v, want nil", res)
 			}
 		})
 	}
