@@ -80,10 +80,23 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
-	carrierIntfMap := d.GetInfraStatistics().GetInterfaces().GetOrCreateInterfaceMap()
-	updates := make([]*gnmipb.Update, 0)
+	stats := d.GetInfraStatistics()
+	if stats == nil {
+		return nil, nil
+	}
+	intfs := stats.GetInterfaces()
+	if intfs == nil {
+		return nil, nil
+	}
+	carrierIntfMap := intfs.GetOrCreateInterfaceMap()
+
+	updates := make([]*gnmipb.Update, 0, len(carrierIntfMap))
 	for name, intf := range carrierIntfMap {
-		phyCarrierCounter := *intf.GetGenericCounters().CarrierTransitions
+		gc := intf.GetGenericCounters()
+		if gc == nil || gc.CarrierTransitions == nil {
+			continue
+		}
+		phyCarrierCounter := *gc.CarrierTransitions
 		update := &gnmipb.Update{
 			Path: &gnmipb.Path{
 				Elem: []*gnmipb.PathElem{

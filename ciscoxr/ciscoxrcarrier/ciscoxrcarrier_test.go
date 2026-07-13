@@ -111,6 +111,157 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 	}
+	nilUpdateSR := &gnmipb.SubscribeResponse{}
+	nilIntfsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-infra-statsd-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "infra-statistics"},
+					},
+				},
+				Delete: []*gnmipb.Path{
+					{
+						Elem: []*gnmipb.PathElem{
+							{Name: "interfaces"},
+						},
+					},
+				},
+			},
+		},
+	}
+	nilStatsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-infra-statsd-oper",
+				},
+				Delete: []*gnmipb.Path{
+					{
+						Elem: []*gnmipb.PathElem{
+							{Name: "infra-statistics"},
+						},
+					},
+				},
+			},
+		},
+	}
+	nilGenericCountersSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-infra-statsd-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "infra-statistics"},
+						{Name: "interfaces"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_JsonIetfVal{
+								JsonIetfVal: []byte("{}"),
+							},
+						},
+					},
+				},
+				Delete: []*gnmipb.Path{
+					{
+						Elem: []*gnmipb.PathElem{
+							{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+							{Name: "generic-counters"},
+						},
+					},
+				},
+			},
+		},
+	}
+	nilCarrierTransitionsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-infra-statsd-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "infra-statistics"},
+						{Name: "interfaces"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+								{Name: "generic-counters"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_JsonIetfVal{
+								JsonIetfVal: []byte("{}"),
+							},
+						},
+					},
+				},
+				Delete: []*gnmipb.Path{
+					{
+						Elem: []*gnmipb.PathElem{
+							{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+							{Name: "generic-counters"},
+							{Name: "carrier-transitions"},
+						},
+					},
+				},
+			},
+		},
+	}
+	nilInterfaceSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-infra-statsd-oper",
+					Elem: []*gnmipb.PathElem{
+						{Name: "infra-statistics"},
+						{Name: "interfaces"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_JsonIetfVal{
+								JsonIetfVal: []byte("null"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	emptyOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+				},
+				Update: []*gnmipb.Update{},
+			},
+		},
+	}
 	successCarrierOutput := &gnmipb.SubscribeResponse{
 		Response: &gnmipb.SubscribeResponse_Update{
 			Update: &gnmipb.Notification{
@@ -179,16 +330,47 @@ func TestTranslate(t *testing.T) {
 		input   *gnmipb.SubscribeResponse
 		want    *gnmipb.SubscribeResponse
 		wantErr bool
+		wantNil bool
 	}{
 		{
-			name:  "successSwitchStats",
+			name:  "SuccessSwitchStats",
 			input: successCarrierSR,
 			want:  successCarrierOutput,
 		},
 		{
-			name:    "invalidSR",
+			name:    "InvalidSR",
 			input:   invalidSR,
 			wantErr: true,
+		},
+		{
+			name:    "NilUpdate",
+			input:   nilUpdateSR,
+			wantNil: true,
+		},
+		{
+			name:    "NilInterfaces",
+			input:   nilIntfsSR,
+			wantNil: true,
+		},
+		{
+			name:    "NilStats",
+			input:   nilStatsSR,
+			wantNil: true,
+		},
+		{
+			name:  "NilGenericCounters",
+			input: nilGenericCountersSR,
+			want:  emptyOutput,
+		},
+		{
+			name:  "NilCarrierTransitions",
+			input: nilCarrierTransitionsSR,
+			want:  emptyOutput,
+		},
+		{
+			name:  "NilInterface",
+			input: nilInterfaceSR,
+			want:  emptyOutput,
 		},
 	}
 	for _, test := range tests {
@@ -197,11 +379,17 @@ func TestTranslate(t *testing.T) {
 			sr, err := ft.Translate(test.input)
 			errorMatchesExpectation := (err != nil) == test.wantErr
 			if !errorMatchesExpectation {
-				t.Fatalf("Unexpected error result returned from translate() = %v, want error %t", err, test.wantErr)
+				t.Fatalf("Translate(%v) error got %v, want error %t", test.input, err, test.wantErr)
 			}
 			if !test.wantErr {
-				if diff := cmp.Diff(test.want, sr, protocmp.Transform(), protocmp.SortRepeatedFields(&gnmipb.Notification{}, "update")); diff != "" {
-					t.Fatalf("Unexpected diff from translate() = %v, want %v, diff(-want +got):\n%s", sr, test.want, diff)
+				if test.wantNil {
+					if sr != nil {
+						t.Fatalf("Translate(%v) got %v, want nil", test.input, sr)
+					}
+				} else {
+					if diff := cmp.Diff(test.want, sr, protocmp.Transform(), protocmp.SortRepeatedFields(&gnmipb.Notification{}, "update")); diff != "" {
+						t.Fatalf("Translate(%v) got unexpected diff (-want +got):\n%s", test.input, diff)
+					}
 				}
 			}
 		})
