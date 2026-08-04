@@ -219,7 +219,7 @@ func deleteHandler(n *gnmipb.Notification) (interfacesForOCDelete, interfacesFor
 		}
 
 		// Check if the map for the specific target exists
-		if targetInfo, targetExists := ftutilities.AristaMACSecMap.RetrieveTargetMacSecInfo(target); targetExists {
+		if targetInfo, targetExists := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target); targetExists {
 			ifaceInfo, ok := targetInfo.InterfaceInfo(deleteInfo.intfID)
 			if !ok {
 				log.V(1).Infof("interface '%s' on target '%s' not found for delete handler.", deleteInfo.intfID, target)
@@ -231,7 +231,7 @@ func deleteHandler(n *gnmipb.Notification) (interfacesForOCDelete, interfacesFor
 				interfacesForOCDelete[deleteInfo.intfID] = true
 				if len(targetInfo.Interfaces) == 0 {
 					log.V(1).Infof("no more interfaces for target '%s', removing target from map.", target)
-					ftutilities.AristaMACSecMap.DeleteTargetMacSecInfo(target)
+					ftutilities.MACSecStateMap.DeleteTargetMacSecInfo(target)
 				}
 			case "ckn-delete":
 				ifaceInfo.RemoveCkn(deleteInfo.ckn)
@@ -288,8 +288,27 @@ func returnPathForMACSecCKN(interfaceName string) *gnmipb.Path {
 	}
 }
 
+// isKnownLeaf reports whether leaf is a leaf name that this translator processes.
+// Used for early-exit before expensive path joining and matching.
+func isKnownLeaf(leaf string) bool {
+	switch leaf {
+	case "controlledPortEnabled", "success", "principal":
+		return true
+	}
+	return false
+}
+
 // metadata populates the MACSec map with the native paths that contribute to the derived MACSec status.
 func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string, error) {
+	// O(1) early exit: skip updates whose leaf name cannot match any pathPattern.
+	updateElems := update.GetPath().GetElem()
+	if len(updateElems) == 0 {
+		return "", nil
+	}
+	if !isKnownLeaf(updateElems[len(updateElems)-1].GetName()) {
+		return "", nil
+	}
+
 	fullPath := ftutilities.Join(prefix, update.GetPath())
 	matched := false
 	interfaceName, ckn, err := interfaceIDAndCKN(fullPath)
@@ -299,7 +318,7 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 	for _, pattern := range pathPatterns {
 		if ftutilities.MatchPath(fullPath, pattern) {
 			matched = true
-			targetInfo := ftutilities.AristaMACSecMap.CreateOrUpdateTargetMacSecInfo(target)
+			targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo(target)
 			ifaceInfo := targetInfo.CreateOrGetInterface(interfaceName)
 
 			leafName := fullPath.GetElem()[len(fullPath.GetElem())-1].GetName()
@@ -326,9 +345,9 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 // translateMACSecState returns the MACSec ckn and status for the given interface.
 func translateMACSecState(interfaceName string, target string) (intfMACSecStatus, cknKeys []string, skip bool) {
 	var success, principal bool
-	targetInfo, ok := ftutilities.AristaMACSecMap.RetrieveTargetMacSecInfo(target)
+	targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target)
 	if !ok {
-		log.V(1).Infof("target '%s' not found in AristaMACSecMap for status translation.", target)
+		log.V(1).Infof("target '%s' not found in MACSecStateMap for status translation.", target)
 		return nil, nil, true
 	}
 

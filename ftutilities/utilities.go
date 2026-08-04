@@ -24,9 +24,9 @@ import (
 	"sync"
 
 	log "github.com/golang/glog"
-	"google.golang.org/protobuf/encoding/prototext"
-	"github.com/openconfig/ygot/ygot"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/ygot/ygot"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // StripPathPrefix strips the prefix from the path.
@@ -160,6 +160,9 @@ var ValidOrigins = map[string]struct{}{
 
 	// Arista
 	"eos_native": {},
+
+	// Juniper
+	"junos": {},
 
 	// Cisco XR-controller-optics-oper
 	"Cisco-IOS-XR-controller-optics-oper": {},
@@ -559,26 +562,26 @@ func (t *TargetMacSecInfo) ClearInterfaceInfo(intf string) {
 	delete(t.Interfaces, intf)
 }
 
-// AristaMACSecMapCache is a thread-safe cache for AristaMACSecMap.
-// It stores cached boolean values from distinct native Arista MACsec paths per target/interface/CKN.
+// MACSecStateMapCache is a thread-safe cache for MACSecStateMap.
+// It stores cached boolean values from distinct native MACsec paths per target/interface/CKN.
 // Although Functional Translators (FTs) are typically stateless, this map is required as an exception
 // to hold values from these multiple source paths, necessary for deriving the single OpenConfig MACsec status.
 // Declaring it here allows access by both the FT logic and the FT registration process,
 // where it is cleared to prevent using stale information between registrations or updates.
-type AristaMACSecMapCache struct {
+type MACSecStateMapCache struct {
 	mu   sync.Mutex
 	data map[string]*TargetMacSecInfo
 }
 
-// Global instance of the AristaMACSecMapCache.
+// Global instance of the MACSecStateMapCache.
 var (
-	AristaMACSecMap = &AristaMACSecMapCache{
+	MACSecStateMap = &MACSecStateMapCache{
 		data: make(map[string]*TargetMacSecInfo),
 	}
 )
 
 // SetTargetMacSecInfo adds or updates the TargetMacSecInfo for a given target hostname.
-func (c *AristaMACSecMapCache) SetTargetMacSecInfo(targetHostname string, info *TargetMacSecInfo) {
+func (c *MACSecStateMapCache) SetTargetMacSecInfo(targetHostname string, info *TargetMacSecInfo) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.data[targetHostname] = info
@@ -586,7 +589,7 @@ func (c *AristaMACSecMapCache) SetTargetMacSecInfo(targetHostname string, info *
 
 // RetrieveTargetMacSecInfo fetches the TargetMacSecInfo for a given target hostname.
 // It returns the info and a boolean indicating if the target was found.
-func (c *AristaMACSecMapCache) RetrieveTargetMacSecInfo(targetHostname string) (*TargetMacSecInfo, bool) {
+func (c *MACSecStateMapCache) RetrieveTargetMacSecInfo(targetHostname string) (*TargetMacSecInfo, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	info, ok := c.data[targetHostname]
@@ -594,14 +597,14 @@ func (c *AristaMACSecMapCache) RetrieveTargetMacSecInfo(targetHostname string) (
 }
 
 // DeleteTargetMacSecInfo removes the TargetMacSecInfo for a given target hostname.
-func (c *AristaMACSecMapCache) DeleteTargetMacSecInfo(targetHostname string) {
+func (c *MACSecStateMapCache) DeleteTargetMacSecInfo(targetHostname string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.data, targetHostname)
 }
 
 // ClearAllTargetMacSecInfo removes all entries from the cache.
-func (c *AristaMACSecMapCache) ClearAllTargetMacSecInfo() {
+func (c *MACSecStateMapCache) ClearAllTargetMacSecInfo() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.data = make(map[string]*TargetMacSecInfo)
@@ -609,7 +612,7 @@ func (c *AristaMACSecMapCache) ClearAllTargetMacSecInfo() {
 
 // CreateOrUpdateTargetMacSecInfo retrieves an existing TargetMacSecInfo for the given target
 // or creates a new one if it doesn't exist, then stores it in the cache.
-func (c *AristaMACSecMapCache) CreateOrUpdateTargetMacSecInfo(targetHostname string) *TargetMacSecInfo {
+func (c *MACSecStateMapCache) CreateOrUpdateTargetMacSecInfo(targetHostname string) *TargetMacSecInfo {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	info, ok := c.data[targetHostname]
