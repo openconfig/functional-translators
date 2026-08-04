@@ -38,4 +38,32 @@ update: {
     elem: { name: "dmMiStatsCurrent" }
     elem: { name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5" }
   }
+  delete: {
+    elem: { name: "Smash" }
+    elem: { name: "cfm" }
+    elem: { name: "mepSmashTable" }
+    elem: { name: "slmMiStatsCurrent" }
+    elem: { name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5" }
+  }
+  delete: {
+    elem: { name: "Sysdb" }
+    elem: { name: "cfm" }
+    elem: { name: "config" }
+    elem: { name: "mdConfig" }
+    elem: { name: "domain3" }
+    elem: { name: "maConfig" }
+    elem: { name: "maNameFormatShortInt_30" }
+    elem: { name: "cfmProfileName" }
+  }
+  delete: {
+    elem: { name: "Sysdb" }
+    elem: { name: "cfm" }
+    elem: { name: "status" }
+    elem: { name: "mdStatus" }
+    elem: { name: "domain3" }
+    elem: { name: "maStatus" }
+    elem: { name: "maNameFormatShortInt_30" }
+    elem: { name: "localMepStatus" }
+    elem: { name: "5" }
+  }
 }

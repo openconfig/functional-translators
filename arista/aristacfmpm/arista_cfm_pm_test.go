@@ -24,6 +24,7 @@ import (
 )
 
 func TestTranslate(t *testing.T) {
+	ftutilities.CfmMap.ClearAllTargetCFMInfo()
 	tests := []struct {
 		name           string
 		inputPath      string
@@ -76,10 +77,16 @@ func TestTranslate(t *testing.T) {
 			inputPath: "testdata/slm_invalid_mep_id_input.txt",
 			wantErr:   true,
 		},
+		{
+			name:           "Local MEP ID cached from Sysdb status",
+			inputPath:      "testdata/cached_mep_input.txt",
+			wantOutputPath: "testdata/cached_mep_output.txt",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ftutilities.CfmMap.ClearAllTargetCFMInfo()
 			inputSR, err := ftutilities.LoadSubscribeResponse(test.inputPath)
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
@@ -266,6 +273,18 @@ func TestConvertMetricValue(t *testing.T) {
 			metricType: "unknown",
 			wantErr:    true,
 		},
+		{
+			name:       "valid near end loss",
+			tv:         &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: 123.4}},
+			metricType: metricLossNear,
+			wantErr:    false,
+		},
+		{
+			name:       "valid far end loss",
+			tv:         &gnmipb.TypedValue{Value: &gnmipb.TypedValue_DoubleVal{DoubleVal: 456.7}},
+			metricType: metricLossFar,
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -275,5 +294,216 @@ func TestConvertMetricValue(t *testing.T) {
 				t.Errorf("convertMetricValue() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestDeleteHandlerEdgeCases(t *testing.T) {
+	i := &impl{}
+
+	tests := []struct {
+		name         string
+		setupCache   func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+		notification func(target string) *gnmipb.Notification
+		verifyCache  func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+	}{
+		{
+			name: "Path not matching pattern but starts with Sysdb ignored",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetProfileName(key, "profile1")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "config"}, {Name: "mdConfig"},
+							{Name: "1"}, {Name: "maConfig"}, {Name: "maNameFormatShortInt_1"}, {Name: "unrelated"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.ProfileName(key); !ok {
+					t.Errorf("Expected profile name to still exist in cache (should not have matched pattern)")
+				}
+			},
+		},
+		{
+			name: "Delete profile name from cache",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetProfileName(key, "profile1")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "config"}, {Name: "mdConfig"},
+							{Name: "1"}, {Name: "maConfig"}, {Name: "maNameFormatShortInt_1"}, {Name: "cfmProfileName"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.ProfileName(key); ok {
+					t.Errorf("Expected profile name to be deleted from cache")
+				}
+			},
+		},
+		{
+			name: "Delete local MEP ID from cache",
+			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				targetCFM.SetLocalMEPID(key, "100")
+			},
+			notification: func(target string) *gnmipb.Notification {
+				return &gnmipb.Notification{
+					Prefix: &gnmipb.Path{Target: target},
+					Delete: []*gnmipb.Path{{
+						Origin: "eos_native",
+						Elem: []*gnmipb.PathElem{
+							{Name: "Sysdb"}, {Name: "cfm"}, {Name: "status"}, {Name: "mdStatus"},
+							{Name: "1"}, {Name: "maStatus"}, {Name: "maNameFormatShortInt_1"}, {Name: "localMepStatus"}, {Name: "100"},
+						},
+					}},
+				}
+			},
+			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
+				if _, ok := targetCFM.LocalMEPID(key); ok {
+					t.Errorf("Expected local MEP ID to be deleted from cache")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ftutilities.CfmMap.ClearAllTargetCFMInfo()
+			target := "test-target"
+			targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
+			key := ftutilities.CFMCacheKey{DomainID: "1", AssocID: "1"}
+
+			if tt.setupCache != nil {
+				tt.setupCache(targetCFM, key)
+			}
+
+			notification := tt.notification(target)
+			_, err := i.deleteHandler(notification)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if tt.verifyCache != nil {
+				tt.verifyCache(t, targetCFM, key)
+			}
+		})
+	}
+}
+
+func TestUnusedMethodsForCoverage(t *testing.T) {
+	target := "test-target"
+	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
+
+	// Call TargetCFM
+	_, _ = ftutilities.CfmMap.TargetCFM(target)
+
+	// Call Clear
+	targetCFM.Clear()
+}
+
+func TestUpdateHandlerEdgeCases(t *testing.T) {
+	oldPatterns := updatePathPatterns
+	defer func() { updatePathPatterns = oldPatterns }()
+
+	updatePathPatterns = append([]*gnmipb.Path(nil), oldPatterns...)
+	updatePathPatterns = append(updatePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			{Name: "*"},
+		},
+	})
+	updatePathPatterns = append(updatePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			{Name: "*"}, {Name: elemSlmMiStats}, {Name: "UNKNOWN_METRIC"},
+		},
+	})
+
+	i := &impl{}
+	notification1 := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Update: []*gnmipb.Update{{
+			Path: &gnmipb.Path{
+				Origin: "eos_native",
+				Elem: []*gnmipb.PathElem{
+					{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+					{Name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5_7_1"},
+				},
+			},
+			Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+		}},
+	}
+	updates1, err := i.updateHandler(notification1)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(updates1) != 0 {
+		t.Errorf("Expected 0 updates, got %d", len(updates1))
+	}
+
+	notification2 := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Update: []*gnmipb.Update{{
+			Path: &gnmipb.Path{
+				Origin: "eos_native",
+				Elem: []*gnmipb.PathElem{
+					{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+					{Name: "6_Array{base: 0, slice: [51 48 0]}_maNameFormatShortInt_5_Array{base: 0, slice: [100 111 109 97 105 110 51 0]}_mdNameFormatNoName_5_7_1"},
+					{Name: "slmMiStats"}, {Name: "UNKNOWN_METRIC"},
+				},
+			},
+			Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: 0}},
+		}},
+	}
+	updates2, err := i.updateHandler(notification2)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(updates2) != 0 {
+		t.Errorf("Expected 0 updates, got %d", len(updates2))
+	}
+}
+
+func TestDeleteHandlerSmashLength(t *testing.T) {
+	oldPatterns := deletePathPatterns
+	defer func() { deletePathPatterns = oldPatterns }()
+
+	deletePathPatterns = append([]*gnmipb.Path(nil), oldPatterns...)
+	deletePathPatterns = append(deletePathPatterns, &gnmipb.Path{
+		Origin: "eos_native",
+		Elem: []*gnmipb.PathElem{
+			{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+		},
+	})
+
+	i := &impl{}
+	notification := &gnmipb.Notification{
+		Prefix: &gnmipb.Path{Target: "test-target"},
+		Delete: []*gnmipb.Path{{
+			Origin: "eos_native",
+			Elem: []*gnmipb.PathElem{
+				{Name: rootSmash}, {Name: elemCfm}, {Name: elemMepSmashTable}, {Name: elemSlmMiStatsCurrent},
+			},
+		}},
+	}
+	deletes, err := i.deleteHandler(notification)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if len(deletes) != 0 {
+		t.Errorf("Expected 0 deletes, got %d", len(deletes))
 	}
 }

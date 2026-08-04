@@ -31,7 +31,7 @@ const (
 	// IdentityFunctionalTranslator is the name of the identity functional translator.
 	IdentityFunctionalTranslator = "identity-ft"
 
-	// AristaInterfaceDescriptionFunctionalTranslator is the name of the Arista BGP neighbor enabled functional translator.
+	// AristaBGPNeighborEnabledFunctionalTranslator is the name of the Arista BGP neighbor enabled functional translator.
 	AristaBGPNeighborEnabledFunctionalTranslator = "arista-bgp-neighbor-enabled-ft"
 
 	// AristaCfmStateFunctionalTranslator is the name of the Arista CFM state functional translator.
@@ -49,6 +49,9 @@ const (
 	// AristaInterfaceMacFunctionalTranslator is the name of the Arista interface mac address functional translator.
 	AristaInterfaceMacFunctionalTranslator = "arista-interface-mac-ft"
 
+	// AristaInterfaceStatusFunctionalTranslator is the name of the Arista interface status functional translator.
+	AristaInterfaceStatusFunctionalTranslator = "arista-interface-status-ft"
+
 	// AristaMacsecStateFunctionalTranslator is the name of the Arista MACSec ckn and status functional translator.
 	AristaMacsecStateFunctionalTranslator = "arista-macsec-state-ft"
 
@@ -60,6 +63,9 @@ const (
 
 	// AristaQoSAggregateCountersTranslator is the name of the Arista QoS aggregate counters functional translator.
 	AristaQoSAggregateCountersTranslator = "arista-qos-aggregate-counters-ft"
+
+	// AristaQoSPolicersFunctionalTranslator is the name of the Arista QoS policers functional translator.
+	AristaQoSPolicersFunctionalTranslator = "arista-qos-policers-ft"
 
 	// AristaTransceiverPowerFunctionalTranslator is the name of the Arista transceiver input power functional translator.
 	AristaTransceiverPowerFunctionalTranslator = "arista-transceiver-input-power-ft"

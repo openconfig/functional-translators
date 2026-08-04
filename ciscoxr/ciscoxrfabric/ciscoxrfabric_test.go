@@ -425,6 +425,646 @@ func TestTranslate(t *testing.T) {
 			},
 		},
 	}
+	partialFabricPlaneSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-fabric-plane-health-oper",
+					Target: "some_target",
+					Elem: []*gnmipb.PathElem{
+						{Name: "fabric"},
+						{Name: "fabric-plane-ids"},
+						{Name: "fabric-plane-id", Key: map[string]string{"fabric-plane-key": "1"}},
+						{Name: "fabric-plane-stats"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "asic-internal-drops"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "mcast-lost-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-pe-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-uce-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	partialFabricPlaneOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+					Target: "some_target",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "asic-internal-drops"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "multicast-lost-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "parity-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "uncorrectable-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilAsicInternalDropsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-fabric-plane-health-oper",
+					Target: "some_target",
+					Elem: []*gnmipb.PathElem{
+						{Name: "fabric"},
+						{Name: "fabric-plane-ids"},
+						{Name: "fabric-plane-id", Key: map[string]string{"fabric-plane-key": "1"}},
+						{Name: "fabric-plane-stats"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "mcast-lost-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-pe-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-uce-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "ucast-lost-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilAsicInternalDropsOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+					Target: "some_target",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "multicast-lost-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "parity-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "uncorrectable-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "unicast-lost-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilMcastLostCellsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-fabric-plane-health-oper",
+					Target: "some_target",
+					Elem: []*gnmipb.PathElem{
+						{Name: "fabric"},
+						{Name: "fabric-plane-ids"},
+						{Name: "fabric-plane-id", Key: map[string]string{"fabric-plane-key": "1"}},
+						{Name: "fabric-plane-stats"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "asic-internal-drops"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-pe-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-uce-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "ucast-lost-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilMcastLostCellsOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+					Target: "some_target",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "asic-internal-drops"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "parity-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "uncorrectable-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "unicast-lost-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilUcastLostCellsSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "Cisco-IOS-XR-fabric-plane-health-oper",
+					Target: "some_target",
+					Elem: []*gnmipb.PathElem{
+						{Name: "fabric"},
+						{Name: "fabric-plane-ids"},
+						{Name: "fabric-plane-id", Key: map[string]string{"fabric-plane-key": "1"}},
+						{Name: "fabric-plane-stats"},
+					},
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "asic-internal-drops"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "mcast-lost-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-pe-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "rx-uce-cells"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fabricPlaneNilUcastLostCellsOutput := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+					Target: "some_target",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "asic-internal-drops"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 1,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "multicast-lost-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 2,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "parity-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 3,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "1"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "errors"},
+								{Name: "fabric-block"},
+								{Name: "fabric-block-error", Key: map[string]string{"name": "uncorrectable-error-cells"}},
+								{Name: "state"},
+								{Name: "count"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 4,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 	tests := []struct {
 		name    string
 		input   *gnmipb.SubscribeResponse
@@ -442,7 +1082,27 @@ func TestTranslate(t *testing.T) {
 			want:  successFabricPlaneOutput,
 		},
 		{
-			name:    "invalid SR",
+			name:  "partialFabricPlane",
+			input: partialFabricPlaneSR,
+			want:  partialFabricPlaneOutput,
+		},
+		{
+			name:  "FabricPlaneNilAsicInternalDrops",
+			input: fabricPlaneNilAsicInternalDropsSR,
+			want:  fabricPlaneNilAsicInternalDropsOutput,
+		},
+		{
+			name:  "FabricPlaneNilMcastLostCells",
+			input: fabricPlaneNilMcastLostCellsSR,
+			want:  fabricPlaneNilMcastLostCellsOutput,
+		},
+		{
+			name:  "FabricPlaneNilUcastLostCells",
+			input: fabricPlaneNilUcastLostCellsSR,
+			want:  fabricPlaneNilUcastLostCellsOutput,
+		},
+		{
+			name:    "InvalidSR",
 			input:   invalidSR,
 			wantErr: true,
 		},

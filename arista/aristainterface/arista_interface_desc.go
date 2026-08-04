@@ -33,12 +33,12 @@ func descDeleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	deletes := n.GetDelete()
 
 	var returnDeletes []*gnmipb.Path
+	const descriptionPath = "/openconfig/interfaces/interface/config/description"
 	for _, delete := range deletes {
 		fullPath := ftutilities.Join(prefix, delete)
 		pathSchemaString := ftutilities.GNMIPathToSchemaString(fullPath, true)
-		descriptionPath := "/openconfig/interfaces/interface/config/description"
 		if strings.HasPrefix(descriptionPath, pathSchemaString) {
-			returnDeletes = append(returnDeletes, ftutilities.ConfigToState(delete))
+			returnDeletes = append(returnDeletes, ftutilities.ConfigToState(fullPath))
 		}
 	}
 
@@ -66,7 +66,8 @@ func NewDescFT() *translator.FunctionalTranslator {
 			OutputToInputMap: p,
 			Metadata: []*translator.FTMetadata{
 				{
-					Vendor: "arista",
+					Vendor:               "arista",
+					SoftwareVersionRange: &translator.SWRange{ExclusiveMax: "4.34.0"},
 				},
 			},
 		},

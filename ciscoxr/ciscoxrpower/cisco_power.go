@@ -127,7 +127,7 @@ func New() *translator.FunctionalTranslator {
 					Vendor: ftconsts.VendorCiscoXR,
 					SoftwareVersionRange: &translator.SWRange{
 						InclusiveMin: "24.3.20",
-						ExclusiveMax: "25.4.1",
+						ExclusiveMax: "25.4.15",
 					},
 				},
 			},

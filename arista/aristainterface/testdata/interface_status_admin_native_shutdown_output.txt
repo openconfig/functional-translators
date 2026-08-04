@@ -1,0 +1,20 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "openconfig"
+  }
+  update: {
+    path: {
+      elem: { name: "interfaces" }
+      elem: {
+        name: "interface"
+        key: { key: "name" value: "Vlan10" }
+      }
+      elem: { name: "state" }
+      elem: { name: "admin-status" }
+    }
+    val: {
+      string_val: "DOWN"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "eos_native"
+  }
+  update: {
+    path: {
+      elem: { name: "Sysdb" }
+      elem: { name: "interface" }
+      elem: { name: "status" }
+      elem: { name: "eth" }
+      elem: { name: "vlan" }
+      elem: { name: "intfStatus" }
+      elem: { name: "Vlan20" }
+      elem: { name: "operStatus" }
+    }
+    val: {
+      string_val: "intfOperUp"
+    }
+  }
+}

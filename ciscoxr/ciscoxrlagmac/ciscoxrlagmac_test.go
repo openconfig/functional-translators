@@ -487,6 +487,90 @@ func TestTranslate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "lacp-mac-delete-no-keys",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+									{Name: "interfaces"},
+									{Name: "interface"},
+									{Name: "state"},
+									{Name: "system-id-mac"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "lacp-mac-delete-missing-name-key",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+									{Name: "interfaces"},
+									{
+										Name: "interface",
+										Key: map[string]string{
+											"other": "val",
+										},
+									},
+									{Name: "state"},
+									{Name: "system-id-mac"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "unmatched-delete",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "interfaces"},
+									{
+										Name: "interface",
+										Key: map[string]string{
+											"name": "Bundle-Ether1",
+										},
+									},
+									{Name: "config"},
+									{Name: "enabled"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
 	}
 
 	ft := New()

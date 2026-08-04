@@ -55,6 +55,16 @@ func TestTranslate(t *testing.T) {
 			inputPath: "testdata/short_delete_path_input.txt",
 			wantErr:   true,
 		},
+		{
+			name:           "InvalidAssocPrefixUpdate",
+			inputPath:      "testdata/invalid_assoc_update_input.txt",
+			wantOutputPath: "testdata/rdi_tx_condition_output.txt",
+		},
+		{
+			name:           "InvalidAssocPrefixDelete",
+			inputPath:      "testdata/invalid_assoc_delete_input.txt",
+			wantOutputPath: "testdata/delete_output.txt",
+		},
 	}
 
 	for _, test := range tests {

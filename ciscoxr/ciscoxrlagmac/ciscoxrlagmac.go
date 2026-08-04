@@ -60,11 +60,17 @@ func deleteHandler(n *gnmipb.Notification) ([]*gnmipb.Path, error) {
 		gotSchema := ftutilities.GNMIPathToSchemaString(fullPath, true)
 
 		switch {
-		case strings.HasPrefix(lacpMacSchema, gotSchema):
-			intfName := d.GetElem()[intfNameIdx].GetKey()["name"]
-			returnDeletes = append(returnDeletes, intfMacPath(intfName))
+		case strings.HasPrefix(lacpMacSchema, gotSchema) && len(fullPath.GetElem()) > intfNameIdx:
+			keys := fullPath.GetElem()[intfNameIdx].GetKey()
+			if keys == nil {
+				continue
+			}
+			intfName, ok := keys["name"]
+			if ok {
+				returnDeletes = append(returnDeletes, intfMacPath(intfName))
+			}
 		case strings.HasPrefix(intfMacSchema, gotSchema):
-			returnDeletes = append(returnDeletes, d)
+			returnDeletes = append(returnDeletes, fullPath)
 		default:
 			continue
 		}

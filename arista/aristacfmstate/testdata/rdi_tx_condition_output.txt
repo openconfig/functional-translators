@@ -15,7 +15,7 @@ update: {
       elem: { name: "maintenance-associations" }
       elem: {
         name: "maintenance-association"
-        key: { key: "association-name" value: "maNameFormatShortInt_10" }
+        key: { key: "association-name" value: "10" }
       }
       elem: { name: "mep-endpoints" }
       elem: {

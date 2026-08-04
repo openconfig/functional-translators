@@ -237,6 +237,9 @@ func New() *translator.FunctionalTranslator {
 			Metadata: []*translator.FTMetadata{
 				{
 					Vendor: ftconsts.VendorCiscoXR,
+					SoftwareVersionRange: &translator.SWRange{
+						ExclusiveMax: "25.4.15",
+					},
 				},
 			},
 		},

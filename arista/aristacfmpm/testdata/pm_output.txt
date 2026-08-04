@@ -16,6 +16,6 @@ update: {
       elem: { name: "delay-measurement-state" }
       elem: { name: "frame-delay-two-way-average" }
     }
-    val: { uint_val: 10 }
+    val: { uint_val: 11 }
   }
 }

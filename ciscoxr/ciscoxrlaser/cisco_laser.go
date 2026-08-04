@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package ciscoxrlaser transslates laser native path to openconfig .
+// Package ciscoxrlaser translates laser native path to openconfig.
 package ciscoxrlaser
 
 import (
@@ -90,11 +90,14 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco laser functional translator: %v", err)
 	}
+	return ft
+}
+
+func init() {
 	schema, schemaErr = xr2431.Schema()
 	if schemaErr != nil {
 		log.Fatalf("Failed to get schema: %v", schemaErr)
 	}
-	return ft
 }
 
 func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
@@ -122,7 +125,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			continue
 		}
 		opticsInfo := port.GetOpticsInfo()
-		if opticsInfo == nil {
+		if opticsInfo == nil || opticsInfo.DerivedOpticsType == nil {
 			continue
 		}
 		modifiedPortName, wanted := ftutilities.MaybeConvertOptical(portName, *opticsInfo.DerivedOpticsType)

@@ -17,6 +17,7 @@ package ciscoxrfabric
 
 import (
 	"fmt"
+	"strconv"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
@@ -79,6 +80,13 @@ var (
 	schemaErr error
 )
 
+func init() {
+	schema, schemaErr = xr2431.Schema()
+	if schemaErr != nil {
+		log.Fatalf("Failed to get schema: %v", schemaErr)
+	}
+}
+
 // checkCompliantPath returns true if path is yang compliant and can be unmarshalled, false if otherwise and it would raw manipulations.
 func checkCompliantPath(prefix *gnmipb.Path, leaves []*gnmipb.Update) bool {
 	for _, leaf := range leaves {
@@ -137,10 +145,6 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco fabric functional translator: %v", err)
 	}
-	schema, schemaErr = xr2431.Schema()
-	if schemaErr != nil {
-		log.Fatalf("Failed to get schema: %v", schemaErr)
-	}
 	return ft
 }
 
@@ -167,24 +171,30 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 		}
-		fabricPlaneIDMap := d.GetFabric().GetFabricPlaneIds().GetOrCreateFabricPlaneIdMap()
+		fabricPlaneIDMap := d.GetOrCreateFabric().GetOrCreateFabricPlaneIds().GetOrCreateFabricPlaneIdMap()
 		for fabricPlaneID, fabricPlane := range fabricPlaneIDMap {
-			fabricPlaneStats := fabricPlane.GetFabricPlaneStats()
-			componentName := fmt.Sprintf("%d", fabricPlaneID)
+			fabricPlaneStats := fabricPlane.GetOrCreateFabricPlaneStats()
+			componentName := strconv.FormatUint(uint64(fabricPlaneID), 10)
 			fabricBlock := fcRoot.GetOrCreateComponents().GetOrCreateComponent(componentName).GetOrCreateIntegratedCircuit().GetOrCreatePipelineCounters().GetOrCreateErrors().GetOrCreateFabricBlock()
 			rxUceCellsError := fabricBlock.GetOrCreateFabricBlockError("uncorrectable-error-cells").GetOrCreateState()
 			rxUceCellsError.Count = fabricPlaneStats.RxUceCells
-			ucastLostCellsError := fabricBlock.GetOrCreateFabricBlockError("unicast-lost-cells").GetOrCreateState()
-			ucastErrors := uint64(*fabricPlaneStats.UcastLostCells)
-			ucastLostCellsError.Count = &ucastErrors
-			mcastLostCellsError := fabricBlock.GetOrCreateFabricBlockError("multicast-lost-cells").GetOrCreateState()
-			mcastErrors := uint64(*fabricPlaneStats.McastLostCells)
-			mcastLostCellsError.Count = &mcastErrors
+			if fabricPlaneStats.UcastLostCells != nil {
+				ucastLostCellsError := fabricBlock.GetOrCreateFabricBlockError("unicast-lost-cells").GetOrCreateState()
+				ucastErrors := uint64(*fabricPlaneStats.UcastLostCells)
+				ucastLostCellsError.Count = &ucastErrors
+			}
+			if fabricPlaneStats.McastLostCells != nil {
+				mcastLostCellsError := fabricBlock.GetOrCreateFabricBlockError("multicast-lost-cells").GetOrCreateState()
+				mcastErrors := uint64(*fabricPlaneStats.McastLostCells)
+				mcastLostCellsError.Count = &mcastErrors
+			}
 			rxPeCellsError := fabricBlock.GetOrCreateFabricBlockError("parity-error-cells").GetOrCreateState()
 			rxPeCellsError.Count = fabricPlaneStats.RxPeCells
-			aiDropsError := fabricBlock.GetOrCreateFabricBlockError("asic-internal-drops").GetOrCreateState()
-			aiDrops := uint64(*fabricPlaneStats.AsicInternalDrops)
-			aiDropsError.Count = &aiDrops
+			if fabricPlaneStats.AsicInternalDrops != nil {
+				aiDropsError := fabricBlock.GetOrCreateFabricBlockError("asic-internal-drops").GetOrCreateState()
+				aiDrops := uint64(*fabricPlaneStats.AsicInternalDrops)
+				aiDropsError.Count = &aiDrops
+			}
 		}
 	}
 	return ftutilities.FilterStructToState(fcRoot, n.GetTimestamp(), "openconfig", n.GetPrefix().GetTarget())
