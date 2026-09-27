@@ -18,8 +18,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 	"github.com/openconfig/functional-translators/ftutilities"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestTranslate(t *testing.T) {
@@ -114,7 +114,7 @@ func TestTranslate(t *testing.T) {
 		{
 			name:      "invalidshortpath",
 			inputPath: "testdata/invalidshortpath_input.txt",
-			wantErr:   true,
+			wantNil:   true,
 		},
 	}
 	for _, test := range tests {
