@@ -17,7 +17,6 @@ package aristamacsecstate
 
 import (
 	"fmt"
-	"maps"
 	"sort"
 
 	log "github.com/golang/glog"
@@ -101,12 +100,76 @@ var (
 	}
 )
 
+type cknInfo struct {
+	principal    bool
+	success      bool
+	principalSet bool
+	successSet   bool
+}
+
+type interfaceMacSecInfo struct {
+	interfaceName string
+	cpStatus      bool
+	cpStatusSet   bool
+	cknStatuses   map[string]*cknInfo
+}
+
+func (i *interfaceMacSecInfo) createOrGetCKN(ckn string) *cknInfo {
+	if i.cknStatuses == nil {
+		i.cknStatuses = make(map[string]*cknInfo)
+	}
+	if _, ok := i.cknStatuses[ckn]; !ok {
+		i.cknStatuses[ckn] = new(cknInfo)
+	}
+	return i.cknStatuses[ckn]
+}
+
+func (c *cknInfo) isComplete() bool {
+	return c != nil && c.principalSet && c.successSet
+}
+
+type macsecState struct {
+	interfaces map[string]*interfaceMacSecInfo
+}
+
+func newMacsecState() *macsecState {
+	return &macsecState{
+		interfaces: make(map[string]*interfaceMacSecInfo),
+	}
+}
+
+func (m *macsecState) createOrGetInterface(interfaceName string) *interfaceMacSecInfo {
+	if _, ok := m.interfaces[interfaceName]; !ok {
+		m.interfaces[interfaceName] = &interfaceMacSecInfo{
+			interfaceName: interfaceName,
+			cknStatuses:   make(map[string]*cknInfo),
+		}
+	}
+	return m.interfaces[interfaceName]
+}
+
+func (m *macsecState) interfaceInfo(intf string) (*interfaceMacSecInfo, bool) {
+	info, ok := m.interfaces[intf]
+	return info, ok
+}
+
+func (m *macsecState) clearInterfaceInfo(intf string) {
+	delete(m.interfaces, intf)
+}
+
+type impl struct {
+	state *macsecState
+}
+
 // New creates a functional translator.
 func New() *translator.FunctionalTranslator {
+	i := &impl{
+		state: newMacsecState(),
+	}
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			ID:               ftconsts.AristaMacsecStateFunctionalTranslator,
-			Translate:        translate,
+			Translate:        i.translate,
 			OutputToInputMap: paths,
 			Metadata: []*translator.FTMetadata{
 				{
@@ -198,10 +261,9 @@ func extractDeleteInfo(path *gnmipb.Path) (*deleteInfo, error) {
 
 // deleteHandler updates the cache based on delete notifications.
 // It returns a map of interfaces that need an OC Delete, and a map of interfaces that need an OC Update.
-func deleteHandler(n *gnmipb.Notification) (interfacesForOCDelete, interfacesForOCUpdate map[string]bool) {
+func (i *impl) deleteHandler(n *gnmipb.Notification) (interfacesForOCDelete, interfacesForOCUpdate map[string]bool) {
 	prefix := n.GetPrefix()
 	deletes := n.GetDelete()
-	target := prefix.GetTarget()
 
 	interfacesForOCDelete = make(map[string]bool)
 	interfacesForOCUpdate = make(map[string]bool)
@@ -210,41 +272,35 @@ func deleteHandler(n *gnmipb.Notification) (interfacesForOCDelete, interfacesFor
 		fullPath := ftutilities.Join(prefix, del)
 		deleteInfo, err := extractDeleteInfo(fullPath)
 		if err != nil {
-			log.Errorf("failed to extract interface ID or CKN from delete path %v after matching a pattern: %v", fullPath, err)
+			log.Errorf("Failed to extract interface ID or CKN from delete path %v after matching a pattern: %v", fullPath, err)
 			continue
 		}
 		if deleteInfo == nil {
-			log.V(1).Infof("delete path %v did not match known MACsec delete patterns.", fullPath)
+			log.V(1).Infof("Delete path %v did not match known MACsec delete patterns.", fullPath)
 			continue
 		}
 
-		// Check if the map for the specific target exists
-		if targetInfo, targetExists := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target); targetExists {
-			ifaceInfo, ok := targetInfo.InterfaceInfo(deleteInfo.intfID)
-			if !ok {
-				log.V(1).Infof("interface '%s' on target '%s' not found for delete handler.", deleteInfo.intfID, target)
-				continue
-			}
-			switch deleteInfo.deleteType {
-			case "intf-delete":
-				targetInfo.ClearInterfaceInfo(deleteInfo.intfID)
-				interfacesForOCDelete[deleteInfo.intfID] = true
-				if len(targetInfo.Interfaces) == 0 {
-					log.V(1).Infof("no more interfaces for target '%s', removing target from map.", target)
-					ftutilities.MACSecStateMap.DeleteTargetMacSecInfo(target)
-				}
-			case "ckn-delete":
-				ifaceInfo.RemoveCkn(deleteInfo.ckn)
-				interfacesForOCUpdate[deleteInfo.intfID] = true
-				if len(ifaceInfo.CloneStatuses()) == 0 {
-					log.V(1).Infof("no more CKNs for interface '%s' on target '%s', removing interface from map.", deleteInfo.intfID, target)
-					targetInfo.ClearInterfaceInfo(deleteInfo.intfID)
-					interfacesForOCDelete[deleteInfo.intfID] = true
-				}
-			case "cpStatus-delete":
-				ifaceInfo.ResetCPStatus()
+		ifaceInfo, ok := i.state.interfaceInfo(deleteInfo.intfID)
+		if !ok {
+			log.V(1).Infof("Interface %q not found for delete handler.", deleteInfo.intfID)
+			continue
+		}
+		switch deleteInfo.deleteType {
+		case "intf-delete":
+			i.state.clearInterfaceInfo(deleteInfo.intfID)
+			interfacesForOCDelete[deleteInfo.intfID] = true
+		case "ckn-delete":
+			delete(ifaceInfo.cknStatuses, deleteInfo.ckn)
+			interfacesForOCUpdate[deleteInfo.intfID] = true
+			if len(ifaceInfo.cknStatuses) == 0 {
+				log.V(1).Infof("No more CKNs for interface %q, removing interface from map.", deleteInfo.intfID)
+				i.state.clearInterfaceInfo(deleteInfo.intfID)
 				interfacesForOCDelete[deleteInfo.intfID] = true
 			}
+		case "cpStatus-delete":
+			ifaceInfo.cpStatus = false
+			ifaceInfo.cpStatusSet = false
+			interfacesForOCDelete[deleteInfo.intfID] = true
 		}
 	}
 	return interfacesForOCDelete, interfacesForOCUpdate
@@ -299,7 +355,7 @@ func isKnownLeaf(leaf string) bool {
 }
 
 // metadata populates the MACSec map with the native paths that contribute to the derived MACSec status.
-func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string, error) {
+func (i *impl) metadata(prefix *gnmipb.Path, update *gnmipb.Update) (string, error) {
 	// O(1) early exit: skip updates whose leaf name cannot match any pathPattern.
 	updateElems := update.GetPath().GetElem()
 	if len(updateElems) == 0 {
@@ -318,21 +374,25 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 	for _, pattern := range pathPatterns {
 		if ftutilities.MatchPath(fullPath, pattern) {
 			matched = true
-			targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo(target)
-			ifaceInfo := targetInfo.CreateOrGetInterface(interfaceName)
+			ifaceInfo := i.state.createOrGetInterface(interfaceName)
 
 			leafName := fullPath.GetElem()[len(fullPath.GetElem())-1].GetName()
 			boolVal := update.GetVal().GetBoolVal()
 
 			switch leafName {
 			case "controlledPortEnabled":
-				ifaceInfo.SetIntfCPStatus(boolVal)
+				ifaceInfo.cpStatus = boolVal
+				ifaceInfo.cpStatusSet = true
 			case "success":
-				ifaceInfo.SetIntfSuccess(ckn, boolVal)
+				cknInfo := ifaceInfo.createOrGetCKN(ckn)
+				cknInfo.success = boolVal
+				cknInfo.successSet = true
 			case "principal":
-				ifaceInfo.SetIntfPrincipal(ckn, boolVal)
+				cknInfo := ifaceInfo.createOrGetCKN(ckn)
+				cknInfo.principal = boolVal
+				cknInfo.principalSet = true
 			default:
-				log.Warningf("Unknown leaf name '%s' encountered for MACsec status processing for path %v", leafName, fullPath)
+				log.Warningf("Unknown leaf name %q encountered for MACsec status processing for path %v", leafName, fullPath)
 			}
 		}
 	}
@@ -343,31 +403,23 @@ func metadata(prefix *gnmipb.Path, update *gnmipb.Update, target string) (string
 }
 
 // translateMACSecState returns the MACSec ckn and status for the given interface.
-func translateMACSecState(interfaceName string, target string) (intfMACSecStatus, cknKeys []string, skip bool) {
-	var success, principal bool
-	targetInfo, ok := ftutilities.MACSecStateMap.RetrieveTargetMacSecInfo(target)
+func (i *impl) translateMACSecState(interfaceName string) (intfMACSecStatus, cknKeys []string, skip bool) {
+	ifaceInfo, ok := i.state.interfaceInfo(interfaceName)
 	if !ok {
-		log.V(1).Infof("target '%s' not found in MACSecStateMap for status translation.", target)
+		log.V(1).Infof("Interface %q not found for status translation.", interfaceName)
+		return nil, nil, true
+	}
+	if !ifaceInfo.cpStatusSet {
+		log.V(1).Infof("CpStatusSet is false for interface %q. Returning empty CKN and status list.", interfaceName)
 		return nil, nil, true
 	}
 
-	ifaceInfo, ok := targetInfo.InterfaceInfo(interfaceName)
-	if !ok {
-		log.V(1).Infof("interface '%s' on target '%s' not found for status translation.", interfaceName, target)
-		return nil, nil, true
-	}
-	controlledPortEnabled, cpStatusSet := ifaceInfo.IntfCPStatus()
-	if !cpStatusSet {
-		log.V(1).Infof("cpStatusSet is false for interface '%s' on target '%s'. Returning empty CKN and status list.", interfaceName, target)
-		return nil, nil, true
-	}
-
-	if len(ifaceInfo.CloneStatuses()) == 0 {
-		log.V(1).Infof("no CKNs found for interface '%s' on target '%s'. Returning empty CKN and status list.", interfaceName, target)
+	if len(ifaceInfo.cknStatuses) == 0 {
+		log.V(1).Infof("No CKNs found for interface %q. Returning empty CKN and status list.", interfaceName)
 		return nil, nil, true
 	}
 	var cknNamesToSort []string
-	for ckn := range maps.Keys(ifaceInfo.CloneStatuses()) {
+	for ckn := range ifaceInfo.cknStatuses {
 		cknNamesToSort = append(cknNamesToSort, ckn)
 	}
 	if len(cknNamesToSort) == 0 {
@@ -378,16 +430,16 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 		cknKeys = append(cknKeys, c)
 		cknStatus := "Unknown"
 
-		success, _ = ifaceInfo.IntfSuccess(c)
-		principal, _ = ifaceInfo.IntfPrincipal(c)
-
-		// Check if all required values have been set using the IsComplete method.
-		// If not, we can't determine a definitive status yet.
-		if !ifaceInfo.IsComplete(c) {
-			log.V(1).Infof("macsec data for interface '%s' on target '%s' is not yet complete. CPStatusSet: %t, PrincipalSet: %t, SuccessSet: %t",
-				interfaceName, target, controlledPortEnabled, principal, success)
+		cknInfo := ifaceInfo.cknStatuses[c]
+		if !cknInfo.isComplete() {
+			log.V(1).Infof("MACsec data for interface %q (CKN %q) is not yet complete. PrincipalSet: %t, SuccessSet: %t",
+				interfaceName, c, cknInfo.principalSet, cknInfo.successSet)
 			return nil, nil, true
 		}
+
+		controlledPortEnabled := ifaceInfo.cpStatus
+		success := cknInfo.success
+		principal := cknInfo.principal
 
 		switch {
 		case controlledPortEnabled && success && principal:
@@ -405,7 +457,7 @@ func translateMACSecState(interfaceName string, target string) (intfMACSecStatus
 	return intfMACSecStatus, cknKeys, false
 }
 
-func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
 	if sr.GetUpdate() == nil {
 		return nil, nil
 	}
@@ -418,7 +470,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	interfaceSeen := make(map[string]bool)
 
 	for _, update := range notification.GetUpdate() {
-		interfaceName, err := metadata(prefix, update, target)
+		interfaceName, err := i.metadata(prefix, update)
 		if err != nil {
 			return nil, fmt.Errorf("failed to populate MACSec map: %v", err)
 		}
@@ -429,7 +481,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	finalInterfacesForOCUpdate := make(map[string]bool)
 	// Determine final set of interfaces for OC Update
 	// These are interfaces affected by native updates or "modifying" native deletes,
-	interfacesForOCDelete, interfacesForOCUpdate := deleteHandler(notification)
+	interfacesForOCDelete, interfacesForOCUpdate := i.deleteHandler(notification)
 	for intfName := range interfaceSeen {
 		if !interfacesForOCDelete[intfName] {
 			finalInterfacesForOCUpdate[intfName] = true
@@ -445,7 +497,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		outgoingDeletes = append(outgoingDeletes, returnPathForMACSecStatus(intfName), returnPathForMACSecCKN(intfName))
 	}
 	for interfaceName := range finalInterfacesForOCUpdate {
-		intfMACSecStatuses, ckns, skip := translateMACSecState(interfaceName, target)
+		intfMACSecStatuses, ckns, skip := i.translateMACSecState(interfaceName)
 		if skip {
 			continue
 		}
@@ -468,7 +520,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			Val:  &gnmipb.TypedValue{Value: &gnmipb.TypedValue_LeaflistVal{LeaflistVal: &gnmipb.ScalarArray{Element: cknElements}}},
 		}
 		outgoingUpdates = append(outgoingUpdates, cknUpdate)
-		log.V(1).Infof("target %s: Generating OC Update for status (len %d) and CKN (len %d) leaf-lists for interface '%s'.", target, len(intfMACSecStatuses), len(ckns), interfaceName)
+		log.V(1).Infof("Target %q: Generating OC Update for status (len %d) and CKN (len %d) leaf-lists for interface %q.", target, len(intfMACSecStatuses), len(ckns), interfaceName)
 	}
 
 	if len(outgoingUpdates) == 0 && len(outgoingDeletes) == 0 {

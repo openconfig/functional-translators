@@ -96,12 +96,152 @@ const (
 	leafDroppedPkts    = "dropped-pkts"
 )
 
+// queueCounters holds the counters for a specific QoS queue.
+type queueCounters struct {
+	txPackets      uint64
+	txBytes        uint64
+	droppedPackets uint64
+	droppedBytes   uint64
+}
+
+// memberInterfaceInfo holds QoS queue information for a specific member interface.
+type memberInterfaceInfo struct {
+	interfaceName string
+	queues        map[string]*queueCounters // map[queueID]*queueCounters
+}
+
+func newMemberInterfaceInfo(interfaceName string) *memberInterfaceInfo {
+	return &memberInterfaceInfo{
+		interfaceName: interfaceName,
+		queues:        make(map[string]*queueCounters),
+	}
+}
+
+func (m *memberInterfaceInfo) createOrGetQueue(queueID string) *queueCounters {
+	if m.queues == nil {
+		m.queues = make(map[string]*queueCounters)
+	}
+	if _, ok := m.queues[queueID]; !ok {
+		m.queues[queueID] = new(queueCounters)
+	}
+	return m.queues[queueID]
+}
+
+// portChannelInfo holds QoS information for a specific port-channel, including all its member interfaces.
+type portChannelInfo struct {
+	portChannelName    string
+	members            map[string]*memberInterfaceInfo // map[interfaceName]*memberInterfaceInfo
+	aggregatedCounters map[string]queueCounters        // Reusable map for zero-allocation aggregation: map[queueID]queueCounters
+}
+
+func (p *portChannelInfo) createOrRetrieveMember(interfaceName string) *memberInterfaceInfo {
+	if p.members == nil {
+		p.members = make(map[string]*memberInterfaceInfo)
+	}
+	if _, ok := p.members[interfaceName]; !ok {
+		p.members[interfaceName] = newMemberInterfaceInfo(interfaceName)
+	}
+	return p.members[interfaceName]
+}
+
+func (p *portChannelInfo) addMemberInfo(memberInfo *memberInterfaceInfo) {
+	if p.members == nil {
+		p.members = make(map[string]*memberInterfaceInfo)
+	}
+	p.members[memberInfo.interfaceName] = memberInfo
+}
+
+func (p *portChannelInfo) clearMemberInfo(intf string) {
+	delete(p.members, intf)
+}
+
+func (p *portChannelInfo) aggregateCounters() map[string]queueCounters {
+	if p.aggregatedCounters == nil {
+		p.aggregatedCounters = make(map[string]queueCounters)
+	} else {
+		clear(p.aggregatedCounters)
+	}
+	for _, memberInfo := range p.members {
+		for queueID, counters := range memberInfo.queues {
+			agg := p.aggregatedCounters[queueID]
+			agg.txBytes += counters.txBytes
+			agg.txPackets += counters.txPackets
+			agg.droppedBytes += counters.droppedBytes
+			agg.droppedPackets += counters.droppedPackets
+			p.aggregatedCounters[queueID] = agg
+		}
+	}
+	return p.aggregatedCounters
+}
+
+// qosState holds QoS information for all port-channels on a target.
+type qosState struct {
+	portChannels        map[string]*portChannelInfo     // map[portChannelName]*portChannelInfo
+	memberToPCMap       map[string]string               // map[interfaceName]portChannelName
+	unassociatedMembers map[string]*memberInterfaceInfo // "Waiting room"
+}
+
+func newQoSState() *qosState {
+	return &qosState{
+		portChannels:        make(map[string]*portChannelInfo),
+		memberToPCMap:       make(map[string]string),
+		unassociatedMembers: make(map[string]*memberInterfaceInfo),
+	}
+}
+
+func (s *qosState) createOrRetrievePortChannel(pcName string) *portChannelInfo {
+	if s.portChannels == nil {
+		s.portChannels = make(map[string]*portChannelInfo)
+	}
+	if _, ok := s.portChannels[pcName]; !ok {
+		s.portChannels[pcName] = &portChannelInfo{
+			portChannelName:    pcName,
+			members:            make(map[string]*memberInterfaceInfo),
+			aggregatedCounters: make(map[string]queueCounters),
+		}
+	}
+	return s.portChannels[pcName]
+}
+
+func (s *qosState) portChannelInfo(pcName string) (*portChannelInfo, bool) {
+	info, ok := s.portChannels[pcName]
+	return info, ok
+}
+
+func (s *qosState) retrievePortChannelForMember(memberName string) (string, bool) {
+	pcName, ok := s.memberToPCMap[memberName]
+	return pcName, ok
+}
+
+func (s *qosState) setPortChannelForMember(memberName, pcName string) {
+	s.memberToPCMap[memberName] = pcName
+}
+
+func (s *qosState) findAndRemoveMember(memberName string) (string, bool) {
+	oldPCName, ok := s.memberToPCMap[memberName]
+	if !ok {
+		return "", false
+	}
+	delete(s.memberToPCMap, memberName)
+	if pcInfo, pcOK := s.portChannels[oldPCName]; pcOK {
+		pcInfo.clearMemberInfo(memberName)
+	}
+	return oldPCName, true
+}
+
+type impl struct {
+	state *qosState
+}
+
 // New creates a functional translator.
 func New() *translator.FunctionalTranslator {
+	i := &impl{
+		state: newQoSState(),
+	}
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			ID:               ftconsts.AristaQoSAggregateCountersTranslator,
-			Translate:        translate,
+			Translate:        i.translate,
 			OutputToInputMap: ftutilities.MustStringMapPaths(translateMap),
 			Metadata: []*translator.FTMetadata{
 				{
@@ -210,18 +350,14 @@ func newCounterUpdate(interfaceID, queueName, leafName string, value uint64) *gn
 }
 
 // aggregateAndBuildUpdates calculates the sum of counters for a port-channel and creates gNMI updates.
-func aggregateAndBuildUpdates(target, pcName string) []*gnmipb.Update {
-	targetInfo, ok := ftutilities.QoSAggMap.RetrieveTargetQoSInfo(target)
-	if !ok {
-		return nil
-	}
-	pcInfo, ok := targetInfo.PortChannelInfo(pcName)
+func (i *impl) aggregateAndBuildUpdates(pcName string) []*gnmipb.Update {
+	pcInfo, ok := i.state.portChannelInfo(pcName)
 	if !ok {
 		return nil
 	}
 
 	// aggregatedCounters maps a simple queue name to its summed counters.
-	aggregatedCounters := pcInfo.AggregateCounters()
+	aggregatedCounters := pcInfo.aggregateCounters()
 	outgoingUpdates := make([]*gnmipb.Update, 0, len(aggregatedCounters)*4)
 	// Build gNMI Updates from the aggregated results.
 	for simpleQueueName, counters := range aggregatedCounters {
@@ -230,10 +366,10 @@ func aggregateAndBuildUpdates(target, pcName string) []*gnmipb.Update {
 		newCompositeQueueID := pcName + "-" + simpleQueueName
 
 		outgoingUpdates = append(outgoingUpdates,
-			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitOctets, counters.TxBytes),
-			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitPkts, counters.TxPackets),
-			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedOctets, counters.DroppedBytes),
-			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedPkts, counters.DroppedPackets),
+			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitOctets, counters.txBytes),
+			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitPkts, counters.txPackets),
+			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedOctets, counters.droppedBytes),
+			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedPkts, counters.droppedPackets),
 		)
 	}
 	return outgoingUpdates
@@ -241,10 +377,9 @@ func aggregateAndBuildUpdates(target, pcName string) []*gnmipb.Update {
 
 // deleteHandler processes delete notifications to handle port-channel member removals.
 // It updates the cache and returns a map of port-channel names that were affected.
-func deleteHandler(n *gnmipb.Notification) (impactedPortChannels map[string]bool) {
+func (i *impl) deleteHandler(n *gnmipb.Notification) (impactedPortChannels map[string]bool) {
 	impactedPortChannels = make(map[string]bool)
 	prefix := n.GetPrefix()
-	target := prefix.GetTarget()
 
 	for _, delPath := range n.GetDelete() {
 		fullPath := ftutilities.Join(prefix, delPath)
@@ -254,7 +389,7 @@ func deleteHandler(n *gnmipb.Notification) (impactedPortChannels map[string]bool
 			continue
 		}
 
-		if oldPCName, removed := processMemberRemoval(target, interfaceName); removed {
+		if oldPCName, removed := i.processMemberRemoval(interfaceName); removed {
 			impactedPortChannels[oldPCName] = true
 		}
 	}
@@ -262,21 +397,17 @@ func deleteHandler(n *gnmipb.Notification) (impactedPortChannels map[string]bool
 }
 
 // processMemberRemoval updates the cache and returns the name of the impacted port-channel and whether a removal occurred.
-func processMemberRemoval(target, interfaceName string) (string, bool) {
-	targetInfo, ok := ftutilities.QoSAggMap.RetrieveTargetQoSInfo(target)
-	if !ok {
-		return "", false
-	}
+func (i *impl) processMemberRemoval(interfaceName string) (string, bool) {
 	// Also clean up the member if it's in the "waiting room"
-	if _, found := targetInfo.UnassociatedMembers[interfaceName]; found {
-		delete(targetInfo.UnassociatedMembers, interfaceName)
-		log.V(2).Infof("removed unassociated member %s from the waiting room on target %s.", interfaceName, target)
+	if _, found := i.state.unassociatedMembers[interfaceName]; found {
+		delete(i.state.unassociatedMembers, interfaceName)
+		log.V(2).Infof("removed unassociated member %q from the waiting room.", interfaceName)
 		return "", true
 	}
 
-	// FindAndRemoveMember cleans up the cache and returns the old port-channel.
-	if oldPCName, found := targetInfo.FindAndRemoveMember(interfaceName); found {
-		log.V(2).Infof("processed removal of member %s from Port-Channel %s on target %s.", interfaceName, oldPCName, target)
+	// findAndRemoveMember cleans up the cache and returns the old port-channel.
+	if oldPCName, found := i.state.findAndRemoveMember(interfaceName); found {
+		log.V(2).Infof("processed removal of member %q from Port-Channel %q.", interfaceName, oldPCName)
 		return oldPCName, true
 	}
 	return "", false
@@ -284,9 +415,9 @@ func processMemberRemoval(target, interfaceName string) (string, bool) {
 
 // handleAggregateIDUpdate processes membership changes based on an aggregate-id update.
 // It updates the cache and the set of impacted port-channels.
-func handleAggregateIDUpdate(targetInfo *ftutilities.TargetQoSInfo, interfaceName, newPCName string, impactedPortChannels map[string]bool) {
+func (i *impl) handleAggregateIDUpdate(interfaceName, newPCName string, impactedPortChannels map[string]bool) {
 	// Process the implicit removal from any old port-channel.
-	if oldPCName, removed := targetInfo.FindAndRemoveMember(interfaceName); removed {
+	if oldPCName, removed := i.state.findAndRemoveMember(interfaceName); removed {
 		impactedPortChannels[oldPCName] = true
 	}
 
@@ -297,19 +428,19 @@ func handleAggregateIDUpdate(targetInfo *ftutilities.TargetQoSInfo, interfaceNam
 	}
 
 	// Handle the addition to the new port-channel if one is specified.
-	pcInfo := targetInfo.CreateOrRetrievePortChannel(newPCName)
-	targetInfo.SetPortChannelForMember(interfaceName, newPCName)
+	pcInfo := i.state.createOrRetrievePortChannel(newPCName)
+	i.state.setPortChannelForMember(interfaceName, newPCName)
 
 	// Check the "waiting room" for pending counters for this interface.
-	if unassociatedMember, found := targetInfo.UnassociatedMembers[interfaceName]; found {
+	if unassociatedMember, found := i.state.unassociatedMembers[interfaceName]; found {
 		// Move the cached member info into the port-channel's member list.
-		pcInfo.AddMemberInfo(unassociatedMember)
+		pcInfo.addMemberInfo(unassociatedMember)
 		// Clean up the waiting room.
-		delete(targetInfo.UnassociatedMembers, interfaceName)
+		delete(i.state.unassociatedMembers, interfaceName)
 		log.V(2).Infof("moved pending counters for %s to Port-Channel %s", interfaceName, newPCName)
 	} else {
 		// If no pending data, just ensure the member struct exists.
-		pcInfo.CreateOrRetrieveMember(interfaceName)
+		pcInfo.createOrRetrieveMember(interfaceName)
 	}
 
 	// Mark the port-channel as impacted to trigger an immediate aggregation.
@@ -318,44 +449,46 @@ func handleAggregateIDUpdate(targetInfo *ftutilities.TargetQoSInfo, interfaceNam
 }
 
 // handleQoSUpdate processes a QoS counter update by updating the appropriate cache location.
-func handleQoSUpdate(targetInfo *ftutilities.TargetQoSInfo, interfaceName, simpleQueueName, leafName string, value uint64, impactedPortChannels map[string]bool) {
-	var memberInfo *ftutilities.MemberInterfaceInfo
+func (i *impl) handleQoSUpdate(interfaceName, simpleQueueName, leafName string, value uint64, impactedPortChannels map[string]bool) {
+	var memberInfo *memberInterfaceInfo
 
 	// The member is already part of a known port-channel. Update its state directly.
-	pcName, ok := targetInfo.RetrievePortChannelForMember(interfaceName)
+	pcName, ok := i.state.retrievePortChannelForMember(interfaceName)
 	if ok {
 		impactedPortChannels[pcName] = true
 
 		// Get the PortChannelInfo and then the MemberInterfaceInfo.
-		pcInfo, pcOk := targetInfo.PortChannelInfo(pcName)
+		pcInfo, pcOk := i.state.portChannelInfo(pcName)
 		if !pcOk {
 			log.Errorf("cache inconsistency: port-channel %s not found for member %s", pcName, interfaceName)
 			return
 		}
-		memberInfo = pcInfo.CreateOrRetrieveMember(interfaceName)
+		memberInfo = pcInfo.createOrRetrieveMember(interfaceName)
 	} else {
 		// We don't know its LAG yet. Put its data in the "waiting room".
-		memberInfo, ok = targetInfo.UnassociatedMembers[interfaceName]
-		if !ok {
+		var found bool
+		memberInfo, found = i.state.unassociatedMembers[interfaceName]
+		if !found {
 			// Member is not in the waiting room yet, so create it.
-			memberInfo = ftutilities.NewMemberInterfaceInfo(interfaceName)
-			targetInfo.UnassociatedMembers[interfaceName] = memberInfo
+			memberInfo = newMemberInterfaceInfo(interfaceName)
+			i.state.unassociatedMembers[interfaceName] = memberInfo
 		}
 	}
 
+	q := memberInfo.createOrGetQueue(simpleQueueName)
 	switch leafName {
 	case leafTransmitOctets:
-		memberInfo.SetTxBytes(simpleQueueName, value)
+		q.txBytes = value
 	case leafTransmitPkts:
-		memberInfo.SetTxPackets(simpleQueueName, value)
+		q.txPackets = value
 	case leafDroppedOctets:
-		memberInfo.SetDroppedBytes(simpleQueueName, value)
+		q.droppedBytes = value
 	case leafDroppedPkts:
-		memberInfo.SetDroppedPackets(simpleQueueName, value)
+		q.droppedPackets = value
 	}
 }
 
-func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
 	notification := sr.GetUpdate()
 	if notification == nil {
 		return nil, nil
@@ -366,7 +499,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	timestamp := notification.GetTimestamp()
 
 	// Handle deletes first and get the initial set of impacted port-channels.
-	impactedPortChannels := deleteHandler(notification)
+	impactedPortChannels := i.deleteHandler(notification)
 
 	// A slice to store all original QOS counter updates for singleton ports that should be passed through.
 	var passthroughUpdates []*gnmipb.Update
@@ -393,12 +526,10 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			continue
 		}
 
-		targetInfo := ftutilities.QoSAggMap.CreateOrUpdateTargetQoSInfo(target)
-
 		// Update to a member's port-channel assignment.
 		if leafName == "aggregate-id" {
 			newPCName := update.GetVal().GetStringVal()
-			handleAggregateIDUpdate(targetInfo, interfaceName, newPCName, impactedPortChannels)
+			i.handleAggregateIDUpdate(interfaceName, newPCName, impactedPortChannels)
 			continue
 		}
 
@@ -411,14 +542,14 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			Val:  update.GetVal(),
 		})
 		val := update.GetVal().GetUintVal()
-		handleQoSUpdate(targetInfo, interfaceName, queueIDStr, leafName, val, impactedPortChannels)
+		i.handleQoSUpdate(interfaceName, queueIDStr, leafName, val, impactedPortChannels)
 	}
 
 	// Aggregate and generate the aggregate updates.
 	var aggregateUpdates []*gnmipb.Update
 	for pcName := range impactedPortChannels {
 		log.V(2).Infof("recalculating aggregates for impacted Port-Channel: %s", pcName)
-		newUpdates := aggregateAndBuildUpdates(target, pcName)
+		newUpdates := i.aggregateAndBuildUpdates(pcName)
 		aggregateUpdates = append(aggregateUpdates, newUpdates...)
 	}
 

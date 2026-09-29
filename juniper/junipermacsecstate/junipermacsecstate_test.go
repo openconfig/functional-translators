@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/openconfig/functional-translators/ftutilities"
+	"github.com/openconfig/functional-translators/ftconsts"
 	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
@@ -115,8 +115,7 @@ func TestTranslateInterfaceState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// Clean up state map before each test.
-			ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+			testImpl := &impl{state: newMacsecState()}
 
 			sr := &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
@@ -124,7 +123,7 @@ func TestTranslateInterfaceState(t *testing.T) {
 				},
 			}
 
-			response, err := translate(sr)
+			response, err := testImpl.translate(sr)
 			if err != nil {
 				t.Fatalf("translate() failed: %v", err)
 			}
@@ -202,7 +201,8 @@ func TestDeleteHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			intfForDelete := deleteHandler(test.notification)
+			testImpl := &impl{state: newMacsecState()}
+			intfForDelete := testImpl.deleteHandler(test.notification)
 
 			if len(intfForDelete) != test.expectDeletes {
 				t.Errorf("deleteHandler() returned %d deletes, want %d", len(intfForDelete), test.expectDeletes)
@@ -297,8 +297,8 @@ func TestNew(t *testing.T) {
 	if ft == nil {
 		t.Fatalf("New() returned nil")
 	}
-	if ft.ID() != "juniper-macsec-state-ft" {
-		t.Errorf("New() ID = %q, want %q", ft.ID(), "juniper-macsec-state-ft")
+	if ft.ID() != ftconsts.JuniperMacsecStateFunctionalTranslator {
+		t.Errorf("New() ID = %q, want %q", ft.ID(), ftconsts.JuniperMacsecStateFunctionalTranslator)
 	}
 }
 
@@ -548,7 +548,8 @@ func TestTranslate_Errors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := translate(tc.input)
+			testImpl := &impl{state: newMacsecState()}
+			res, err := testImpl.translate(tc.input)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("translate() error = %v, wantErr %v", err, tc.wantErr)
 			}
@@ -565,82 +566,67 @@ func TestTranslate_Errors(t *testing.T) {
 func TestTranslateMACSecState_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name       string
-		setup      func()
+		setup      func(state *macsecState)
 		intf       string
-		target     string
 		wantSkip   bool
 		wantStatus []string
 	}{
 		{
-			name:     "target not found in map",
-			setup:    func() { ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo() },
-			intf:     "et-0/0/0",
-			target:   "non-existent-device",
-			wantSkip: true,
-		},
-		{
-			name: "interface not found in targetInfo",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-			},
+			name:     "interface not found in targetInfo",
+			setup:    func(state *macsecState) {},
 			intf:     "et-0/0/1",
-			target:   "device1",
 			wantSkip: true,
 		},
 		{
 			name: "cpStatusSet is false",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("et-0/0/1")
-				ifaceInfo.SetIntfSuccess("ckn1", true)
-				ifaceInfo.SetIntfPrincipal("ckn1", true)
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("et-0/0/1")
+				ckn1 := ifaceInfo.createOrGetCKN("ckn1")
+				ckn1.success = true
+				ckn1.successSet = true
+				ckn1.principal = true
+				ckn1.principalSet = true
 			},
 			intf:     "et-0/0/1",
-			target:   "device1",
 			wantSkip: true,
 		},
 		{
 			name: "CloneStatuses is empty",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("et-0/0/1")
-				ifaceInfo.SetIntfCPStatus(true)
-				for k := range ifaceInfo.CloneStatuses() {
-					ifaceInfo.RemoveCkn(k)
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("et-0/0/1")
+				ifaceInfo.cpStatus = true
+				ifaceInfo.cpStatusSet = true
+				for k := range ifaceInfo.cknStatuses {
+					delete(ifaceInfo.cknStatuses, k)
 				}
 			},
 			intf:     "et-0/0/1",
-			target:   "device1",
 			wantSkip: true,
 		},
 		{
 			name: "CKN data is incomplete",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("et-0/0/1")
-				ifaceInfo.SetIntfCPStatus(true)
-				ifaceInfo.CreateOrGetCKN("ckn1")
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("et-0/0/1")
+				ifaceInfo.cpStatus = true
+				ifaceInfo.cpStatusSet = true
+				ifaceInfo.createOrGetCKN("ckn1")
 			},
 			intf:     "et-0/0/1",
-			target:   "device1",
 			wantSkip: true,
 		},
 		{
 			name: "Unknown case non-matching switch branch",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("et-0/0/1")
-				ifaceInfo.SetIntfCPStatus(false)
-				ifaceInfo.SetIntfSuccess("ckn1", true)
-				ifaceInfo.SetIntfPrincipal("ckn1", false)
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("et-0/0/1")
+				ifaceInfo.cpStatus = false
+				ifaceInfo.cpStatusSet = true
+				ckn1 := ifaceInfo.createOrGetCKN("ckn1")
+				ckn1.success = true
+				ckn1.successSet = true
+				ckn1.principal = false
+				ckn1.principalSet = true
 			},
 			intf:       "et-0/0/1",
-			target:     "device1",
 			wantSkip:   false,
 			wantStatus: []string{"Unknown"},
 		},
@@ -648,10 +634,12 @@ func TestTranslateMACSecState_EdgeCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			state := newMacsecState()
+			testImpl := &impl{state: state}
 			if tc.setup != nil {
-				tc.setup()
+				tc.setup(state)
 			}
-			statuses, _, skip := translateMACSecState(tc.intf, tc.target)
+			statuses, _, skip := testImpl.translateMACSecState(tc.intf)
 			if skip != tc.wantSkip {
 				t.Fatalf("translateMACSecState() skip = %v, want %v", skip, tc.wantSkip)
 			}
@@ -661,5 +649,65 @@ func TestTranslateMACSecState_EdgeCases(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestInterfaceMacSecInfoCreateOrGetCKNNilMap(t *testing.T) {
+	info := &interfaceMacSecInfo{interfaceName: "et-0/0/1"}
+	ckn := info.createOrGetCKN("ckn1")
+	if ckn == nil {
+		t.Fatal("createOrGetCKN() returned nil")
+	}
+	if got := info.createOrGetCKN("ckn1"); got != ckn {
+		t.Errorf("createOrGetCKN() returned %v, want %v", got, ckn)
+	}
+}
+
+func TestCKNInfoIsCompleteNil(t *testing.T) {
+	var c *cknInfo
+	if c.isComplete() {
+		t.Errorf("nil cknInfo.isComplete() = true, want false")
+	}
+}
+
+func TestInterfaceIDAndValue_MissingInterfaceNameKey(t *testing.T) {
+	path := &gnmipb.Path{
+		Elem: []*gnmipb.PathElem{
+			{Name: "macsec"},
+			{Name: "interfaces"},
+			{Name: "interface", Key: map[string]string{}},
+			{Name: "name"},
+		},
+	}
+	_, _, err := interfaceIDAndValue(path)
+	if err == nil {
+		t.Errorf("interfaceIDAndValue() expected error for missing name key, got nil")
+	}
+}
+
+func TestExtractDeleteInfo_InvalidInterface(t *testing.T) {
+	path := &gnmipb.Path{
+		Origin: "junos",
+		Elem: []*gnmipb.PathElem{
+			{Name: "macsec"},
+			{Name: "interfaces"},
+			{Name: "interface", Key: map[string]string{}},
+		},
+	}
+	_, err := extractDeleteInfo(path)
+	if err == nil {
+		t.Errorf("extractDeleteInfo() expected error for invalid interface, got nil")
+	}
+}
+
+func TestIsKnownLeaf(t *testing.T) {
+	if !isKnownLeaf("name") {
+		t.Errorf("isKnownLeaf(\"name\") = false, want true")
+	}
+	if !isKnownLeaf("jnx-cak-name") {
+		t.Errorf("isKnownLeaf(\"jnx-cak-name\") = false, want true")
+	}
+	if isKnownLeaf("unknown") {
+		t.Errorf("isKnownLeaf(\"unknown\") = true, want false")
 	}
 }

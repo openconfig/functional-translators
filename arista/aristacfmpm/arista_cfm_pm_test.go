@@ -24,7 +24,6 @@ import (
 )
 
 func TestTranslate(t *testing.T) {
-	ftutilities.CfmMap.ClearAllTargetCFMInfo()
 	tests := []struct {
 		name           string
 		inputPath      string
@@ -86,7 +85,6 @@ func TestTranslate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ftutilities.CfmMap.ClearAllTargetCFMInfo()
 			inputSR, err := ftutilities.LoadSubscribeResponse(test.inputPath)
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
@@ -298,18 +296,16 @@ func TestConvertMetricValue(t *testing.T) {
 }
 
 func TestDeleteHandlerEdgeCases(t *testing.T) {
-	i := &impl{}
-
 	tests := []struct {
 		name         string
-		setupCache   func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+		setupCache   func(state *cfmState, key cfmCacheKey)
 		notification func(target string) *gnmipb.Notification
-		verifyCache  func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey)
+		verifyCache  func(t *testing.T, state *cfmState, key cfmCacheKey)
 	}{
 		{
 			name: "Path not matching pattern but starts with Sysdb ignored",
-			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				targetCFM.SetProfileName(key, "profile1")
+			setupCache: func(state *cfmState, key cfmCacheKey) {
+				state.profileNameCache[key] = "profile1"
 			},
 			notification: func(target string) *gnmipb.Notification {
 				return &gnmipb.Notification{
@@ -323,16 +319,16 @@ func TestDeleteHandlerEdgeCases(t *testing.T) {
 					}},
 				}
 			},
-			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				if _, ok := targetCFM.ProfileName(key); !ok {
+			verifyCache: func(t *testing.T, state *cfmState, key cfmCacheKey) {
+				if _, ok := state.profileNameCache[key]; !ok {
 					t.Errorf("Expected profile name to still exist in cache (should not have matched pattern)")
 				}
 			},
 		},
 		{
 			name: "Delete profile name from cache",
-			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				targetCFM.SetProfileName(key, "profile1")
+			setupCache: func(state *cfmState, key cfmCacheKey) {
+				state.profileNameCache[key] = "profile1"
 			},
 			notification: func(target string) *gnmipb.Notification {
 				return &gnmipb.Notification{
@@ -346,16 +342,16 @@ func TestDeleteHandlerEdgeCases(t *testing.T) {
 					}},
 				}
 			},
-			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				if _, ok := targetCFM.ProfileName(key); ok {
+			verifyCache: func(t *testing.T, state *cfmState, key cfmCacheKey) {
+				if _, ok := state.profileNameCache[key]; ok {
 					t.Errorf("Expected profile name to be deleted from cache")
 				}
 			},
 		},
 		{
 			name: "Delete local MEP ID from cache",
-			setupCache: func(targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				targetCFM.SetLocalMEPID(key, "100")
+			setupCache: func(state *cfmState, key cfmCacheKey) {
+				state.localMEPCache[key] = "100"
 			},
 			notification: func(target string) *gnmipb.Notification {
 				return &gnmipb.Notification{
@@ -369,8 +365,8 @@ func TestDeleteHandlerEdgeCases(t *testing.T) {
 					}},
 				}
 			},
-			verifyCache: func(t *testing.T, targetCFM *ftutilities.TargetCFMInfo, key ftutilities.CFMCacheKey) {
-				if _, ok := targetCFM.LocalMEPID(key); ok {
+			verifyCache: func(t *testing.T, state *cfmState, key cfmCacheKey) {
+				if _, ok := state.localMEPCache[key]; ok {
 					t.Errorf("Expected local MEP ID to be deleted from cache")
 				}
 			},
@@ -379,37 +375,27 @@ func TestDeleteHandlerEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ftutilities.CfmMap.ClearAllTargetCFMInfo()
 			target := "test-target"
-			targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
-			key := ftutilities.CFMCacheKey{DomainID: "1", AssocID: "1"}
+			testImpl := &impl{
+				state: newCFMState(),
+			}
+			key := cfmCacheKey{domainID: "1", assocID: "1"}
 
 			if tt.setupCache != nil {
-				tt.setupCache(targetCFM, key)
+				tt.setupCache(testImpl.state, key)
 			}
 
 			notification := tt.notification(target)
-			_, err := i.deleteHandler(notification)
+			_, err := testImpl.deleteHandler(notification)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
 			if tt.verifyCache != nil {
-				tt.verifyCache(t, targetCFM, key)
+				tt.verifyCache(t, testImpl.state, key)
 			}
 		})
 	}
-}
-
-func TestUnusedMethodsForCoverage(t *testing.T) {
-	target := "test-target"
-	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
-
-	// Call TargetCFM
-	_, _ = ftutilities.CfmMap.TargetCFM(target)
-
-	// Call Clear
-	targetCFM.Clear()
 }
 
 func TestUpdateHandlerEdgeCases(t *testing.T) {
@@ -432,7 +418,9 @@ func TestUpdateHandlerEdgeCases(t *testing.T) {
 		},
 	})
 
-	i := &impl{}
+	i := &impl{
+		state: newCFMState(),
+	}
 	notification1 := &gnmipb.Notification{
 		Prefix: &gnmipb.Path{Target: "test-target"},
 		Update: []*gnmipb.Update{{
@@ -489,7 +477,9 @@ func TestDeleteHandlerSmashLength(t *testing.T) {
 		},
 	})
 
-	i := &impl{}
+	i := &impl{
+		state: newCFMState(),
+	}
 	notification := &gnmipb.Notification{
 		Prefix: &gnmipb.Path{Target: "test-target"},
 		Delete: []*gnmipb.Path{{

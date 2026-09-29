@@ -282,7 +282,7 @@ func TestFinalInterfacesForOCUpdate(t *testing.T) {
 func TestTranslate_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name    string
-		setup   func()
+		setup   func(state *macsecState)
 		input   *gnmipb.SubscribeResponse
 		wantErr bool
 		wantNil bool
@@ -320,9 +320,7 @@ func TestTranslate_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "delete interface not found in map",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
+			setup: func(state *macsecState) {
 			},
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
@@ -352,12 +350,13 @@ func TestTranslate_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "interface cpStatusSet is false",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
-				ifaceInfo.SetIntfSuccess("ckn1", true)
-				ifaceInfo.SetIntfPrincipal("ckn1", true)
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("Eth1")
+				ckn1 := ifaceInfo.createOrGetCKN("ckn1")
+				ckn1.success = true
+				ckn1.successSet = true
+				ckn1.principal = true
+				ckn1.principalSet = true
 			},
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
@@ -376,11 +375,10 @@ func TestTranslate_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "no CKNs found",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
-				ifaceInfo.SetIntfCPStatus(true)
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("Eth1")
+				ifaceInfo.cpStatus = true
+				ifaceInfo.cpStatusSet = true
 			},
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
@@ -399,12 +397,11 @@ func TestTranslate_EdgeCases(t *testing.T) {
 		},
 		{
 			name: "interface data is not complete",
-			setup: func() {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
-				targetInfo := ftutilities.MACSecStateMap.CreateOrUpdateTargetMacSecInfo("device1")
-				ifaceInfo := targetInfo.CreateOrGetInterface("Eth1")
-				ifaceInfo.SetIntfCPStatus(true)
-				ifaceInfo.CreateOrGetCKN("ckn1")
+			setup: func(state *macsecState) {
+				ifaceInfo := state.createOrGetInterface("Eth1")
+				ifaceInfo.cpStatus = true
+				ifaceInfo.cpStatusSet = true
+				ifaceInfo.createOrGetCKN("ckn1")
 			},
 			input: &gnmipb.SubscribeResponse{
 				Response: &gnmipb.SubscribeResponse_Update{
@@ -441,13 +438,14 @@ func TestTranslate_EdgeCases(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ft := New()
-			if tc.setup != nil {
-				tc.setup()
-			} else {
-				ftutilities.MACSecStateMap.ClearAllTargetMacSecInfo()
+			state := newMacsecState()
+			testImpl := &impl{
+				state: state,
 			}
-			res, err := ft.Translate(tc.input)
+			if tc.setup != nil {
+				tc.setup(state)
+			}
+			res, err := testImpl.translate(tc.input)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("Translate() error = %v, wantErr %v", err, tc.wantErr)
 			}
@@ -455,5 +453,16 @@ func TestTranslate_EdgeCases(t *testing.T) {
 				t.Errorf("Translate() returned %v, want nil", res)
 			}
 		})
+	}
+}
+
+func TestInterfaceMacSecInfoCreateOrGetCKNNilMap(t *testing.T) {
+	info := &interfaceMacSecInfo{interfaceName: "Eth1"}
+	ckn := info.createOrGetCKN("ckn1")
+	if ckn == nil {
+		t.Fatal("createOrGetCKN() returned nil")
+	}
+	if got := info.createOrGetCKN("ckn1"); got != ckn {
+		t.Errorf("createOrGetCKN() returned %v, want %v", got, ckn)
 	}
 }

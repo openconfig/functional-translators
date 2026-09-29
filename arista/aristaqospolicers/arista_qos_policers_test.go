@@ -76,7 +76,7 @@ func TestTranslate(t *testing.T) {
 			inputPath: "testdata/physical_interface_skip_input.txt",
 			wantNil:   true,
 		},
-				{
+		{
 			name:      "OpenConfigEmptyNotificationIsDropped",
 			inputPath: "testdata/openconfig_empty_notification_input.txt",
 			wantNil:   true,
@@ -129,10 +129,11 @@ func TestTranslate(t *testing.T) {
 }
 
 func TestCacheCleanupOnLastMemberDeletion(t *testing.T) {
-	ft := New()
 	target := "target-cache-test"
 	attachmentPoint := "Port-Channel99"
 	physIntf := "Ethernet99/1"
+	state := newPolicerState()
+	testImpl := &impl{state: state}
 
 	// Send an update to create the attachment point in the cache
 	addInput := &gnmipb.SubscribeResponse{
@@ -154,11 +155,10 @@ func TestCacheCleanupOnLastMemberDeletion(t *testing.T) {
 			},
 		},
 	}
-	_, _ = ft.Translate(addInput)
+	_, _ = testImpl.translate(addInput)
 
 	// Verify the attachment point was successfully created in the cache
-	targetInfo := ftutilities.PolicerAggMap.CreateOrUpdateTargetPolicerInfo(target)
-	if _, ok := targetInfo.AttachmentPointInfo(attachmentPoint); !ok {
+	if _, ok := state.attachmentPointInfo(attachmentPoint); !ok {
 		t.Fatalf("Setup failed: Expected %s to exist in cache", attachmentPoint)
 	}
 
@@ -179,10 +179,31 @@ func TestCacheCleanupOnLastMemberDeletion(t *testing.T) {
 			},
 		},
 	}
-	_, _ = ft.Translate(delInput)
+	_, _ = testImpl.translate(delInput)
 
 	// Verify the attachment point was actually deleted from the cache
-	if _, ok := targetInfo.AttachmentPointInfo(attachmentPoint); ok {
+	if _, ok := state.attachmentPointInfo(attachmentPoint); ok {
 		t.Errorf("Expected %s to be completely deleted from cache after its last member was removed to prevent memory leaks", attachmentPoint)
+	}
+}
+
+func TestAttachmentPointInfoSetMemberCounterNilMap(t *testing.T) {
+	ap := &attachmentPointInfo{name: "ap1"}
+	if !ap.setMemberCounter("Eth1", "pktDropCount", 10) {
+		t.Fatal("setMemberCounter() returned false")
+	}
+	if _, pktDrop, _, _ := ap.aggregateCounters(); pktDrop != 10 || ap.members["Eth1"].pktDropCount != 10 {
+		t.Errorf("setMemberCounter() member not set properly")
+	}
+}
+
+func TestPolicerStateCreateOrRetrieveAttachmentPointNilMap(t *testing.T) {
+	p := &policerState{}
+	ap := p.createOrRetrieveAttachmentPoint("ap1")
+	if ap == nil {
+		t.Fatal("createOrRetrieveAttachmentPoint() returned nil")
+	}
+	if got := p.createOrRetrieveAttachmentPoint("ap1"); got != ap {
+		t.Errorf("createOrRetrieveAttachmentPoint() returned %v, want %v", got, ap)
 	}
 }
