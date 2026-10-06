@@ -18,6 +18,7 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmpm"
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
+	"github.com/openconfig/functional-translators/arista/aristagirocounter"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
 	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
@@ -52,6 +53,7 @@ var (
 		// go/keep-sorted start
 		ftconsts.AristaCFMPMFunctionalTranslator:                          aristacfmpm.New(),
 		ftconsts.AristaCfmStateFunctionalTranslator:                       aristacfmstate.New(),
+		ftconsts.AristaGirocounterFunctionalTranslator:                    aristagirocounter.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator:           aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
 		ftconsts.AristaInterfaceStatusFunctionalTranslator:                aristainterface.NewStatusFT(),

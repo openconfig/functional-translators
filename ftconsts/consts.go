@@ -40,6 +40,9 @@ const (
 	// AristaCFMPMFunctionalTranslator is the name of the Arista CFM PM functional translator.
 	AristaCFMPMFunctionalTranslator = "arista-cfm-pm-ft"
 
+	// AristaGirocounterFunctionalTranslator is the name of the Arista Girocounter functional translator.
+	AristaGirocounterFunctionalTranslator = "arista-girocounter-ft"
+
 	// AristaInterfaceDescriptionFunctionalTranslator is the name of the Arista interface description functional translator.
 	AristaInterfaceDescriptionFunctionalTranslator = "arista-interface-description-ft"
 
