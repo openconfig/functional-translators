@@ -61,6 +61,9 @@ const (
 	// AristaMacsecCountersTranslator is the name of the Arista macsec counters functional translator.
 	AristaMacsecCountersTranslator = "arista-macsec-counters-ft"
 
+	// AristaMplsLfibFunctionalTranslator is the name of the Arista MPLS LFIB counters functional translator.
+	AristaMplsLfibFunctionalTranslator = "arista-mpls-lfib-ft"
+
 	// AristaPWStateFunctionalTranslator is the name of the Arista pseudowire state functional translator.
 	AristaPWStateFunctionalTranslator = "arista-pw-state-ft"
 

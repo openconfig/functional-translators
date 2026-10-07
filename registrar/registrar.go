@@ -22,6 +22,7 @@ import (
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
 	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
+	"github.com/openconfig/functional-translators/arista/aristamplslfib"
 	"github.com/openconfig/functional-translators/arista/aristapwstate"
 	"github.com/openconfig/functional-translators/arista/aristaqosaggregatecounters"
 	"github.com/openconfig/functional-translators/arista/aristaqospolicers"
@@ -59,6 +60,7 @@ var (
 		ftconsts.AristaInterfaceStatusFunctionalTranslator:                aristainterface.NewStatusFT(),
 		ftconsts.AristaMacsecCountersTranslator:                           aristamacseccounters.New(),
 		ftconsts.AristaMacsecStateFunctionalTranslator:                    aristamacsecstate.New(),
+		ftconsts.AristaMplsLfibFunctionalTranslator:                       aristamplslfib.New(),
 		ftconsts.AristaPWStateFunctionalTranslator:                        aristapwstate.New(),
 		ftconsts.AristaQoSAggregateCountersTranslator:                     aristaqosaggregatecounters.New(),
 		ftconsts.AristaQoSPolicersFunctionalTranslator:                    aristaqospolicers.New(),
