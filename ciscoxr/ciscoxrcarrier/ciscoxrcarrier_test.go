@@ -15,6 +15,7 @@
 package ciscoxrcarrier
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -394,4 +395,88 @@ func TestTranslate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConcurrentTranslate(t *testing.T) {
+	// Do not call t.Parallel(): resetting package-level schema state requires sequential execution.
+	schemaOnce = sync.Once{}
+	schema = nil
+	schemaErr = nil
+
+	want := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 123,
+				Prefix: &gnmipb.Path{
+					Origin: "openconfig",
+				},
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "Fh0/0/0/0"}},
+								{Name: "ethernet"},
+								{Name: "state"},
+								{Name: "counters"},
+								{Name: "phy-carrier-transitions"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var wg sync.WaitGroup
+	for range 16 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			input := &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 123,
+						Prefix: &gnmipb.Path{
+							Origin: "Cisco-IOS-XR-infra-statsd-oper",
+							Elem: []*gnmipb.PathElem{
+								{Name: "infra-statistics"},
+								{Name: "interfaces"},
+							},
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Elem: []*gnmipb.PathElem{
+										{Name: "interface", Key: map[string]string{"interface-name": "Fh0/0/0/0"}},
+										{Name: "generic-counters"},
+										{Name: "carrier-transitions"},
+									},
+								},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_UintVal{
+										UintVal: 10,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			got, err := New().Translate(input)
+			if err != nil {
+				t.Errorf("Translate(%v) got error %v, want nil", input, err)
+				return
+			}
+			if diff := cmp.Diff(want, got, protocmp.Transform(), protocmp.SortRepeatedFields(&gnmipb.Notification{}, "update")); diff != "" {
+				t.Errorf("Translate(%v) returned unexpected diff (-want +got):\n%s", input, diff)
+			}
+		}()
+	}
+	wg.Wait()
 }
