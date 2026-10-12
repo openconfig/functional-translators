@@ -177,6 +177,23 @@ func matchPath(path *gnmipb.Path, patterns map[string][]*gnmipb.Path) (string, s
 	return "", "", false
 }
 
+// clearOriginAndTarget returns fullPath with Origin and Target cleared because
+// the outgoing Notification sets them on its Prefix.
+//
+// When prefix != nil, ftutilities.Join already allocated a fresh Path struct,
+// so clearing Origin and Target in place adds zero heap allocations on the
+// collector path. When prefix == nil, ftutilities.Join returns the incoming
+// Path pointer directly; allocating a shallow Path header avoids mutating
+// shared input messages fanned out across concurrent subscribers.
+func clearOriginAndTarget(prefix, fullPath *gnmipb.Path) *gnmipb.Path {
+	if prefix == nil {
+		return &gnmipb.Path{Elem: fullPath.GetElem()}
+	}
+	fullPath.Origin = ""
+	fullPath.Target = ""
+	return fullPath
+}
+
 func updateHandler(n *gnmipb.Notification) []*gnmipb.Update {
 	if len(n.GetUpdate()) == 0 {
 		return nil
@@ -191,11 +208,8 @@ func updateHandler(n *gnmipb.Notification) []*gnmipb.Update {
 		}
 		// Passthrough for OC updates.
 		if origin == "openconfig" {
-			// Clear the Origin and Target from the fullPath as they will be set in the Notification Prefix.
-			fullPath.Origin = ""
-			fullPath.Target = ""
 			updates = append(updates, &gnmipb.Update{
-				Path: fullPath,
+				Path: clearOriginAndTarget(prefix, fullPath),
 				Val:  update.GetVal(),
 			})
 			continue
@@ -227,7 +241,7 @@ func deleteHandler(n *gnmipb.Notification) []*gnmipb.Path {
 		return nil
 	}
 	prefix := n.GetPrefix()
-	var deletes []*gnmipb.Path
+	deletes := make([]*gnmipb.Path, 0, len(n.GetDelete()))
 
 	for _, del := range n.GetDelete() {
 		fullPath := ftutilities.Join(prefix, del)
@@ -236,10 +250,7 @@ func deleteHandler(n *gnmipb.Notification) []*gnmipb.Path {
 			continue
 		}
 		if origin == "openconfig" {
-			// Clear the Origin and Target from the fullPath as they will be set in the Notification Prefix.
-			fullPath.Origin = ""
-			fullPath.Target = ""
-			deletes = append(deletes, fullPath)
+			deletes = append(deletes, clearOriginAndTarget(prefix, fullPath))
 			continue
 		}
 		vlanName := fullPath.GetElem()[vlanNameIndex].GetName()

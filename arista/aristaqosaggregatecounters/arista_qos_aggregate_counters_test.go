@@ -15,11 +15,15 @@
 package aristaqosaggregatecounters
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"github.com/openconfig/functional-translators/ftutilities"
+
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 // setupStateForTwoMembers pre-populates the cache with one member in a port-channel.
@@ -187,7 +191,11 @@ func TestTranslate(t *testing.T) {
 				t.Fatalf("failed to load input message: %v", err)
 			}
 
+			beforeInput := proto.CloneOf(inputSR)
 			gotSR, err := testImpl.translate(inputSR)
+			if diff := cmp.Diff(beforeInput, inputSR, protocmp.Transform()); diff != "" {
+				t.Errorf("translate(%s) mutated input message (-want +got):\n%s", tc.inputPath, diff)
+			}
 
 			if gotNil, gotErr := gotSR == nil, err != nil; gotNil || gotErr {
 				switch {
@@ -215,6 +223,185 @@ func TestTranslate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTranslatePrefixAndImmutability(t *testing.T) {
+	queueLeafElems := []*gnmipb.PathElem{
+		{Name: "qos"},
+		{Name: "interfaces"},
+		{Name: "interface", Key: map[string]string{"interface-id": "Ethernet1"}},
+		{Name: "output"},
+		{Name: "queues"},
+		{Name: "queue", Key: map[string]string{"name": "Ethernet1-0"}},
+		{Name: "state"},
+		{Name: "transmit-octets"},
+	}
+
+	tests := []struct {
+		name   string
+		input  *gnmipb.SubscribeResponse
+		wantSR *gnmipb.SubscribeResponse
+	}{
+		{
+			name: "nil_prefix_passthrough_update",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 55,
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Origin: "openconfig",
+									Target: "cx12.sql12",
+									Elem:   queueLeafElems,
+								},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantSR: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 55,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: queueLeafElems},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non_nil_prefix_passthrough_update",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 55,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "cx12.sql12",
+							Elem:   []*gnmipb.PathElem{{Name: "qos"}},
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Origin: "openconfig",
+									Target: "cx12.sql12",
+									Elem:   queueLeafElems[1:],
+								},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantSR: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 55,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "cx12.sql12",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: queueLeafElems},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ft := New()
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeInput := proto.CloneOf(tc.input)
+			gotSR, err := ft.Translate(tc.input)
+			if err != nil {
+				t.Fatalf("ft.Translate(%v) returned unexpected error: %v", tc.input, err)
+			}
+			if diff := cmp.Diff(tc.wantSR, gotSR, protocmp.Transform()); diff != "" {
+				t.Errorf("ft.Translate(%v) output diff (-want +got):\n%s", tc.input, diff)
+			}
+			if diff := cmp.Diff(beforeInput, tc.input, protocmp.Transform()); diff != "" {
+				t.Errorf("ft.Translate(%v) mutated input message (-want +got):\n%s", tc.input, diff)
+			}
+		})
+	}
+}
+
+func TestTranslateConcurrentMarshal(t *testing.T) {
+	sharedSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 66,
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "cx12.sql12",
+							Elem: []*gnmipb.PathElem{
+								{Name: "qos"},
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"interface-id": "Ethernet1"}},
+								{Name: "output"},
+								{Name: "queues"},
+								{Name: "queue", Key: map[string]string{"name": "Ethernet1-0"}},
+								{Name: "state"},
+								{Name: "transmit-octets"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ft := New()
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				if _, err := ft.Translate(sharedSR); err != nil {
+					t.Errorf("ft.Translate(%v) failed: %v", sharedSR, err)
+					return
+				}
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				if _, err := proto.Marshal(sharedSR); err != nil {
+					t.Errorf("proto.Marshal(%v) failed: %v", sharedSR, err)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func TestMemberInterfaceInfoCreateOrGetQueueNilMap(t *testing.T) {

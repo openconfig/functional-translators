@@ -502,7 +502,7 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 	impactedPortChannels := i.deleteHandler(notification)
 
 	// A slice to store all original QOS counter updates for singleton ports that should be passed through.
-	var passthroughUpdates []*gnmipb.Update
+	passthroughUpdates := make([]*gnmipb.Update, 0, len(notification.GetUpdate()))
 
 	// Handle both membership changes and counter updates.
 	for _, update := range notification.GetUpdate() {
@@ -534,11 +534,8 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 		}
 
 		// This ensures the singleton port QOS counters are preserved.
-		// Clear the Origin and Target from the fullPath as they will be set in the Notification Prefix.
-		fullPath.Origin = ""
-		fullPath.Target = ""
 		passthroughUpdates = append(passthroughUpdates, &gnmipb.Update{
-			Path: fullPath,
+			Path: clearOriginAndTarget(prefix, fullPath),
 			Val:  update.GetVal(),
 		})
 		val := update.GetVal().GetUintVal()
@@ -569,4 +566,21 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 	return &gnmipb.SubscribeResponse{
 		Response: &gnmipb.SubscribeResponse_Update{Update: outgoingNotification},
 	}, nil
+}
+
+// clearOriginAndTarget returns fullPath with Origin and Target cleared because
+// the outgoing Notification sets them on its Prefix.
+//
+// When prefix != nil, ftutilities.Join already allocated a fresh Path struct,
+// so clearing Origin and Target in place adds zero heap allocations on the
+// collector path. When prefix == nil, ftutilities.Join returns the incoming
+// Path pointer directly; allocating a shallow Path header avoids mutating
+// shared input messages fanned out across concurrent subscribers.
+func clearOriginAndTarget(prefix, fullPath *gnmipb.Path) *gnmipb.Path {
+	if prefix == nil {
+		return &gnmipb.Path{Elem: fullPath.GetElem()}
+	}
+	fullPath.Origin = ""
+	fullPath.Target = ""
+	return fullPath
 }
