@@ -133,6 +133,32 @@ func TestTranslate(t *testing.T) {
 							},
 						},
 					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "trap-id", Key: map[string]string{"trap-id": "3"}},
+								{Name: "trap-string"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{
+								StringVal: "L3_IP_UNICAST_RPF(D*)",
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "trap-id", Key: map[string]string{"trap-id": "3"}},
+								{Name: "packet-dropped"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 35,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -731,6 +757,28 @@ func TestTranslate(t *testing.T) {
 						Val: &gnmipb.TypedValue{
 							Value: &gnmipb.TypedValue_UintVal{
 								UintVal: 34,
+							},
+						},
+					},
+					{
+						Path: &gnmipb.Path{
+							Elem: []*gnmipb.PathElem{
+								{Name: "components"},
+								{Name: "component", Key: map[string]string{"name": "0/RP0/CPU0:0"}},
+								{Name: "integrated-circuit"},
+								{Name: "pipeline-counters"},
+								{Name: "drop"},
+								{Name: "vendor"},
+								{Name: "CiscoXR"},
+								{Name: "spitfire"},
+								{Name: "packet-processing"},
+								{Name: "state"},
+								{Name: "L3_IP_UNICAST_RPF(D*)"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_UintVal{
+								UintVal: 35,
 							},
 						},
 					},
