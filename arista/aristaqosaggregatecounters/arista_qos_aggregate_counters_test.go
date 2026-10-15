@@ -378,15 +378,23 @@ func TestTranslateConcurrentMarshal(t *testing.T) {
 		},
 	}
 
-	ft := New()
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()
+			// Each translator instance holds unsynchronized per-device state and is
+			// invoked sequentially per device session in production; isolate New()
+			// per goroutine while sharing sharedSR to verify input immutability.
+			ft := New()
 			for range 100 {
-				if _, err := ft.Translate(sharedSR); err != nil {
-					t.Errorf("ft.Translate(%v) failed: %v", sharedSR, err)
+				gotSR, err := ft.Translate(sharedSR)
+				if err != nil || gotSR == nil {
+					t.Errorf("ft.Translate(%v) = (%v, %v), want non-nil response and nil error", sharedSR, gotSR, err)
+					return
+				}
+				if _, err := proto.Marshal(gotSR); err != nil {
+					t.Errorf("proto.Marshal(%v) failed: %v", gotSR, err)
 					return
 				}
 			}
