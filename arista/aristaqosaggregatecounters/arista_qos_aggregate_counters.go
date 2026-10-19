@@ -86,6 +86,17 @@ var (
 			},
 		},
 	}
+
+	pathElemQoS            = &gnmipb.PathElem{Name: "qos"}
+	pathElemInterfaces     = &gnmipb.PathElem{Name: "interfaces"}
+	pathElemOutput         = &gnmipb.PathElem{Name: "output"}
+	pathElemQueues         = &gnmipb.PathElem{Name: "queues"}
+	pathElemState          = &gnmipb.PathElem{Name: "state"}
+	pathElemTransmitOctets = &gnmipb.PathElem{Name: leafTransmitOctets}
+	pathElemTransmitPkts   = &gnmipb.PathElem{Name: leafTransmitPkts}
+	pathElemDroppedOctets  = &gnmipb.PathElem{Name: leafDroppedOctets}
+	pathElemDroppedPkts    = &gnmipb.PathElem{Name: leafDroppedPkts}
+	qosInterfacesPrefix    = []*gnmipb.PathElem{pathElemQoS, pathElemInterfaces}
 )
 
 const (
@@ -322,27 +333,24 @@ func parsePath(path *gnmipb.Path) (interfaceName, simpleQueueName, leafName stri
 	}
 }
 
-// newCounterUpdate creates a gNMI update for a given port-channel, queueID, and counter leaf.
-func newCounterUpdate(interfaceID, queueName, leafName string, value uint64) *gnmipb.Update {
+// newCounterUpdate creates a gNMI update relative to the notification prefix
+// (/qos/interfaces) for a given interface PathElem, queue PathElem, and counter
+// leaf PathElem.
+//
+// Only /qos/interfaces is factored into Notification.Prefix because a single
+// outgoing Notification combines updates across multiple interfaces (both
+// member-port passthrough updates and Port-Channel aggregate updates) and
+// multiple queues.
+func newCounterUpdate(interfaceElem, queueElem, leafElem *gnmipb.PathElem, value uint64) *gnmipb.Update {
 	return &gnmipb.Update{
 		Path: &gnmipb.Path{
 			Elem: []*gnmipb.PathElem{
-				{Name: "qos"}, {Name: "interfaces"},
-				{
-					Name: "interface",
-					Key: map[string]string{
-						"interface-id": interfaceID,
-					},
-				},
-				{Name: "output"}, {Name: "queues"},
-				{
-					Name: "queue",
-					Key: map[string]string{
-						"name": queueName,
-					},
-				},
-				{Name: "state"},
-				{Name: leafName},
+				interfaceElem,
+				pathElemOutput,
+				pathElemQueues,
+				queueElem,
+				pathElemState,
+				leafElem,
 			},
 		},
 		Val: &gnmipb.TypedValue{Value: &gnmipb.TypedValue_UintVal{UintVal: value}},
@@ -358,18 +366,32 @@ func (i *impl) aggregateAndBuildUpdates(pcName string) []*gnmipb.Update {
 
 	// aggregatedCounters maps a simple queue name to its summed counters.
 	aggregatedCounters := pcInfo.aggregateCounters()
+	if len(aggregatedCounters) == 0 {
+		return nil
+	}
+	interfaceElem := &gnmipb.PathElem{
+		Name: "interface",
+		Key: map[string]string{
+			"interface-id": pcName,
+		},
+	}
 	outgoingUpdates := make([]*gnmipb.Update, 0, len(aggregatedCounters)*4)
 	// Build gNMI Updates from the aggregated results.
 	for simpleQueueName, counters := range aggregatedCounters {
 		// Create the new composite queue ID for the aggregated path.
 		// e.g., if pcName is "Port-Channel10" and simpleQueueName is "0", this becomes "Port-Channel10-0".
-		newCompositeQueueID := pcName + "-" + simpleQueueName
+		queueElem := &gnmipb.PathElem{
+			Name: "queue",
+			Key: map[string]string{
+				"name": pcName + "-" + simpleQueueName,
+			},
+		}
 
 		outgoingUpdates = append(outgoingUpdates,
-			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitOctets, counters.txBytes),
-			newCounterUpdate(pcName, newCompositeQueueID, leafTransmitPkts, counters.txPackets),
-			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedOctets, counters.droppedBytes),
-			newCounterUpdate(pcName, newCompositeQueueID, leafDroppedPkts, counters.droppedPackets),
+			newCounterUpdate(interfaceElem, queueElem, pathElemTransmitOctets, counters.txBytes),
+			newCounterUpdate(interfaceElem, queueElem, pathElemTransmitPkts, counters.txPackets),
+			newCounterUpdate(interfaceElem, queueElem, pathElemDroppedOctets, counters.droppedBytes),
+			newCounterUpdate(interfaceElem, queueElem, pathElemDroppedPkts, counters.droppedPackets),
 		)
 	}
 	return outgoingUpdates
@@ -516,13 +538,17 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 		}
 
 		if !matched {
-			log.V(2).Infof("path not matched by patterns: %v", fullPath)
+			if log.V(2) {
+				log.Infof("path not matched by patterns: %v", fullPath)
+			}
 			continue
 		}
 
 		interfaceName, queueIDStr, leafName, err := parsePath(fullPath)
 		if err != nil {
-			log.V(2).Infof("matched path but failed to parse: %v, err: %v", fullPath, err)
+			if log.V(2) {
+				log.Infof("matched path but failed to parse: %v, err: %v", fullPath, err)
+			}
 			continue
 		}
 
@@ -535,7 +561,7 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 
 		// This ensures the singleton port QOS counters are preserved.
 		passthroughUpdates = append(passthroughUpdates, &gnmipb.Update{
-			Path: clearOriginAndTarget(prefix, fullPath),
+			Path: relativeQoSPath(prefix, fullPath),
 			Val:  update.GetVal(),
 		})
 		val := update.GetVal().GetUintVal()
@@ -545,7 +571,9 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 	// Aggregate and generate the aggregate updates.
 	var aggregateUpdates []*gnmipb.Update
 	for pcName := range impactedPortChannels {
-		log.V(2).Infof("recalculating aggregates for impacted Port-Channel: %s", pcName)
+		if log.V(2) {
+			log.Infof("recalculating aggregates for impacted Port-Channel: %s", pcName)
+		}
 		newUpdates := i.aggregateAndBuildUpdates(pcName)
 		aggregateUpdates = append(aggregateUpdates, newUpdates...)
 	}
@@ -557,10 +585,16 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 		return nil, nil
 	}
 
+	// Factor the longest common OpenConfig prefix (/qos/interfaces) shared across
+	// all member passthrough and Port-Channel aggregate updates into Notification.Prefix.
 	outgoingNotification := &gnmipb.Notification{
 		Timestamp: timestamp,
-		Prefix:    &gnmipb.Path{Origin: "openconfig", Target: target},
-		Update:    finalUpdates,
+		Prefix: &gnmipb.Path{
+			Origin: "openconfig",
+			Target: target,
+			Elem:   qosInterfacesPrefix,
+		},
+		Update: finalUpdates,
 	}
 
 	return &gnmipb.SubscribeResponse{
@@ -568,19 +602,21 @@ func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeRespons
 	}, nil
 }
 
-// clearOriginAndTarget returns fullPath with Origin and Target cleared because
-// the outgoing Notification sets them on its Prefix.
+// relativeQoSPath returns fullPath relative to the outgoing Notification
+// Prefix (/openconfig/qos/interfaces), stripping Origin, Target, and the
+// leading [qos, interfaces] elements.
 //
 // When prefix != nil, ftutilities.Join already allocated a fresh Path struct,
-// so clearing Origin and Target in place adds zero heap allocations on the
-// collector path. When prefix == nil, ftutilities.Join returns the incoming
-// Path pointer directly; allocating a shallow Path header avoids mutating
-// shared input messages fanned out across concurrent subscribers.
-func clearOriginAndTarget(prefix, fullPath *gnmipb.Path) *gnmipb.Path {
+// so updating it in place adds zero heap allocations on the collector path.
+// When prefix == nil, ftutilities.Join returns the incoming Path pointer
+// directly; allocating a shallow Path header avoids mutating shared input
+// messages fanned out across concurrent subscribers.
+func relativeQoSPath(prefix, fullPath *gnmipb.Path) *gnmipb.Path {
 	if prefix == nil {
-		return &gnmipb.Path{Elem: fullPath.GetElem()}
+		return &gnmipb.Path{Elem: fullPath.GetElem()[2:]}
 	}
 	fullPath.Origin = ""
 	fullPath.Target = ""
+	fullPath.Elem = fullPath.Elem[2:]
 	return fullPath
 }

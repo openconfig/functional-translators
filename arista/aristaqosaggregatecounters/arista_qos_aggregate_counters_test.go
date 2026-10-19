@@ -269,10 +269,11 @@ func TestTranslatePrefixAndImmutability(t *testing.T) {
 						Timestamp: 55,
 						Prefix: &gnmipb.Path{
 							Origin: "openconfig",
+							Elem:   queueLeafElems[:2],
 						},
 						Update: []*gnmipb.Update{
 							{
-								Path: &gnmipb.Path{Elem: queueLeafElems},
+								Path: &gnmipb.Path{Elem: queueLeafElems[2:]},
 								Val: &gnmipb.TypedValue{
 									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
 								},
@@ -315,10 +316,11 @@ func TestTranslatePrefixAndImmutability(t *testing.T) {
 						Prefix: &gnmipb.Path{
 							Origin: "openconfig",
 							Target: "cx12.sql12",
+							Elem:   queueLeafElems[:2],
 						},
 						Update: []*gnmipb.Update{
 							{
-								Path: &gnmipb.Path{Elem: queueLeafElems},
+								Path: &gnmipb.Path{Elem: queueLeafElems[2:]},
 								Val: &gnmipb.TypedValue{
 									Value: &gnmipb.TypedValue_UintVal{UintVal: 4200},
 								},
@@ -354,6 +356,22 @@ func TestTranslateConcurrentMarshal(t *testing.T) {
 			Update: &gnmipb.Notification{
 				Timestamp: 66,
 				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "cx12.sql12",
+							Elem: []*gnmipb.PathElem{
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "Ethernet1"}},
+								{Name: "ethernet"},
+								{Name: "state"},
+								{Name: "aggregate-id"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{StringVal: "Port-Channel10"},
+						},
+					},
 					{
 						Path: &gnmipb.Path{
 							Origin: "openconfig",
@@ -435,5 +453,64 @@ func TestPortChannelInfoNilMembers(t *testing.T) {
 	pc2.addMemberInfo(m2)
 	if pc2.members["Ethernet2"] != m2 {
 		t.Errorf("addMemberInfo() member not added to nil map")
+	}
+}
+
+func TestAggregateAndBuildUpdates(t *testing.T) {
+	emptyPCState := newQoSState()
+	emptyPC := emptyPCState.createOrRetrievePortChannel("Port-Channel10")
+	emptyPC.createOrRetrieveMember("Ethernet19/1")
+
+	populatedPCState := newQoSState()
+	setupStateForTwoMembers(populatedPCState)
+
+	wantInterfaceElem := &gnmipb.PathElem{
+		Name: "interface",
+		Key:  map[string]string{"interface-id": "Port-Channel10"},
+	}
+	wantQueueElem := &gnmipb.PathElem{
+		Name: "queue",
+		Key:  map[string]string{"name": "Port-Channel10-0"},
+	}
+
+	tests := []struct {
+		name   string
+		state  *qosState
+		pcName string
+		want   []*gnmipb.Update
+	}{
+		{
+			name:   "unknown_port_channel",
+			state:  newQoSState(),
+			pcName: "Port-Channel99",
+			want:   nil,
+		},
+		{
+			name:   "port_channel_without_queue_counters",
+			state:  emptyPCState,
+			pcName: "Port-Channel10",
+			want:   nil,
+		},
+		{
+			name:   "port_channel_with_member_counters",
+			state:  populatedPCState,
+			pcName: "Port-Channel10",
+			want: []*gnmipb.Update{
+				newCounterUpdate(wantInterfaceElem, wantQueueElem, pathElemTransmitOctets, 1000),
+				newCounterUpdate(wantInterfaceElem, wantQueueElem, pathElemTransmitPkts, 100),
+				newCounterUpdate(wantInterfaceElem, wantQueueElem, pathElemDroppedOctets, 20),
+				newCounterUpdate(wantInterfaceElem, wantQueueElem, pathElemDroppedPkts, 2),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			testImpl := &impl{state: tc.state}
+			got := testImpl.aggregateAndBuildUpdates(tc.pcName)
+			if diff := cmp.Diff(tc.want, got, protocmp.Transform()); diff != "" {
+				t.Errorf("aggregateAndBuildUpdates(%q) returned unexpected diff (-want +got):\n%s", tc.pcName, diff)
+			}
+		})
 	}
 }

@@ -3,11 +3,11 @@ update: {
   prefix: {
     origin: "openconfig"
     target: "pr10.sql12"
+    elem: { name: "qos" }
+    elem: { name: "interfaces" }
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -19,8 +19,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -32,8 +30,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -45,8 +41,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Ethernet36/3/1" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -58,8 +52,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -71,8 +63,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -84,8 +74,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -97,8 +85,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel20" } }
       elem: { name: "output" }
       elem: { name: "queues" }

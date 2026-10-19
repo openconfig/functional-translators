@@ -318,12 +318,21 @@ func GNMIPathToSchemaStrings(path *gnmipb.Path, setOCIfOriginMissing bool) []str
 	if pathNilOrEmpty(path) {
 		return nil
 	}
-	var p []string
-	if path.GetOrigin() != "" {
-		p = append(p, path.GetOrigin())
-	} else if setOCIfOriginMissing {
+	origin := path.GetOrigin()
+	if origin == "" && setOCIfOriginMissing {
 		// Happens on every message for Arista/Nokia.
-		p = append(p, "openconfig")
+		origin = "openconfig"
+	}
+	n := len(path.Elem)
+	if origin != "" {
+		n++
+	}
+	if n == 0 {
+		return nil
+	}
+	p := make([]string, 0, n)
+	if origin != "" {
+		p = append(p, origin)
 	}
 	for _, e := range path.Elem {
 		p = append(p, e.Name)
