@@ -206,7 +206,7 @@ func New() *translator.FunctionalTranslator {
 					Vendor: ftconsts.VendorArista,
 					SoftwareVersionRange: &translator.SWRange{
 						InclusiveMin: "4.33.0F",
-						ExclusiveMax: "4.37",
+						ExclusiveMax: "4.38",
 					},
 				},
 			},

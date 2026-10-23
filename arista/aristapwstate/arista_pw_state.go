@@ -80,7 +80,7 @@ func New() *translator.FunctionalTranslator {
 						for the required OC path starting from the below version.
 						b/442520271
 						*/
-						ExclusiveMax: "4.37",
+						ExclusiveMax: "4.38",
 					},
 				},
 			},

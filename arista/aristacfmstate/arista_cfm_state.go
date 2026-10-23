@@ -77,7 +77,9 @@ func New() *translator.FunctionalTranslator {
 					Vendor: ftconsts.VendorArista,
 					SoftwareVersionRange: &translator.SWRange{
 						InclusiveMin: "4.33.0F",
-						ExclusiveMax: "4.37",
+						// TODO(team): Set ExclusiveMax to the first EOS release that natively
+						// supports the OpenConfig CFM present-rdi state path.
+						ExclusiveMax: "4.38",
 					},
 				},
 			},
