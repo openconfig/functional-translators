@@ -17,6 +17,7 @@ package ciscoxrcarrier
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
@@ -37,8 +38,9 @@ var (
 	paths = ftutilities.MustStringMapPaths(translateMap)
 	// schema is a package-level variable to optimize CiscoXR YANG schema
 	// initialization.
-	schema    *ytypes.Schema
-	schemaErr error
+	schemaOnce sync.Once
+	schema     *ytypes.Schema
+	schemaErr  error
 )
 
 // New creates a functional translator.
@@ -58,7 +60,9 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco carrier functional translator: %v", err)
 	}
-	schema, schemaErr = xr2431.Schema()
+	schemaOnce.Do(func() {
+		schema, schemaErr = xr2431.Schema()
+	})
 	if schemaErr != nil {
 		log.Fatalf("Failed to get schema: %v", schemaErr)
 	}
@@ -80,10 +84,23 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	if err := ytypes.UnmarshalNotifications(&schemaCopy, []*gnmipb.Notification{n}, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
-	carrierIntfMap := d.GetInfraStatistics().GetInterfaces().GetOrCreateInterfaceMap()
-	updates := make([]*gnmipb.Update, 0)
+	stats := d.GetInfraStatistics()
+	if stats == nil {
+		return nil, nil
+	}
+	intfs := stats.GetInterfaces()
+	if intfs == nil {
+		return nil, nil
+	}
+	carrierIntfMap := intfs.GetOrCreateInterfaceMap()
+
+	updates := make([]*gnmipb.Update, 0, len(carrierIntfMap))
 	for name, intf := range carrierIntfMap {
-		phyCarrierCounter := *intf.GetGenericCounters().CarrierTransitions
+		gc := intf.GetGenericCounters()
+		if gc == nil || gc.CarrierTransitions == nil {
+			continue
+		}
+		phyCarrierCounter := *gc.CarrierTransitions
 		update := &gnmipb.Update{
 			Path: &gnmipb.Path{
 				Elem: []*gnmipb.PathElem{

@@ -589,6 +589,33 @@ func TestTranslate(t *testing.T) {
 			},
 			want: nil,
 		},
+		{
+			name: "ShortLACPDeletePath",
+			in: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 1,
+						Prefix: &gnmipb.Path{
+							Target: target,
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+								},
+							},
+							{
+								Elem: []*gnmipb.PathElem{
+									{Name: "lacp"},
+									{Name: "interfaces"},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
 	}
 
 	ft := NewMacFT()

@@ -40,6 +40,9 @@ const (
 	// AristaCFMPMFunctionalTranslator is the name of the Arista CFM PM functional translator.
 	AristaCFMPMFunctionalTranslator = "arista-cfm-pm-ft"
 
+	// AristaGirocounterFunctionalTranslator is the name of the Arista Girocounter functional translator.
+	AristaGirocounterFunctionalTranslator = "arista-girocounter-ft"
+
 	// AristaInterfaceDescriptionFunctionalTranslator is the name of the Arista interface description functional translator.
 	AristaInterfaceDescriptionFunctionalTranslator = "arista-interface-description-ft"
 
@@ -57,6 +60,9 @@ const (
 
 	// AristaMacsecCountersTranslator is the name of the Arista macsec counters functional translator.
 	AristaMacsecCountersTranslator = "arista-macsec-counters-ft"
+
+	// AristaMplsLfibFunctionalTranslator is the name of the Arista MPLS LFIB counters functional translator.
+	AristaMplsLfibFunctionalTranslator = "arista-mpls-lfib-ft"
 
 	// AristaPWStateFunctionalTranslator is the name of the Arista pseudowire state functional translator.
 	AristaPWStateFunctionalTranslator = "arista-pw-state-ft"
@@ -115,4 +121,7 @@ const (
 
 	// CiscoXRVendorTranslator is the name of a translator that provides Vendor information.
 	CiscoXRVendorDropsTranslator = "ciscoxr-vendordrops-ft"
+
+	// JuniperMacsecStateFunctionalTranslator is the name of the Juniper MACsec state functional translator.
+	JuniperMacsecStateFunctionalTranslator = "juniper-macsec-state-ft"
 )

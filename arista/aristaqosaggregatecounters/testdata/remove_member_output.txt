@@ -3,11 +3,11 @@ update: {
   prefix: {
     origin: "openconfig"
     target: "cx12.sql12"
+    elem: { name: "qos" }
+    elem: { name: "interfaces" }
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -21,8 +21,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -36,8 +34,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
       elem: { name: "output" }
       elem: { name: "queues" }
@@ -51,8 +47,6 @@ update: {
   }
   update: {
     path: {
-      elem: { name: "qos" }
-      elem: { name: "interfaces" }
       elem: { name: "interface" key: { key: "interface-id" value: "Port-Channel10" } }
       elem: { name: "output" }
       elem: { name: "queues" }

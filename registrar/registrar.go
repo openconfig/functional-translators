@@ -18,9 +18,11 @@ package registrar
 import (
 	"github.com/openconfig/functional-translators/arista/aristacfmpm"
 	"github.com/openconfig/functional-translators/arista/aristacfmstate"
+	"github.com/openconfig/functional-translators/arista/aristagirocounter"
 	"github.com/openconfig/functional-translators/arista/aristainterface"
 	"github.com/openconfig/functional-translators/arista/aristamacseccounters"
 	"github.com/openconfig/functional-translators/arista/aristamacsecstate"
+	"github.com/openconfig/functional-translators/arista/aristamplslfib"
 	"github.com/openconfig/functional-translators/arista/aristapwstate"
 	"github.com/openconfig/functional-translators/arista/aristaqosaggregatecounters"
 	"github.com/openconfig/functional-translators/arista/aristaqospolicers"
@@ -40,6 +42,7 @@ import (
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrtransceiver"
 	"github.com/openconfig/functional-translators/ciscoxr/ciscoxrvendordrops"
 	"github.com/openconfig/functional-translators/ftconsts"
+	"github.com/openconfig/functional-translators/juniper/junipermacsecstate"
 	"github.com/openconfig/functional-translators/translator"
 )
 
@@ -51,11 +54,13 @@ var (
 		// go/keep-sorted start
 		ftconsts.AristaCFMPMFunctionalTranslator:                          aristacfmpm.New(),
 		ftconsts.AristaCfmStateFunctionalTranslator:                       aristacfmstate.New(),
+		ftconsts.AristaGirocounterFunctionalTranslator:                    aristagirocounter.New(),
 		ftconsts.AristaInterfaceDescriptionFunctionalTranslator:           aristainterface.NewDescFT(),
 		ftconsts.AristaInterfaceMacFunctionalTranslator:                   aristainterface.NewMacFT(),
 		ftconsts.AristaInterfaceStatusFunctionalTranslator:                aristainterface.NewStatusFT(),
 		ftconsts.AristaMacsecCountersTranslator:                           aristamacseccounters.New(),
 		ftconsts.AristaMacsecStateFunctionalTranslator:                    aristamacsecstate.New(),
+		ftconsts.AristaMplsLfibFunctionalTranslator:                       aristamplslfib.New(),
 		ftconsts.AristaPWStateFunctionalTranslator:                        aristapwstate.New(),
 		ftconsts.AristaQoSAggregateCountersTranslator:                     aristaqosaggregatecounters.New(),
 		ftconsts.AristaQoSPolicersFunctionalTranslator:                    aristaqospolicers.New(),
@@ -74,6 +79,7 @@ var (
 		ftconsts.CiscoXRSubinterfaceCounterTranslator:                     ciscoxrsubcounters.New(),
 		ftconsts.CiscoXRTransceiverTranslator:                             ciscoxrtransceiver.New(),
 		ftconsts.CiscoXRVendorDropsTranslator:                             ciscoxrvendordrops.New(),
+		ftconsts.JuniperMacsecStateFunctionalTranslator:                   junipermacsecstate.New(),
 		// go/keep-sorted end
 	}
 )

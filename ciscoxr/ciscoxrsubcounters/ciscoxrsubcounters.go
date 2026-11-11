@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ytypes"
@@ -64,8 +65,9 @@ var (
 	paths = ftutilities.MustStringMapPaths(translateMap)
 	// schema is a package-level variable to optimize CiscoXR YANG schema
 	// initialization.
-	schema    *ytypes.Schema
-	schemaErr error
+	schemaOnce sync.Once
+	schema     *ytypes.Schema
+	schemaErr  error
 )
 
 // New creates a functional translator.
@@ -85,7 +87,9 @@ func New() *translator.FunctionalTranslator {
 	if err != nil {
 		log.Fatalf("Failed to create Cisco subinterface functional translator: %v", err)
 	}
-	schema, schemaErr = xr.Schema()
+	schemaOnce.Do(func() {
+		schema, schemaErr = xr.Schema()
+	})
 	if schemaErr != nil {
 		log.Fatalf("Failed to get schema: %v", schemaErr)
 	}

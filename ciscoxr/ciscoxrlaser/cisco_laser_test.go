@@ -30,36 +30,47 @@ func TestTranslate(t *testing.T) {
 		inputPath      string
 		wantOutputPath string
 		expectError    bool
+		wantNil        bool
 	}{
 		{
-			name:           "success",
+			name:           "Success",
 			inputPath:      "testdata/success_input.txt",
 			wantOutputPath: "testdata/success_output.txt",
 		},
 		{
-			name:           "Temp thresholds not present",
+			name:           "TempThresholdsNotPresent",
 			inputPath:      "testdata/no_temp_input.txt",
 			wantOutputPath: "testdata/no_temp_output.txt",
 		},
 		{
-			name:           "RX thresholds not present",
+			name:           "RXThresholdsNotPresent",
 			inputPath:      "testdata/no_rx_input.txt",
 			wantOutputPath: "testdata/no_rx_output.txt",
 		},
 		{
-			name:           "TX thresholds not present",
+			name:           "TXThresholdsNotPresent",
 			inputPath:      "testdata/no_tx_input.txt",
 			wantOutputPath: "testdata/no_tx_output.txt",
 		},
 		{
-			name:        "path with no info",
+			name:        "PathWithNoInfo",
 			inputPath:   "testdata/no_info_input.txt",
 			expectError: true,
 		},
 		{
-			name:        "path with no port",
+			name:        "PathWithNoPort",
 			inputPath:   "testdata/no_port_input.txt",
 			expectError: true,
+		},
+		{
+			name:      "NilOpticsOper",
+			inputPath: "testdata/nil_optics_oper_input.txt",
+			wantNil:   true,
+		},
+		{
+			name:      "NilOpticsPorts",
+			inputPath: "testdata/nil_optics_ports_input.txt",
+			wantNil:   true,
 		},
 	}
 
@@ -67,20 +78,26 @@ func TestTranslate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			inputSR, err := ftutilities.LoadSubscribeResponse(test.inputPath)
 			if err != nil {
-				t.Fatalf("Failed to load input message: %v", err)
+				t.Fatalf("ftutilities.LoadSubscribeResponse(%q) failed: %v", test.inputPath, err)
 			}
 			gotSR, err := New().Translate(inputSR)
 			errorMatchesExpectation := (err != nil) == test.expectError
 			if !errorMatchesExpectation {
-				t.Fatalf("Unexpected error result returned from translate() = %v, want error %t", err, test.expectError)
+				t.Fatalf("Translate(%q) error got %v, want error %t", test.inputPath, err, test.expectError)
 			}
 			if !test.expectError {
-				wantSR, err := ftutilities.LoadSubscribeResponse(test.wantOutputPath)
-				if err != nil {
-					t.Fatalf("Failed to load want message: %v", err)
-				}
-				if diff := cmp.Diff(wantSR, gotSR, protocmp.Transform(), protocmp.SortRepeatedFields(&gnmipb.Notification{}, "update")); diff != "" {
-					t.Fatalf("Unexpected diff from translate() = %v, want %v, diff(-want +got):\n%s", gotSR, wantSR, diff)
+				if test.wantNil {
+					if gotSR != nil {
+						t.Fatalf("Translate(%q) got %v, want nil", test.inputPath, gotSR)
+					}
+				} else {
+					wantSR, err := ftutilities.LoadSubscribeResponse(test.wantOutputPath)
+					if err != nil {
+						t.Fatalf("ftutilities.LoadSubscribeResponse(%q) failed: %v", test.wantOutputPath, err)
+					}
+					if diff := cmp.Diff(wantSR, gotSR, protocmp.Transform(), protocmp.SortRepeatedFields(&gnmipb.Notification{}, "update")); diff != "" {
+						t.Fatalf("Translate(%q) got %v, want %v, diff(-want +got):\n%s", test.inputPath, gotSR, wantSR, diff)
+					}
 				}
 			}
 		})

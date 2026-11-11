@@ -15,11 +15,15 @@
 package aristainterface
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"github.com/openconfig/functional-translators/ftutilities"
+
+	gnmipb "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 func TestStatusTranslate(t *testing.T) {
@@ -68,7 +72,11 @@ func TestStatusTranslate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to load input message: %v", err)
 			}
+			beforeInput := proto.CloneOf(inputSR)
 			gotSR, gotErr := ft.Translate(inputSR)
+			if diff := cmp.Diff(beforeInput, inputSR, protocmp.Transform()); diff != "" {
+				t.Errorf("ft.Translate(%s) mutated input message (-want +got):\n%s", test.inputPath, diff)
+			}
 			errorMatchesExpectation := (gotErr != nil) == test.expectError
 			if !errorMatchesExpectation {
 				t.Fatalf("Unexpected error result returned from translate() = %v, want error %t", gotErr, test.expectError)
@@ -91,3 +99,207 @@ func TestStatusTranslate(t *testing.T) {
 		})
 	}
 }
+
+func TestStatusTranslatePrefixAndImmutability(t *testing.T) {
+	ocLeafElems := []*gnmipb.PathElem{
+		{Name: "interfaces"},
+		{Name: "interface", Key: map[string]string{"name": "Vlan100"}},
+		{Name: "state"},
+		{Name: "admin-status"},
+	}
+
+	tests := []struct {
+		name   string
+		input  *gnmipb.SubscribeResponse
+		wantSR *gnmipb.SubscribeResponse
+	}{
+		{
+			name: "nil_prefix_update_and_delete",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 42,
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Origin: "openconfig",
+									Target: "dut1",
+									Elem:   ocLeafElems,
+								},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_StringVal{StringVal: "UP"},
+								},
+							},
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Origin: "openconfig",
+								Target: "dut1",
+								Elem:   ocLeafElems,
+							},
+						},
+					},
+				},
+			},
+			wantSR: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 42,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: ocLeafElems},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_StringVal{StringVal: "UP"},
+								},
+							},
+						},
+						Delete: []*gnmipb.Path{
+							{Elem: ocLeafElems},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non_nil_prefix_update_and_delete",
+			input: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 42,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "dut1",
+							Elem:   []*gnmipb.PathElem{{Name: "interfaces"}},
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{
+									Origin: "openconfig",
+									Target: "dut1",
+									Elem:   ocLeafElems[1:],
+								},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_StringVal{StringVal: "UP"},
+								},
+							},
+						},
+						Delete: []*gnmipb.Path{
+							{
+								Origin: "openconfig",
+								Target: "dut1",
+								Elem:   ocLeafElems[1:],
+							},
+						},
+					},
+				},
+			},
+			wantSR: &gnmipb.SubscribeResponse{
+				Response: &gnmipb.SubscribeResponse_Update{
+					Update: &gnmipb.Notification{
+						Timestamp: 42,
+						Prefix: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "dut1",
+						},
+						Update: []*gnmipb.Update{
+							{
+								Path: &gnmipb.Path{Elem: ocLeafElems},
+								Val: &gnmipb.TypedValue{
+									Value: &gnmipb.TypedValue_StringVal{StringVal: "UP"},
+								},
+							},
+						},
+						Delete: []*gnmipb.Path{
+							{Elem: ocLeafElems},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ft := NewStatusFT()
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeInput := proto.CloneOf(tc.input)
+			gotSR, err := ft.Translate(tc.input)
+			if err != nil {
+				t.Fatalf("ft.Translate(%v) returned unexpected error: %v", tc.input, err)
+			}
+			if diff := cmp.Diff(tc.wantSR, gotSR, protocmp.Transform()); diff != "" {
+				t.Errorf("ft.Translate(%v) output diff (-want +got):\n%s", tc.input, diff)
+			}
+			if diff := cmp.Diff(beforeInput, tc.input, protocmp.Transform()); diff != "" {
+				t.Errorf("ft.Translate(%v) mutated input message (-want +got):\n%s", tc.input, diff)
+			}
+		})
+	}
+}
+
+func TestStatusTranslateConcurrentMarshal(t *testing.T) {
+	sharedSR := &gnmipb.SubscribeResponse{
+		Response: &gnmipb.SubscribeResponse_Update{
+			Update: &gnmipb.Notification{
+				Timestamp: 99,
+				Update: []*gnmipb.Update{
+					{
+						Path: &gnmipb.Path{
+							Origin: "openconfig",
+							Target: "dut1",
+							Elem: []*gnmipb.PathElem{
+								{Name: "interfaces"},
+								{Name: "interface", Key: map[string]string{"name": "Vlan100"}},
+								{Name: "state"},
+								{Name: "admin-status"},
+							},
+						},
+						Val: &gnmipb.TypedValue{
+							Value: &gnmipb.TypedValue_StringVal{StringVal: "UP"},
+						},
+					},
+				},
+				Delete: []*gnmipb.Path{
+					{
+						Origin: "openconfig",
+						Target: "dut1",
+						Elem: []*gnmipb.PathElem{
+							{Name: "interfaces"},
+							{Name: "interface", Key: map[string]string{"name": "Vlan100"}},
+							{Name: "state"},
+							{Name: "oper-status"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ft := NewStatusFT()
+	var wg sync.WaitGroup
+	for range 8 {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				if _, err := ft.Translate(sharedSR); err != nil {
+					t.Errorf("ft.Translate(%v) failed: %v", sharedSR, err)
+					return
+				}
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				if _, err := proto.Marshal(sharedSR); err != nil {
+					t.Errorf("proto.Marshal(%v) failed: %v", sharedSR, err)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+}
+

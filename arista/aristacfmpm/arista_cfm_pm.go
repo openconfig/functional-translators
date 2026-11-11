@@ -168,12 +168,34 @@ var (
 	}
 )
 
+// cfmCacheKey is a comparable struct used as a map key to avoid allocations.
+type cfmCacheKey struct {
+	domainID string
+	assocID  string
+}
+
+// cfmState holds CFM information for a target.
+type cfmState struct {
+	profileNameCache map[cfmCacheKey]string
+	localMEPCache    map[cfmCacheKey]string
+}
+
+func newCFMState() *cfmState {
+	return &cfmState{
+		profileNameCache: make(map[cfmCacheKey]string),
+		localMEPCache:    make(map[cfmCacheKey]string),
+	}
+}
+
 type impl struct {
+	state *cfmState
 }
 
 // New creates a functional translator.
 func New() *translator.FunctionalTranslator {
-	i := &impl{}
+	i := &impl{
+		state: newCFMState(),
+	}
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			ID:               ftconsts.AristaCFMPMFunctionalTranslator,
@@ -184,7 +206,7 @@ func New() *translator.FunctionalTranslator {
 					Vendor: ftconsts.VendorArista,
 					SoftwareVersionRange: &translator.SWRange{
 						InclusiveMin: "4.33.0F",
-						ExclusiveMax: "4.37",
+						ExclusiveMax: "4.38",
 					},
 				},
 			},
@@ -322,9 +344,7 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 		return nil, nil
 	}
 	prefix := notification.GetPrefix()
-	target := prefix.GetTarget()
 	var updates []*gnmipb.Update
-	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
 	for _, update := range notification.GetUpdate() {
 		fullPath := ftutilities.Join(prefix, update.GetPath())
 		for _, path := range updatePathPatterns {
@@ -343,12 +363,12 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 					return nil, fmt.Errorf("error parsing smash key %q: %v", key, err)
 				}
 
-				cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
-				profileName, ok := targetCFM.ProfileName(cacheKey)
+				cacheKey := cfmCacheKey{domainID: domainID, assocID: assocID}
+				profileName, ok := i.state.profileNameCache[cacheKey]
 				if !ok {
 					continue
 				}
-				localMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+				localMEPID, ok := i.state.localMEPCache[cacheKey]
 				if !ok {
 					localMEPID = parsedLocalMEPID
 				}
@@ -394,7 +414,7 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 					continue
 				}
 				assocID := strings.TrimPrefix(assocKey, assocPrefix)
-				cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
+				cacheKey := cfmCacheKey{domainID: domainID, assocID: assocID}
 
 				if elems[2].GetName() == elemConfig {
 					// Path: Sysdb/cfm/config/mdConfig/<domain>/maConfig/<assoc>/cfmProfileName
@@ -402,12 +422,12 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 					if profileName == "" {
 						continue // Ignore empty or invalid values
 					}
-					targetCFM.SetProfileName(cacheKey, profileName)
+					i.state.profileNameCache[cacheKey] = profileName
 				} else { // Path matches Sysdb status pattern based on updatePathPatterns
 					// Path: Sysdb/cfm/status/mdStatus/<domain>/maStatus/<assoc>/localMepStatus/<id>/...
 					if len(elems) >= 9 {
 						localMEPID := elems[8].GetName()
-						targetCFM.SetLocalMEPID(cacheKey, localMEPID)
+						i.state.localMEPCache[cacheKey] = localMEPID
 					}
 				}
 			}
@@ -419,9 +439,7 @@ func (i *impl) updateHandler(notification *gnmipb.Notification) ([]*gnmipb.Updat
 
 func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path, error) {
 	prefix := notification.GetPrefix()
-	target := prefix.GetTarget()
 	var deletes []*gnmipb.Path
-	targetCFM := ftutilities.CfmMap.CreateOrUpdateTargetCFMInfo(target)
 	// Loop 1: Process Smash deletes first (telemetry)
 	for _, del := range notification.GetDelete() {
 		fullPath := ftutilities.Join(prefix, del)
@@ -446,12 +464,12 @@ func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path,
 				continue
 			}
 
-			cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
-			profileName, ok := targetCFM.ProfileName(cacheKey)
+			cacheKey := cfmCacheKey{domainID: domainID, assocID: assocID}
+			profileName, ok := i.state.profileNameCache[cacheKey]
 			if !ok {
 				continue
 			}
-			localMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+			localMEPID, ok := i.state.localMEPCache[cacheKey]
 			if !ok {
 				localMEPID = parsedLocalMEPID
 			}
@@ -494,15 +512,15 @@ func (i *impl) deleteHandler(notification *gnmipb.Notification) ([]*gnmipb.Path,
 			}
 			assocID := strings.TrimPrefix(assocKey, assocPrefix)
 
-			cacheKey := ftutilities.CFMCacheKey{DomainID: domainID, AssocID: assocID}
+			cacheKey := cfmCacheKey{domainID: domainID, assocID: assocID}
 			if elems[2].GetName() == elemConfig {
-				targetCFM.DeleteProfileName(cacheKey)
+				delete(i.state.profileNameCache, cacheKey)
 			} else { // Path matches Sysdb status pattern based on deletePathPatterns
 				if len(elems) >= 9 {
 					deletedMEPID := elems[8].GetName()
-					cachedMEPID, ok := targetCFM.LocalMEPID(cacheKey)
+					cachedMEPID, ok := i.state.localMEPCache[cacheKey]
 					if ok && cachedMEPID == deletedMEPID {
-						targetCFM.DeleteLocalMEPID(cacheKey)
+						delete(i.state.localMEPCache, cacheKey)
 					}
 				}
 			}

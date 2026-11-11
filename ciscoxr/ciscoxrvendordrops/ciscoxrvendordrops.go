@@ -345,6 +345,33 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 				},
 			}
 			updates = append(updates, update)
+		// Tracking bug: b/555180543 (featureprofiles test: b/571039600). Native
+		// OpenConfig support (l3_ip_unicast_rpf) is delivered in IOS-XR 25.4.15
+		// (b/429249240, b/513230868).
+		case "L3_IP_UNICAST_RPF(D*)":
+			update := &gnmipb.Update{
+				Path: &gnmipb.Path{
+					Elem: []*gnmipb.PathElem{
+						{Name: "components"},
+						{Name: "component", Key: map[string]string{"name": componentName}},
+						{Name: "integrated-circuit"},
+						{Name: "pipeline-counters"},
+						{Name: "drop"},
+						{Name: "vendor"},
+						{Name: "CiscoXR"},
+						{Name: "spitfire"},
+						{Name: "packet-processing"},
+						{Name: "state"},
+						{Name: "L3_IP_UNICAST_RPF(D*)"},
+					},
+				},
+				Val: &gnmipb.TypedValue{
+					Value: &gnmipb.TypedValue_UintVal{
+						UintVal: uint64(trap.packetDropped),
+					},
+				},
+			}
+			updates = append(updates, update)
 		}
 	}
 

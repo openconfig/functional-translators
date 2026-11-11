@@ -57,19 +57,139 @@ var (
 	}
 )
 
+// counterType is an enum for different policer counter names.
+type counterType int
+
+const (
+	byteDrop counterType = iota
+	pktDrop
+	yellowByteIn
+	yellowPktIn
+)
+
+// counterMap maps string counter names to their counterType enum.
+var counterMap = map[string]counterType{
+	"byteDropCount":     byteDrop,
+	"pktDropCount":      pktDrop,
+	"yellowByteInCount": yellowByteIn,
+	"yellowPktInCount":  yellowPktIn,
+}
+
+// memberCounters holds the 4 QoS counter metrics for a single physical member interface.
+type memberCounters struct {
+	byteDropCount     uint64
+	pktDropCount      uint64
+	yellowByteInCount uint64
+	yellowPktInCount  uint64
+}
+
+// attachmentPointInfo holds drop counts for all physical members of a specific logical interface.
+type attachmentPointInfo struct {
+	name    string
+	members map[string]*memberCounters // map[physicalInterfaceName]*memberCounters
+}
+
+func (a *attachmentPointInfo) setMemberCounter(member, counterName string, count uint64) bool {
+	if a.members == nil {
+		a.members = make(map[string]*memberCounters)
+	}
+	mCounters, ok := a.members[member]
+	if !ok {
+		mCounters = &memberCounters{}
+		a.members[member] = mCounters
+	}
+	cType, ok := counterMap[counterName]
+	if !ok {
+		return false
+	}
+
+	switch cType {
+	case byteDrop:
+		mCounters.byteDropCount = count
+	case pktDrop:
+		mCounters.pktDropCount = count
+	case yellowByteIn:
+		mCounters.yellowByteInCount = count
+	case yellowPktIn:
+		mCounters.yellowPktInCount = count
+	}
+	return true
+}
+
+func (a *attachmentPointInfo) aggregateCounters() (byteDrop, pktDrop, yellowByte, yellowPkt uint64) {
+	for _, m := range a.members {
+		byteDrop += m.byteDropCount
+		pktDrop += m.pktDropCount
+		yellowByte += m.yellowByteInCount
+		yellowPkt += m.yellowPktInCount
+	}
+	return
+}
+
+// policerState holds policer drop information for a specific target device.
+type policerState struct {
+	attachmentPoints map[string]*attachmentPointInfo // map[attachmentPointName]*attachmentPointInfo
+}
+
+func newPolicerState() *policerState {
+	return &policerState{
+		attachmentPoints: make(map[string]*attachmentPointInfo),
+	}
+}
+
+func (p *policerState) createOrRetrieveAttachmentPoint(apName string) *attachmentPointInfo {
+	if p.attachmentPoints == nil {
+		p.attachmentPoints = make(map[string]*attachmentPointInfo)
+	}
+	if _, ok := p.attachmentPoints[apName]; !ok {
+		p.attachmentPoints[apName] = &attachmentPointInfo{
+			name:    apName,
+			members: make(map[string]*memberCounters),
+		}
+	}
+	return p.attachmentPoints[apName]
+}
+
+func (p *policerState) attachmentPointInfo(apName string) (*attachmentPointInfo, bool) {
+	info, ok := p.attachmentPoints[apName]
+	return info, ok
+}
+
+func (p *policerState) removeMemberAndCleanup(apName, member string) (int, bool) {
+	apInfo, ok := p.attachmentPoints[apName]
+	if !ok {
+		return 0, false
+	}
+	if apInfo.members != nil {
+		delete(apInfo.members, member)
+	}
+	remaining := len(apInfo.members)
+	if remaining == 0 {
+		delete(p.attachmentPoints, apName)
+	}
+	return remaining, true
+}
+
+type impl struct {
+	state *policerState
+}
+
 // New returns a new FunctionalTranslator for Arista QoS policers.
 func New() *translator.FunctionalTranslator {
+	i := &impl{
+		state: newPolicerState(),
+	}
 	ft, err := translator.NewFunctionalTranslator(
 		translator.FunctionalTranslatorOptions{
 			ID:               "arista-qos-policers-ft",
-			Translate:        translate,
+			Translate:        i.translate,
 			OutputToInputMap: ftutilities.MustStringMapPaths(translateMap),
 			Metadata: []*translator.FTMetadata{
 				{
 					Vendor: "Arista",
 					SoftwareVersionRange: &translator.SWRange{
 						InclusiveMin: "4.33.0F",
-						ExclusiveMax: "4.37",
+						ExclusiveMax: "4.38",
 					},
 				},
 			},
@@ -80,7 +200,7 @@ func New() *translator.FunctionalTranslator {
 	return ft
 }
 
-func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
+func (i *impl) translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) {
 	notification := sr.GetUpdate()
 	if notification == nil {
 		return nil, nil
@@ -147,7 +267,6 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 
 	var outgoingUpdates []*gnmipb.Update
 	var outgoingDeletes []*gnmipb.Path
-	targetInfo := ftutilities.PolicerAggMap.CreateOrUpdateTargetPolicerInfo(target)
 	updatedAPs := make(map[string]bool)
 	deletedAPs := make(map[string]bool)
 
@@ -159,7 +278,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			continue
 		}
 
-		apInfo := targetInfo.CreateOrRetrieveAttachmentPoint(attachmentPoint)
+		apInfo := i.state.createOrRetrieveAttachmentPoint(attachmentPoint)
 		elems := update.GetPath().GetElem()
 		if len(elems) == 0 {
 			continue
@@ -167,7 +286,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		lastElem := elems[len(elems)-1].GetName()
 
 		// Send counter update to the cache manager
-		if apInfo.SetMemberCounter(physIntf, lastElem, update.GetVal().GetUintVal()) {
+		if apInfo.setMemberCounter(physIntf, lastElem, update.GetVal().GetUintVal()) {
 			updatedAPs[attachmentPoint] = true
 		}
 	}
@@ -180,7 +299,7 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 			continue
 		}
 
-		remainingMembers, ok := targetInfo.RemoveMemberAndCleanup(attachmentPoint, physIntf)
+		remainingMembers, ok := i.state.removeMemberAndCleanup(attachmentPoint, physIntf)
 		if !ok {
 			continue
 		}
@@ -192,8 +311,8 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 	}
 
 	for ap := range updatedAPs {
-		if info, ok := targetInfo.AttachmentPointInfo(ap); ok {
-			byteDrop, pktDrop, yellowByte, yellowPkt := info.AggregateCounters()
+		if info, ok := i.state.attachmentPointInfo(ap); ok {
+			byteDrop, pktDrop, yellowByte, yellowPkt := info.aggregateCounters()
 
 			outgoingUpdates = append(outgoingUpdates, buildOCUpdate(ap, violatingOctets, byteDrop))
 			outgoingUpdates = append(outgoingUpdates, buildOCUpdate(ap, violatingPkts, pktDrop))

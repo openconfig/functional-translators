@@ -115,7 +115,15 @@ func translate(sr *gnmipb.SubscribeResponse) (*gnmipb.SubscribeResponse, error) 
 		return nil, fmt.Errorf("failed to unmarshal notifications: %v", err)
 	}
 
-	portMap := d.GetOpticsOper().GetOpticsPorts().GetOrCreateOpticsPortMap()
+	opticsOper := d.GetOpticsOper()
+	if opticsOper == nil {
+		return nil, nil
+	}
+	opticsPorts := opticsOper.GetOpticsPorts()
+	if opticsPorts == nil {
+		return nil, nil
+	}
+	portMap := opticsPorts.GetOrCreateOpticsPortMap()
 	if portMap == nil {
 		return nil, fmt.Errorf("failed to get optics port map")
 	}

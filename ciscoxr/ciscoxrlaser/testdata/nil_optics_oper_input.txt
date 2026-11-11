@@ -1,0 +1,6 @@
+update: {
+  timestamp: 123
+  prefix: {
+    origin: "Cisco-IOS-XR-controller-optics-oper"
+  }
+}
