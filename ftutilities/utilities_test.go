@@ -1107,6 +1107,19 @@ func TestGNMIPathToSchemaStrings(t *testing.T) {
 			wantSetOriginTrue:  nil,
 			wantSetOriginFalse: nil,
 		},
+		{
+			name: "NilPathElem",
+			path: &gnmipb.Path{
+				Origin: "openconfig",
+				Elem: []*gnmipb.PathElem{
+					{Name: "some"},
+					nil,
+					{Name: "path"},
+				},
+			},
+			wantSetOriginTrue:  []string{"openconfig", "some", "", "path"},
+			wantSetOriginFalse: []string{"openconfig", "some", "", "path"},
+		},
 	}
 
 	for _, tc := range tests {

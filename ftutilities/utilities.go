@@ -335,7 +335,7 @@ func GNMIPathToSchemaStrings(path *gnmipb.Path, setOCIfOriginMissing bool) []str
 		p = append(p, origin)
 	}
 	for _, e := range path.Elem {
-		p = append(p, e.Name)
+		p = append(p, e.GetName())
 	}
 	return p
 }
